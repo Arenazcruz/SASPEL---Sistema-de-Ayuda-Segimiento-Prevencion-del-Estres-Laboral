@@ -1,0 +1,100 @@
+<a class="skip-link" href="#sa-main">Ir al contenido</a>
+<div class="sa-shell" [class.collapsed]="collapsed()">
+  @if (mobileOpen()) {
+    <button class="backdrop" aria-label="Cerrar menú" (click)="mobileOpen.set(false)"></button>
+  }
+  <aside
+    id="sa-sidebar"
+    class="sidebar"
+    [class.open]="mobileOpen()"
+    (keydown.escape)="mobileOpen.set(false)"
+  >
+    <a [routerLink]="base" class="brand" (click)="mobileOpen.set(false)"><app-brand /></a>
+    <p class="sidebar-caption">ADMINISTRACIÓN GLOBAL</p>
+    <nav aria-label="Menú Superadmin">
+      <a
+        [routerLink]="base"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        (click)="mobileOpen.set(false)"
+        >Inicio</a
+      >
+      <button
+        class="group"
+        (click)="peopleOpen.set(!peopleOpen())"
+        [attr.aria-expanded]="peopleOpen()"
+        aria-controls="people-menu"
+      >
+        Personas <span>{{ peopleOpen() ? '−' : '+' }}</span>
+      </button>
+      @if (peopleOpen()) {
+        <div id="people-menu" class="submenu">
+          @for (link of links; track link[1]) {
+            <a
+              [routerLink]="base + '/' + link[1]"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              ariaCurrentWhenActive="page"
+              (click)="mobileOpen.set(false)"
+              >{{ link[0] }}</a
+            >
+          }
+        </div>
+      }
+      <button
+        class="group"
+        (click)="institutionOpen.set(!institutionOpen())"
+        [attr.aria-expanded]="institutionOpen()"
+        aria-controls="institution-menu"
+      >
+        Institución <span>{{ institutionOpen() ? '−' : '+' }}</span>
+      </button>
+      @if (institutionOpen()) {
+        <div id="institution-menu" class="submenu">
+          <a
+            [routerLink]="base + '/institucion/areas'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Áreas</a
+          >
+          <a
+            [routerLink]="base + '/institucion/cargos'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Cargos</a
+          >
+        </div>
+      }
+    </nav>
+    <p class="sidebar-foot">SASPEL · CRECER IFD</p>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button
+        class="desktop-toggle"
+        (click)="collapsed.set(!collapsed())"
+        [attr.aria-expanded]="!collapsed()"
+        aria-controls="sa-sidebar"
+      >
+        {{ collapsed() ? '☰ Mostrar menú' : '☰ Ocultar menú' }}
+      </button>
+      <button
+        class="mobile-toggle"
+        (click)="mobileOpen.set(!mobileOpen())"
+        [attr.aria-expanded]="mobileOpen()"
+        aria-controls="sa-sidebar"
+      >
+        ☰ Menú
+      </button>
+      <div class="identity">
+        <strong>{{ auth.user()?.first_name || 'Superadmin' }}</strong
+        ><span>{{ auth.user()?.email }}</span>
+      </div>
+      <button (click)="auth.logout()">Cerrar sesión</button>
+    </header>
+    <main id="sa-main" class="sa-content"><router-outlet /></main>
+  </div>
+</div>

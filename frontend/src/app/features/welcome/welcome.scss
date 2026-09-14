@@ -1,0 +1,255 @@
+:host {
+  display: block;
+}
+.header-institution {
+  display: block;
+  margin: 6px 0 0 41px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.site-header {
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.site-header nav {
+  display: flex;
+  gap: 30px;
+  font-size: 14px;
+}
+.site-header nav a {
+  color: var(--muted);
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 65px;
+  align-items: center;
+  padding-top: 45px;
+  padding-bottom: 85px;
+}
+.hero h1 {
+  font-size: clamp(44px, 4.8vw, 69px);
+  line-height: 1.08;
+  letter-spacing: -3px;
+  font-weight: 600;
+  margin: 27px 0;
+}
+.hero h1 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: var(--green);
+}
+.hero-description {
+  max-width: 430px;
+  line-height: 1.8;
+  color: var(--muted);
+  font-size: 16px;
+}
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-top: 31px;
+}
+.hero-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 37px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.note-icon {
+  font-size: 25px;
+  color: var(--green);
+}
+.hero-note strong {
+  font-weight: 500;
+}
+.intro-band {
+  background: #f0f2eb;
+  padding: 65px 0;
+}
+.intro-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 50px;
+}
+.intro-layout p:last-child {
+  max-width: 640px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.functions {
+  padding-top: 85px;
+  padding-bottom: 85px;
+}
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  margin-bottom: 35px;
+}
+.section-heading > p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.function-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+.function-grid article {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 25px 23px;
+  position: relative;
+}
+.feature-number {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.feature-icon {
+  display: block;
+  font-size: 35px;
+  color: var(--green);
+  margin: 25px 0 22px;
+}
+.function-grid h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  max-width: 190px;
+  margin-bottom: 12px;
+}
+.function-grid p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  min-height: 95px;
+}
+.future-label {
+  font-size: 10px;
+  color: #536d5f;
+  background: #edf2ec;
+  border-radius: 4px;
+  padding: 5px 9px;
+}
+.institution {
+  background: var(--ink);
+  color: #fffdf7;
+  padding: 46px 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+.institution .eyebrow {
+  color: #b8d1b9;
+}
+.institution p:last-child {
+  font-size: 14px;
+  color: #c3d4cc;
+  max-width: 580px;
+  line-height: 1.8;
+}
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 46px;
+  padding-bottom: 40px;
+  font-size: 11px;
+  color: var(--muted);
+  gap: 20px;
+}
+.site-footer app-brand {
+  transform: scale(0.75);
+  transform-origin: left center;
+}
+@media (max-width: 950px) {
+  .hero {
+    gap: 30px;
+  }
+  .hero h1 {
+    letter-spacing: -2px;
+  }
+  .function-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .function-grid p {
+    min-height: 60px;
+  }
+  .site-header nav {
+    gap: 15px;
+    font-size: 12px;
+  }
+}
+@media (max-width: 650px) {
+  .site-header {
+    height: 90px;
+  }
+  .site-header nav {
+    display: none;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 25px;
+    gap: 38px;
+    padding-bottom: 45px;
+  }
+  .hero h1 {
+    font-size: 49px;
+  }
+  .intro-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .intro-band {
+    padding: 40px 0;
+  }
+  .functions {
+    padding-top: 50px;
+    padding-bottom: 45px;
+  }
+  .section-heading {
+    display: block;
+  }
+  .function-grid {
+    gap: 12px;
+  }
+  .function-grid article {
+    padding: 19px 15px;
+  }
+  .function-grid h3 {
+    font-size: 16px;
+  }
+  .function-grid p {
+    min-height: 115px;
+  }
+  .institution {
+    padding: 28px;
+    display: block;
+  }
+  .institution .button {
+    margin-top: 15px;
+  }
+  .site-footer {
+    flex-wrap: wrap;
+  }
+  .site-footer > span {
+    order: 3;
+    width: 100%;
+  }
+  .hero-actions {
+    gap: 23px;
+  }
+}

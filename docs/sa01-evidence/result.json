@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "user_id": 3,
+  "results": [
+    "Login y redirección: /dashboard/superadmin",
+    "Dashboard obtiene estadísticas reales.",
+    "Catálogo creado mediante UI: areas",
+    "Catálogo creado mediante UI: cargos",
+    "Nuevo trabajador registrado desde el formulario con área y cargo.",
+    "Edición de persona verificada.",
+    "Login y redirección: /dashboard/nuevo-trabajador",
+    "Acceso ajeno rechazado por backend (403) y guard Angular.",
+    "Login y redirección: /dashboard/superadmin",
+    "Cuenta desactivada: login bloqueado.",
+    "Login y redirección: /dashboard/superadmin",
+    "Login y redirección: /dashboard/nuevo-trabajador",
+    "Reactivación: login restaurado.",
+    "Login y redirección: /dashboard/superadmin",
+    "Login y redirección: /dashboard/nuevo-trabajador",
+    "Reset: clave anterior rechazada y nueva clave aceptada.",
+    "Login y redirección: /dashboard/superadmin",
+    "Filtro de sidebar y búsqueda verificados.",
+    "Menú móvil: abre, navega y se cierra; sin desbordamiento horizontal."
+  ],
+  "postgresql": "User, PerfilUsuario, Group, área y cargo verificados directamente; mismas tablas antes/después.",
+  "cleanup": "Cuenta de prueba, perfil, membresía y catálogos temporales eliminados sin historial; cuenta original conservada.",
+  "tables_unchanged": true,
+  "remaining_users": 1
+}

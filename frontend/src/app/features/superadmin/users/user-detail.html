@@ -1,0 +1,165 @@
+<p class="eyebrow">SUPERADMIN / PERSONAS / DETALLE</p>
+@if (vm.error()) {
+  <div class="sa-error" role="alert">
+    {{ vm.error() }} <button (click)="vm.load()">Reintentar</button>
+  </div>
+}
+@if (vm.notice()) {
+  <p class="sa-success" role="status">{{ vm.notice() }}</p>
+}
+@if (vm.loading()) {
+  <p role="status">Cargando persona…</p>
+}
+@if (vm.person(); as user) {
+  <div class="sa-heading">
+    <div>
+      <h1>{{ user.nombre_completo || user.email }}</h1>
+      <app-role-badge [role]="user.role" />
+    </div>
+    <a class="text-link" routerLink="/dashboard/superadmin/personas">Volver a usuarios</a>
+  </div>
+  <div class="sa-actions">
+    <a class="button button-small" [routerLink]="['editar']">Editar persona</a
+    ><a class="button button-outline button-small" [routerLink]="['password']"
+      >Restablecer contraseña</a
+    ><button
+      class="button button-outline button-small"
+      (click)="vm.toggle()"
+      [disabled]="vm.busy() || (user.id === vm.currentUser()?.id && user.is_active)"
+    >
+      {{ user.is_active ? 'Desactivar usuario' : 'Activar usuario' }}
+    </button>
+  </div>
+  <section class="sa-panel">
+    <h2>Datos de cuenta</h2>
+    <dl class="sa-details">
+      <div>
+        <dt>Correo</dt>
+        <dd>{{ user.email }}</dd>
+      </div>
+      <div>
+        <dt>Rol</dt>
+        <dd><app-role-badge [role]="user.role" /></dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd>{{ user.is_active ? 'Activo' : 'Inactivo' }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de registro</dt>
+        <dd>{{ user.fecha_registro | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+      <div>
+        <dt>Último acceso</dt>
+        <dd>{{ user.last_login ? (user.last_login | date: 'dd/MM/yyyy HH:mm') : 'Nunca' }}</dd>
+      </div>
+    </dl>
+  </section>
+  <section class="sa-panel">
+    <h2>Datos personales</h2>
+    @if (!user.tiene_perfil) {
+      <p class="sa-info">
+        Esta cuenta aún no tiene perfil. Puedes completarlo desde Editar persona.
+      </p>
+    }
+    <dl class="sa-details">
+      <div>
+        <dt>Nombres</dt>
+        <dd>{{ user.first_name || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Apellido paterno</dt>
+        <dd>{{ user.last_name || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Apellido materno</dt>
+        <dd>{{ user.apellido_materno || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Nombre preferido</dt>
+        <dd>{{ user.nombre_preferido || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de nacimiento</dt>
+        <dd>{{ user.fecha_nacimiento ? (user.fecha_nacimiento | date: 'dd/MM/yyyy') : '—' }}</dd>
+      </div>
+      <div>
+        <dt>Sexo</dt>
+        <dd>
+          {{
+            user.sexo === 'F'
+              ? 'Femenino'
+              : user.sexo === 'M'
+                ? 'Masculino'
+                : user.sexo === 'O'
+                  ? 'Otro'
+                  : 'Sin especificar'
+          }}
+        </dd>
+      </div>
+      <div>
+        <dt>Teléfono</dt>
+        <dd>{{ user.telefono || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Código empleado</dt>
+        <dd>{{ user.codigo_empleado || '—' }}</dd>
+      </div>
+    </dl>
+  </section>
+  <section class="sa-panel">
+    <h2>Datos institucionales</h2>
+    <dl class="sa-details">
+      <div>
+        <dt>Área</dt>
+        <dd>{{ user.area?.nombre || 'Sin área' }}</dd>
+      </div>
+      <div>
+        <dt>Cargo</dt>
+        <dd>{{ user.cargo?.nombre || 'Sin cargo' }}</dd>
+      </div>
+    </dl>
+  </section>
+  <section class="sa-panel">
+    <h2>Estado SASPEL</h2>
+    <dl class="sa-details">
+      <div>
+        <dt>Tamizaje resuelto</dt>
+        <dd>{{ user.tamizaje_resuelto ? 'Sí' : 'No' }}</dd>
+      </div>
+      @if (user.role === 'PSICOLOGO') {
+        <div>
+          <dt>Habilitado para recibir trabajadores</dt>
+          <dd>{{ user.habilitado_asignaciones ? 'Sí' : 'No' }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+  @if (vm.canChangeRole()) {
+    <section class="sa-panel">
+      <h2>Corregir rol administrativo</h2>
+      <p>
+        Permite corregir una cuenta administrativa. El paso a Trabajador se realizará mediante la
+        evaluación inicial.
+      </p>
+      <div class="sa-actions">
+        <label
+          >Nuevo rol<select
+            [value]="vm.selectedRole()"
+            (change)="vm.selectedRole.set($any($event.target).value)"
+          >
+            @for (role of vm.roles; track role[0]) {
+              <option [value]="role[0]">{{ role[1] }}</option>
+            }
+          </select></label
+        ><button
+          class="button button-outline button-small"
+          (click)="vm.changeRole()"
+          [disabled]="vm.busy() || vm.selectedRole() === user.role"
+        >
+          Confirmar cambio de rol
+        </button>
+      </div>
+    </section>
+  }
+}

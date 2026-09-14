@@ -1,0 +1,150 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: #f4f7f3;
+}
+.sa-shell {
+  display: grid;
+  grid-template-columns: 255px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+.sidebar {
+  background: #173f35;
+  color: #edf5ed;
+  padding: 30px 18px;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+.brand {
+  display: block;
+  color: var(--ink);
+  background: #fafbf6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 28px;
+}
+.sidebar-caption,
+.sidebar-foot {
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  color: #b6cfbf;
+  margin: 20px 10px;
+}
+nav a,
+.group {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 7px;
+  padding: 12px;
+  margin: 3px 0;
+  color: inherit;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.group {
+  margin-top: 18px;
+  font-weight: 700;
+}
+.submenu {
+  padding-left: 10px;
+}
+nav a:hover,
+nav a.active {
+  background: #315d4b;
+}
+nav a.active {
+  box-shadow: inset 3px 0 #bee0ad;
+  font-weight: 650;
+}
+.workspace {
+  min-width: 0;
+}
+.topbar {
+  min-height: 82px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.topbar button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.identity {
+  margin-left: auto;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.identity span {
+  color: var(--muted);
+}
+.sa-content {
+  padding: 34px;
+  max-width: 1700px;
+  margin: auto;
+}
+.collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+.collapsed .sidebar {
+  display: none;
+}
+.mobile-toggle,
+.backdrop {
+  display: none;
+}
+@media (max-width: 900px) {
+  .sa-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar,
+  .collapsed .sidebar {
+    display: none;
+    position: fixed;
+    width: 270px;
+    z-index: 30;
+  }
+  .sidebar.open,
+  .collapsed .sidebar.open {
+    display: block;
+  }
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    border: 0;
+    background: #10271e80;
+  }
+  .mobile-toggle {
+    display: block;
+  }
+  .desktop-toggle {
+    display: none;
+  }
+  .topbar {
+    padding: 14px 18px;
+    gap: 10px;
+  }
+  .identity strong {
+    display: none;
+  }
+  .sa-content {
+    padding: 24px 16px;
+  }
+}

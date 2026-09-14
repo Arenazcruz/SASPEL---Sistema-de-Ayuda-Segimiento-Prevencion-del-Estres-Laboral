@@ -1,0 +1,125 @@
+<div class="sa-heading">
+  <div>
+    <p class="eyebrow">SUPERADMIN / PERSONAS</p>
+    <h1>{{ vm.title() }}</h1>
+    <p>Cuentas de acceso e información institucional.</p>
+  </div>
+  <a class="button" [routerLink]="base + '/nuevo'">Registrar persona</a>
+</div>
+<form class="sa-panel sa-filters" [formGroup]="vm.filters" (ngSubmit)="vm.search()">
+  <label
+    >Buscar<input formControlName="search" placeholder="Nombre, correo o código" maxlength="200"
+  /></label>
+  <label
+    >Rol<select formControlName="role" [attr.disabled]="vm.fixedRole() ? '' : null">
+      <option value="">Todos los roles</option>
+      @for (role of vm.roles; track role[0]) {
+        <option [value]="role[0]">{{ role[1] }}</option>
+      }
+    </select></label
+  >
+  <label
+    >Estado<select formControlName="active">
+      <option value="">Todos</option>
+      <option value="true">Activo</option>
+      <option value="false">Inactivo</option>
+    </select></label
+  >
+  <label
+    >Área<select formControlName="area">
+      <option value="">Todas</option>
+      @for (item of vm.areas(); track item.id) {
+        <option [value]="item.id">{{ item.nombre }}</option>
+      }
+    </select></label
+  >
+  <label
+    >Cargo<select formControlName="cargo">
+      <option value="">Todos</option>
+      @for (item of vm.cargos(); track item.id) {
+        <option [value]="item.id">{{ item.nombre }}</option>
+      }
+    </select></label
+  >
+  <button class="button button-small" type="submit" [disabled]="vm.loading()">Buscar</button>
+</form>
+@if (vm.error()) {
+  <div class="sa-error" role="alert">
+    {{ vm.error() }} <button (click)="vm.reload()">Reintentar</button>
+  </div>
+}
+@if (vm.notice()) {
+  <p class="sa-success" role="status">{{ vm.notice() }}</p>
+}
+@if (vm.loading()) {
+  <p role="status">Cargando usuarios…</p>
+}
+@if (vm.page(); as page) {
+  <section class="sa-panel" [attr.aria-busy]="vm.loading()">
+    <div class="sa-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Área</th>
+            <th>Cargo</th>
+            <th>Estado</th>
+            <th>Último acceso</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of page.results; track user.id) {
+            <tr>
+              <td>{{ user.codigo_empleado || '—' }}</td>
+              <td>{{ user.nombre_completo || 'Sin nombre' }}</td>
+              <td>{{ user.email }}</td>
+              <td><app-role-badge [role]="user.role" /></td>
+              <td>{{ user.area?.nombre || '—' }}</td>
+              <td>{{ user.cargo?.nombre || '—' }}</td>
+              <td>
+                <span class="sa-badge" [class.inactive]="!user.is_active">{{
+                  user.is_active ? 'Activo' : 'Inactivo'
+                }}</span>
+              </td>
+              <td>
+                {{ user.last_login ? (user.last_login | date: 'dd/MM/yyyy HH:mm') : 'Nunca' }}
+              </td>
+              <td>
+                <div class="sa-row-actions">
+                  <a [routerLink]="[base, user.id]">Ver</a
+                  ><a [routerLink]="[base, user.id, 'editar']">Editar</a
+                  ><a [routerLink]="[base, user.id, 'password']">Restablecer contraseña</a
+                  ><button
+                    (click)="vm.toggle(user)"
+                    [disabled]="vm.busy() || (user.id === vm.currentUser()?.id && user.is_active)"
+                  >
+                    {{ user.is_active ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9">No se encontraron personas con estos filtros.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <nav class="sa-pagination" aria-label="Paginación">
+      <span>{{ page.count }} usuarios · Página {{ page.page }}</span
+      ><button (click)="vm.search(page.page - 1)" [disabled]="page.page <= 1 || vm.loading()">
+        Anterior</button
+      ><button
+        (click)="vm.search(page.page + 1)"
+        [disabled]="page.page * page.page_size >= page.count || vm.loading()"
+      >
+        Siguiente
+      </button>
+    </nav>
+  </section>
+}

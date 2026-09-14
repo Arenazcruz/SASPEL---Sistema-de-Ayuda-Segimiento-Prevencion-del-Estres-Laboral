@@ -1,0 +1,173 @@
+<div class="sa-heading">
+  <div>
+    <p class="eyebrow">SUPERADMIN / PERSONAS</p>
+    <h1>{{ vm.id ? 'Editar persona' : 'Registrar persona' }}</h1>
+    <p>Los campos con * son obligatorios.</p>
+  </div>
+  <a class="text-link" routerLink="/dashboard/superadmin/personas">Volver a usuarios</a>
+</div>
+@if (vm.loading()) {
+  <p role="status">Cargando formulario…</p>
+}
+@if (vm.error()) {
+  <div class="sa-error" role="alert">
+    {{ vm.error() }}
+    @if (!vm.ready() && !vm.loading()) {
+      <button (click)="vm.load()">Reintentar</button>
+    }
+  </div>
+}
+@if (vm.ready()) {
+  <form [formGroup]="vm.form" (ngSubmit)="vm.submit()" class="sa-form">
+    <section class="sa-panel">
+      <h2>Cuenta</h2>
+      <div class="sa-form-grid">
+        <label
+          >Correo *<input type="email" formControlName="email" autocomplete="off" maxlength="150" />
+          @if (vm.invalid('email')) {
+            <small class="sa-field-error">Escribe un correo válido.</small>
+          }
+        </label>
+        @if (!vm.id) {
+          <label
+            >Rol *<select formControlName="role">
+              @for (role of vm.roles; track role[0]) {
+                <option [value]="role[0]">{{ role[1] }}</option>
+              }
+            </select></label
+          >
+          <label
+            >Contraseña *<input
+              [type]="vm.showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              maxlength="128"
+            />
+            @if (vm.invalid('password')) {
+              <small class="sa-field-error">Mínimo 8 caracteres, una letra y un número.</small>
+            }
+          </label>
+          <label
+            >Confirmar contraseña *<input
+              [type]="vm.showPassword() ? 'text' : 'password'"
+              formControlName="password_confirmation"
+              autocomplete="new-password"
+              maxlength="128"
+            />
+            @if (
+              vm.form.controls.password_confirmation.touched && vm.form.hasError('passwordsMatch')
+            ) {
+              <small class="sa-field-error">Las contraseñas no coinciden.</small>
+            }
+          </label>
+          <button class="sa-plain" type="button" (click)="vm.showPassword.set(!vm.showPassword())">
+            {{ vm.showPassword() ? 'Ocultar contraseñas' : 'Mostrar contraseñas' }}
+          </button>
+          <p class="sa-help">
+            Mínimo 8 caracteres, una letra y un número. Evita claves comunes o similares a los datos
+            personales.
+          </p>
+        }
+      </div>
+      @if (!vm.id && vm.form.controls.role.value === 'NUEVO_TRABAJADOR') {
+        <p class="sa-info">
+          El trabajador ingresará por primera vez al proceso de bienvenida y evaluación inicial.
+        </p>
+      }
+      @if (vm.form.controls.role.value === 'PSICOLOGO') {
+        <label class="sa-check"
+          ><input type="checkbox" formControlName="habilitado_asignaciones" />Habilitado para
+          recibir trabajadores</label
+        >
+      }
+      @if (!vm.id && vm.form.controls.role.value === 'SUPERADMIN') {
+        <div class="sa-warning">
+          <p>Este rol posee administración global del sistema.</p>
+          <label class="sa-check"
+            ><input
+              type="checkbox"
+              [checked]="vm.confirmSuperadmin()"
+              (change)="vm.confirmSuperadmin.set($any($event.target).checked)"
+            />Confirmo que deseo crear otro SUPERADMIN.</label
+          >
+        </div>
+      }
+    </section>
+    <section class="sa-panel">
+      <h2>Información personal</h2>
+      <div class="sa-form-grid">
+        <label
+          >Código empleado *<input formControlName="codigo_empleado" maxlength="50" />
+          @if (vm.invalid('codigo_empleado')) {
+            <small class="sa-field-error">El código es obligatorio.</small>
+          }
+        </label>
+        <label
+          >Nombres *<input formControlName="first_name" maxlength="150" />
+          @if (vm.invalid('first_name')) {
+            <small class="sa-field-error">Los nombres son obligatorios.</small>
+          }
+        </label>
+        <label
+          >Apellido paterno *<input formControlName="last_name" maxlength="150" />
+          @if (vm.invalid('last_name')) {
+            <small class="sa-field-error">El apellido paterno es obligatorio.</small>
+          }
+        </label>
+        <label>Apellido materno<input formControlName="apellido_materno" maxlength="150" /></label>
+        <label>Nombre preferido<input formControlName="nombre_preferido" maxlength="150" /></label>
+        <label>Fecha de nacimiento<input type="date" formControlName="fecha_nacimiento" /></label>
+        <label
+          >Sexo<select formControlName="sexo">
+            <option value="">Sin especificar</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Otro</option>
+          </select></label
+        >
+        <label>Teléfono<input type="tel" formControlName="telefono" maxlength="30" /></label>
+      </div>
+    </section>
+    <section class="sa-panel">
+      <h2>Información institucional</h2>
+      <div class="sa-form-grid">
+        <label
+          >Área<select formControlName="area_id">
+            <option [ngValue]="null">Sin área</option>
+            @if (vm.person()?.area; as current) {
+              @if (!current.activo) {
+                <option [ngValue]="current.id" disabled>
+                  {{ current.nombre }} (actual, inactiva)
+                </option>
+              }
+            }
+            @for (item of vm.areas(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }}</option>
+            }
+          </select></label
+        >
+        <label
+          >Cargo<select formControlName="cargo_id">
+            <option [ngValue]="null">Sin cargo</option>
+            @if (vm.person()?.cargo; as current) {
+              @if (!current.activo) {
+                <option [ngValue]="current.id" disabled>
+                  {{ current.nombre }} (actual, inactivo)
+                </option>
+              }
+            }
+            @for (item of vm.cargos(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }}</option>
+            }
+          </select></label
+        >
+      </div>
+      <p class="sa-help">Puedes administrar las opciones desde Institución → Áreas y Cargos.</p>
+    </section>
+    <div class="sa-actions">
+      <button class="button" type="submit" [disabled]="vm.saving()">
+        {{ vm.saving() ? 'Guardando…' : vm.id ? 'Guardar cambios' : 'Registrar persona' }}</button
+      ><a class="button button-outline" routerLink="/dashboard/superadmin/personas">Cancelar</a>
+    </div>
+  </form>
+}
