@@ -1,0 +1,64 @@
+/* Extiende los estilos administrativos existentes sin afectar otras pantallas. */
+:host {
+  display: block;
+  min-width: 0;
+}
+.assignment-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.worker-search {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.worker-search label {
+  flex: 1;
+}
+.assignment-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+}
+.assignment-overview > section {
+  min-width: 0;
+}
+.assignment-form {
+  max-width: 850px;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+fieldset label + label {
+  margin-top: 20px;
+}
+.closing-reason {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+@media (max-width: 1150px) {
+  .assignment-overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+@media (max-width: 650px) {
+  .assignment-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .worker-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

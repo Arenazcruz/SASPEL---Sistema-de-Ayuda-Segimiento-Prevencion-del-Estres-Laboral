@@ -103,6 +103,10 @@ describe('Superadmin layout y permisos', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Usuarios');
+    expect(
+      el.querySelector('a[href="/dashboard/superadmin/personas/asignaciones-profesionales"]')
+        ?.textContent,
+    ).toContain('Asignaciones profesionales');
     expect(el.textContent).not.toContain('auth_user');
     el.querySelector<HTMLButtonElement>('[aria-controls="people-menu"]')!.click();
     await fixture.whenStable();
