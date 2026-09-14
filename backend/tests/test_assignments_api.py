@@ -221,3 +221,41 @@ class AssignmentApiTests(TestCase):
     def test_old_token_loses_permission_after_removing_group(self):
         self.admin.groups.clear()
         self.assertEqual(self.client.get(BASE).status_code, 403)
+
+    def test_pagination_covers_every_worker_and_assignment_without_duplicates(self):
+        """Cruza el límite de 20 filas en ambas listas; no basta probar una página vacía."""
+        workers = [self.worker, self.new_worker] + [person(f'page-worker-{i:02}', 'TRABAJADOR') for i in range(23)]
+        expected = {user.pk for user in workers}
+        pages = [self.client.get(BASE + 'unassigned-workers/', {'page': i}).data for i in (1, 2)]
+        self.assertEqual([len(p['results']) for p in pages], [20, 5])
+        ids = [row['id'] for page in pages for row in page['results']]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(set(ids), expected)
+        AsignacionProfesional.objects.bulk_create([
+            AsignacionProfesional(trabajador=user, psicologo=self.psychologist) for user in workers
+        ])
+        pages = [self.client.get(BASE, {'page': i}).data for i in (1, 2)]
+        self.assertTrue(all(p['count'] == 25 for p in pages))
+        self.assertEqual([len(p['results']) for p in pages], [20, 5])
+        ids = [row['id'] for page in pages for row in page['results']]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual({row['trabajador']['id'] for p in pages for row in p['results']}, expected)
+        self.assertEqual(self.client.get(BASE + 'unassigned-workers/').data['count'], 0)
+
+    def test_load_counts_active_links_even_when_worker_account_becomes_inactive(self):
+        """Desactivar acceso no finaliza silenciosamente un vínculo ni elimina su historial."""
+        self.assign()
+        User.objects.filter(pk=self.worker.pk).update(is_active=False)
+        loads = {row['psicologo']['id']: row['trabajadores_activos'] for row in self.client.get(BASE + 'psychologists/').data}
+        self.assertEqual(loads[self.psychologist.pk], 1)
+        self.assertEqual(self.client.get(BASE, {'estado': 'ACTIVA'}).data['count'], 1)
+
+    def test_finishing_removes_only_that_link_from_psychologist_load(self):
+        previous_id = self.assign().data['id']
+        self.assign(worker=self.new_worker)
+        self.action(previous_id, 'finish', motivo_fin='Fin')
+        loads = {row['psicologo']['id']: row['trabajadores_activos'] for row in self.client.get(BASE + 'psychologists/').data}
+        self.assertEqual(loads[self.psychologist.pk], 1)
+        history = self.client.get(BASE, {'estado': 'FINALIZADA', 'trabajador_id': self.worker.pk}).data
+        self.assertEqual(history['count'], 1)
+        self.assertEqual(history['results'][0]['id'], previous_id)
