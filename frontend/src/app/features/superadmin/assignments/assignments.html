@@ -1,0 +1,365 @@
+<p class="eyebrow">SUPERADMIN / PERSONAS</p>
+<div class="sa-heading">
+  <div>
+    <h1>Asignaciones profesionales</h1>
+    <p>
+      Asigna trabajadores, consulta la carga de psicólogos y conserva el historial de
+      acompañamiento.
+    </p>
+  </div>
+  <button
+    class="button button-outline button-small"
+    (click)="vm.reload()"
+    [disabled]="vm.busy() || vm.loading()"
+  >
+    Actualizar
+  </button>
+</div>
+@if (vm.notice()) {
+  <p class="sa-success" role="status">{{ vm.notice() }}</p>
+}
+@if (vm.loadError()) {
+  <p class="sa-error" role="alert">
+    {{ vm.loadError() }}
+    <button type="button" (click)="vm.reload()" [disabled]="vm.busy()">Reintentar carga</button>
+  </p>
+}
+@if (vm.loading()) {
+  <p role="status">Cargando asignaciones y disponibilidad…</p>
+}
+
+@if (vm.selection(); as selection) {
+  <form
+    class="sa-panel assignment-form"
+    [formGroup]="vm.form"
+    (ngSubmit)="vm.submit()"
+    aria-labelledby="assignment-form-title"
+  >
+    <h2 id="assignment-form-title" tabindex="-1">
+      {{
+        selection.kind === 'assign'
+          ? 'Asignar trabajador'
+          : selection.kind === 'reassign'
+            ? 'Reasignar trabajador'
+            : 'Finalizar asignación'
+      }}
+    </h2>
+    <p>
+      <strong>Trabajador:</strong> {{ vm.selectedWorker()?.nombre_completo }} ·
+      {{ vm.selectedWorker()?.email }}
+    </p>
+    @if (vm.currentPsychologist(); as current) {
+      <p><strong>Psicólogo actual:</strong> {{ current.nombre_completo }}</p>
+    }
+    @if (vm.actionError()) {
+      <p class="sa-error" role="alert">{{ vm.actionError() }}</p>
+    }
+    <fieldset [disabled]="vm.busy() || vm.loading() || !!vm.loadError()">
+      @if (selection.kind !== 'finish') {
+        <label
+          >Psicólogo {{ selection.kind === 'reassign' ? 'nuevo' : '' }} *
+          <select formControlName="psicologo_id">
+            <option [ngValue]="0">Selecciona un psicólogo</option>
+            @for (load of vm.availablePsychologists(); track load.psicologo.id) {
+              <option [ngValue]="load.psicologo.id">
+                {{ load.psicologo.nombre_completo }} · {{ load.psicologo.email }} —
+                {{ load.trabajadores_activos }} asignaciones activas
+              </option>
+            }
+          </select>
+        </label>
+        @if (vm.form.controls.psicologo_id.touched && vm.form.controls.psicologo_id.invalid) {
+          <small class="sa-field-error">Selecciona un psicólogo.</small>
+        }
+        @if (!vm.availablePsychologists().length) {
+          <p class="sa-warning">
+            No hay psicólogos disponibles para esta operación. Revisa su estado y habilitación en
+            Personas.
+          </p>
+        }
+      }
+      @if (selection.kind !== 'assign') {
+        <label
+          >Motivo {{ selection.kind === 'finish' ? 'de finalización' : 'de reasignación' }} *
+          <textarea
+            formControlName="motivo_fin"
+            rows="3"
+            maxlength="2000"
+            aria-describedby="reason-help"
+          ></textarea>
+        </label>
+        <p id="reason-help" class="sa-help">
+          Indica el motivo administrativo. El historial se conserva; evita incluir notas clínicas.
+        </p>
+        @if (vm.form.controls.motivo_fin.touched && vm.form.controls.motivo_fin.invalid) {
+          <small class="sa-field-error">El motivo es obligatorio (máximo 2000 caracteres).</small>
+        }
+      }
+      @if (selection.kind === 'finish') {
+        <p class="sa-warning">
+          Al confirmar, este vínculo se cerrará y el trabajador quedará sin asignación activa.
+        </p>
+      }
+      <div class="sa-actions">
+        <button
+          class="button button-small"
+          type="submit"
+          [disabled]="selection.kind !== 'finish' && !vm.availablePsychologists().length"
+        >
+          {{
+            vm.busy()
+              ? 'Guardando…'
+              : selection.kind === 'assign'
+                ? 'Confirmar asignación'
+                : selection.kind === 'reassign'
+                  ? 'Confirmar reasignación'
+                  : 'Confirmar finalización'
+          }}
+        </button>
+      </div>
+    </fieldset>
+    <button class="sa-plain" type="button" (click)="vm.cancel()" [disabled]="vm.busy()">
+      Cancelar
+    </button>
+  </form>
+}
+
+<section class="sa-panel" aria-labelledby="assignments-title" [attr.aria-busy]="vm.loading()">
+  <h2 id="assignments-title">Asignaciones e historial</h2>
+  @if (vm.historyWorker(); as worker) {
+    <p class="sa-info">
+      Historial de {{ worker.nombre_completo }} · {{ worker.email }}
+      <button class="sa-plain" (click)="vm.history(null)" [disabled]="vm.busy()">
+        Ver todos los trabajadores
+      </button>
+    </p>
+  }
+  <form class="assignment-filters" [formGroup]="vm.filters" (ngSubmit)="vm.search()">
+    <label
+      >Buscar persona<input
+        formControlName="search"
+        placeholder="Nombre, correo o código"
+        maxlength="200"
+    /></label>
+    <label
+      >Estado<select formControlName="estado">
+        <option value="ACTIVA">Activas</option>
+        <option value="">Todos / historial</option>
+        <option value="FINALIZADA">Finalizadas</option>
+        <option value="REASIGNADA">Reasignadas</option>
+      </select></label
+    >
+    <button class="button button-outline button-small" [disabled]="vm.busy()">Buscar</button>
+  </form>
+  <div class="sa-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Trabajador</th>
+          <th scope="col">Psicólogo del vínculo</th>
+          <th scope="col">Fecha de asignación</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Cierre / motivo</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of vm.rows()?.results; track item.id) {
+          <tr>
+            <td>
+              <strong>{{ item.trabajador.nombre_completo }}</strong
+              ><br />{{ item.trabajador.email }}<br /><small>{{
+                item.trabajador.codigo_empleado
+              }}</small>
+            </td>
+            <td>
+              {{ item.psicologo.nombre_completo }}<br /><small>{{ item.psicologo.email }}</small>
+              @if (item.estado === 'ACTIVA') {
+                <br /><small>Psicólogo actual</small>
+              }
+            </td>
+            <td>{{ item.fecha_asignacion | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span class="sa-badge" [class.inactive]="item.estado !== 'ACTIVA'">{{
+                item.estado === 'ACTIVA'
+                  ? 'Activa'
+                  : item.estado === 'FINALIZADA'
+                    ? 'Finalizada'
+                    : 'Reasignada'
+              }}</span>
+            </td>
+            <td>
+              {{ item.fecha_fin ? (item.fecha_fin | date: 'dd/MM/yyyy HH:mm') : '—' }}<br /><span
+                class="closing-reason"
+                >{{ item.motivo_fin }}</span
+              >
+            </td>
+            <td>
+              <div class="sa-row-actions">
+                @if (item.estado === 'ACTIVA') {
+                  <button
+                    type="button"
+                    (click)="open({ kind: 'reassign', assignment: item })"
+                    [disabled]="vm.busy() || vm.loading()"
+                  >
+                    Reasignar
+                  </button>
+                  <button
+                    type="button"
+                    (click)="open({ kind: 'finish', assignment: item })"
+                    [disabled]="vm.busy() || vm.loading()"
+                  >
+                    Finalizar
+                  </button>
+                }
+                <button type="button" (click)="vm.history(item.trabajador)" [disabled]="vm.busy()">
+                  Ver historial
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          @if (!vm.loading() && !vm.loadError()) {
+            <tr>
+              <td colspan="6">No hay asignaciones para estos filtros.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (vm.rows(); as page) {
+    <div class="sa-pagination">
+      <span>{{ page.count }} registros · Página {{ page.page }}</span>
+      <button
+        (click)="vm.page(page.page - 1)"
+        [disabled]="page.page <= 1 || vm.loading() || vm.busy()"
+        aria-label="Página anterior de asignaciones"
+      >
+        Anterior
+      </button>
+      <button
+        (click)="vm.page(page.page + 1)"
+        [disabled]="page.page * page.page_size >= page.count || vm.loading() || vm.busy()"
+        aria-label="Página siguiente de asignaciones"
+      >
+        Siguiente
+      </button>
+    </div>
+  }
+</section>
+
+<div class="assignment-overview">
+  <section class="sa-panel" aria-labelledby="unassigned-title">
+    <h2 id="unassigned-title">Trabajadores sin asignación activa</h2>
+    <p>
+      Trabajadores y nuevos trabajadores con cuenta activa. La asignación manual no cambia su rol ni
+      completa el tamizaje.
+    </p>
+    <form class="worker-search" [formGroup]="vm.workerFilters" (ngSubmit)="vm.searchWorkers()">
+      <label
+        >Buscar trabajador<input
+          formControlName="search"
+          placeholder="Nombre, correo o código"
+          maxlength="200"
+      /></label>
+      <button class="button button-outline button-small" [disabled]="vm.busy()">
+        Buscar trabajador
+      </button>
+    </form>
+    <div class="sa-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Trabajador</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (worker of vm.workers()?.results; track worker.id) {
+            <tr>
+              <td>
+                <strong>{{ worker.nombre_completo }}</strong
+                ><br />{{ worker.email }}<br /><small>{{ worker.codigo_empleado }}</small>
+              </td>
+              <td>
+                <div class="sa-row-actions">
+                  <button
+                    type="button"
+                    (click)="open({ kind: 'assign', worker })"
+                    [disabled]="vm.busy() || vm.loading() || !vm.loads().length"
+                  >
+                    Asignar
+                  </button>
+                  <button type="button" (click)="vm.history(worker)" [disabled]="vm.busy()">
+                    Ver historial
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            @if (!vm.loading() && !vm.loadError()) {
+              <tr>
+                <td colspan="2">No hay trabajadores pendientes para esta búsqueda.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (vm.workers(); as page) {
+      <div class="sa-pagination">
+        <span>{{ page.count }} trabajadores · Página {{ page.page }}</span>
+        <button
+          (click)="vm.page(page.page - 1, true)"
+          [disabled]="page.page <= 1 || vm.loading() || vm.busy()"
+          aria-label="Página anterior de trabajadores"
+        >
+          Anterior
+        </button>
+        <button
+          (click)="vm.page(page.page + 1, true)"
+          [disabled]="page.page * page.page_size >= page.count || vm.loading() || vm.busy()"
+          aria-label="Página siguiente de trabajadores"
+        >
+          Siguiente
+        </button>
+      </div>
+    }
+  </section>
+  <section class="sa-panel" aria-labelledby="loads-title">
+    <h2 id="loads-title">Carga de psicólogos</h2>
+    <p>
+      Profesionales activos y habilitados para recibir trabajadores. La carga cuenta sus
+      asignaciones activas.
+    </p>
+    <div class="sa-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Psicólogo</th>
+            <th scope="col">Asignaciones activas</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (load of vm.loads(); track load.psicologo.id) {
+            <tr>
+              <td>
+                {{ load.psicologo.nombre_completo }}<br /><small>{{ load.psicologo.email }}</small>
+              </td>
+              <td>{{ load.trabajadores_activos }}</td>
+            </tr>
+          } @empty {
+            @if (!vm.loading() && !vm.loadError()) {
+              <tr>
+                <td colspan="2">
+                  No hay psicólogos activos y habilitados. Revisa sus perfiles en Personas.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

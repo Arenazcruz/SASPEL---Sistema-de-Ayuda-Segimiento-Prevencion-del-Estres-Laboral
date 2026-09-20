@@ -8,13 +8,14 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Brand } from '../../../shared/brand/brand';
 
-// El menú publica únicamente las funciones disponibles en SA-01.
+// El menú publica las funciones disponibles de Personas, incluidas las asignaciones T23.
 export const PERSON_LINKS = [
   ['Usuarios', 'personas'],
   ['Nuevos trabajadores', 'personas/nuevos-trabajadores'],
   ['Trabajadores', 'personas/trabajadores'],
   ['Psicólogos', 'personas/psicologos'],
   ['Administradores', 'personas/administradores'],
+  ['Asignaciones profesionales', 'personas/asignaciones-profesionales'],
 ];
 
 @Component({

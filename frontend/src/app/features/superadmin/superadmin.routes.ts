@@ -26,6 +26,10 @@ export const SUPERADMIN_ROUTES: Routes = [
   },
   { path: 'personas', loadComponent: list },
   {
+    path: 'personas/asignaciones-profesionales',
+    loadComponent: () => import('./assignments/assignments').then((m) => m.ProfessionalAssignments),
+  },
+  {
     path: 'personas/nuevo',
     loadComponent: () => import('./users/user-form').then((m) => m.UserForm),
   },

@@ -4,9 +4,17 @@ SuperadminService. No hay borrado físico publicado.
 """
 
 from django.urls import path
+from src.infrastructure.api.rest.views.assignments import (
+    AssignmentsView, FinishAssignmentView, PsychologistLoadsView, ReassignWorkerView, UnassignedWorkersView,
+)
 from src.infrastructure.api.rest.views.superadmin import InstitutionView, SummaryView, UserActionView, UserDetailView, UsersView
 
 urlpatterns = [
+    path('assignments/', AssignmentsView.as_view()),
+    path('assignments/unassigned-workers/', UnassignedWorkersView.as_view()),
+    path('assignments/psychologists/', PsychologistLoadsView.as_view()),
+    path('assignments/<int:assignment_id>/finish/', FinishAssignmentView.as_view()),
+    path('assignments/<int:assignment_id>/reassign/', ReassignWorkerView.as_view()),
     path('dashboard/summary/', SummaryView.as_view()),
     path('users/', UsersView.as_view()),
     path('users/<int:user_id>/', UserDetailView.as_view()),
