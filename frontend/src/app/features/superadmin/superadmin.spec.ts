@@ -107,6 +107,10 @@ describe('Superadmin layout y permisos', () => {
       el.querySelector('a[href="/dashboard/superadmin/personas/asignaciones-profesionales"]')
         ?.textContent,
     ).toContain('Asignaciones profesionales');
+    expect(el.querySelector('#people-menu')?.textContent).toContain('Asignaciones profesionales');
+    expect(el.querySelector('#people-menu')?.textContent).not.toContain('Nuevos trabajadores');
+    expect(el.querySelectorAll('#people-menu a')).toHaveLength(2);
+    expect(el.querySelector('#people-menu button:disabled')).toBeNull();
     expect(el.textContent).not.toContain('auth_user');
     el.querySelector<HTMLButtonElement>('[aria-controls="people-menu"]')!.click();
     await fixture.whenStable();
@@ -168,7 +172,7 @@ describe('Formulario de personas', () => {
     expect(fixture.nativeElement.textContent).toContain('Las contraseñas no coinciden.');
     http.expectNone('/api/superadmin/users/');
   });
-  it('crea con datos reales, limpia claves y navega al detalle', () => {
+  it('crea sin enviar correo, limpia claves y vuelve al listado', () => {
     const fixture = form();
     const vm = fixture.componentInstance.vm;
     fill(vm);
@@ -178,9 +182,23 @@ describe('Formulario de personas', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body.role).toBe('NUEVO_TRABAJADOR');
     expect(req.request.body).not.toHaveProperty('tamizaje_resuelto');
+    expect(req.request.body).not.toHaveProperty('email');
     req.flush(person);
     expect(vm.form.controls.password.value).toBe('');
-    expect(navigate).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/superadmin/personas'], {
+      queryParamsHandling: 'preserve',
+    });
+  });
+  it('muestra vista previa con tildes normalizadas y correo de solo lectura', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vm.form.patchValue({ first_name: 'Jesús Gabriel', last_name: 'Crúz' });
+    await fixture.whenStable();
+    const input = fixture.nativeElement.querySelector('input[type="email"]');
+    expect(input.value).toBe('jesus.cruz@saspel.com');
+    expect(input.readOnly).toBe(true);
+    expect(vm.form.get('email')).toBeNull();
   });
   it('exige confirmación adicional para crear Superadmin', () => {
     const vm = form().componentInstance.vm;
@@ -198,7 +216,7 @@ describe('Formulario de personas', () => {
     vm.submit();
     const req = http.expectOne('/api/superadmin/users/2/');
     expect(req.request.method).toBe('PATCH');
-    for (const key of ['password', 'password_confirmation', 'role', 'is_active'])
+    for (const key of ['email', 'password', 'password_confirmation', 'role', 'is_active'])
       expect(req.request.body).not.toHaveProperty(key);
     req.flush({ ...person, first_name: 'Editada' });
   });
@@ -214,7 +232,7 @@ describe('Listado y estado', () => {
     vi.restoreAllMocks();
   });
   it('presenta usuarios y solicita filtro de rol con la misma API', async () => {
-    routeData.next({ filterRole: 'PSICOLOGO', title: 'Psicólogos' });
+    query.next(convertToParamMap({ role: 'PSICOLOGO' }));
     const fixture = TestBed.createComponent(UserList);
     catalogs(http);
     const req = http.expectOne(
@@ -229,6 +247,22 @@ describe('Listado y estado', () => {
       (r) => r.params.get('page') === '2' && r.params.get('search') === 'Ana',
     );
     second.flush({ count: 1, page: 2, page_size: 20, results: [] });
+  });
+  it('cambia categoría sobre la misma tabla y reinicia la página conservando búsqueda', () => {
+    query.next(convertToParamMap({ role: 'PSICOLOGO', search: 'Ana', page: 3 }));
+    const vm = TestBed.createComponent(UserList).componentInstance.vm;
+    catalogs(http);
+    http
+      .expectOne((r) => r.url === '/api/superadmin/users/')
+      .flush({ count: 0, page: 3, page_size: 20, results: [] });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.selectCategory('ADMINISTRADORES');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ role: 'ADMINISTRADORES', search: 'Ana', page: 1 }),
+      }),
+    );
   });
   // Simulamos confirmación y respuesta HTTP para comprobar acción explícita y recarga.
   it('activa/desactiva mediante acción explícita y refresca el listado', () => {

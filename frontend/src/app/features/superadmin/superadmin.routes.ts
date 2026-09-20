@@ -1,10 +1,9 @@
 /**
- * Rutas hijas del panel: resumen, personas, fichas, clave y catálogos. Las listas por rol
- * comparten componente mediante data.filterRole; áreas/cargos mediante data.kind. Mantener
- * rutas literales antes de personas/:id y revisar los enlaces del layout al añadir páginas.
+ * Un listado de usuarios con filtros por query params y formularios/fichas en su modal.
+ * Las rutas antiguas por categoría redirigen al mismo listado.
  */
 import { inject } from '@angular/core';
-import { CanActivateChildFn, Router, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateChildFn, Router, Routes } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 /**
@@ -24,36 +23,38 @@ export const SUPERADMIN_ROUTES: Routes = [
     pathMatch: 'full',
     loadComponent: () => import('./dashboard/dashboard').then((m) => m.SuperadminDashboard),
   },
-  { path: 'personas', loadComponent: list },
   {
     path: 'personas/asignaciones-profesionales',
     loadComponent: () => import('./assignments/assignments').then((m) => m.ProfessionalAssignments),
-  },
-  {
-    path: 'personas/nuevo',
-    loadComponent: () => import('./users/user-form').then((m) => m.UserForm),
   },
   ...[
     ['nuevos-trabajadores', 'NUEVO_TRABAJADOR', 'Nuevos trabajadores'],
     ['trabajadores', 'TRABAJADOR', 'Trabajadores'],
     ['psicologos', 'PSICOLOGO', 'Psicólogos'],
-    ['administradores', 'ADMIN', 'Administradores'],
-  ].map(([path, filterRole, title]) => ({
+    ['administradores', 'ADMINISTRADORES', 'Administradores'],
+  ].map(([path, filterRole]) => ({
     path: `personas/${path}`,
-    data: { filterRole, title },
-    loadComponent: list,
+    pathMatch: 'full' as const,
+    redirectTo: ({ queryParams }: Pick<ActivatedRouteSnapshot, 'queryParams'>) =>
+      inject(Router).createUrlTree(['/dashboard/superadmin/personas'], {
+        queryParams: { ...queryParams, role: filterRole, page: 1 },
+      }),
   })),
   {
-    path: 'personas/:id/editar',
-    loadComponent: () => import('./users/user-form').then((m) => m.UserForm),
-  },
-  {
-    path: 'personas/:id/password',
-    loadComponent: () => import('./users/user-password').then((m) => m.UserPassword),
-  },
-  {
-    path: 'personas/:id',
-    loadComponent: () => import('./users/user-detail').then((m) => m.UserDetail),
+    path: 'personas',
+    loadComponent: list,
+    children: [
+      { path: 'nuevo', loadComponent: () => import('./users/user-form').then((m) => m.UserForm) },
+      {
+        path: ':id/editar',
+        loadComponent: () => import('./users/user-form').then((m) => m.UserForm),
+      },
+      {
+        path: ':id/password',
+        loadComponent: () => import('./users/user-password').then((m) => m.UserPassword),
+      },
+      { path: ':id', loadComponent: () => import('./users/user-detail').then((m) => m.UserDetail) },
+    ],
   },
   ...['areas', 'cargos'].map((kind) => ({
     path: `institucion/${kind}`,

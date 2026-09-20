@@ -40,7 +40,7 @@ class SuperadminApiTests(TestCase):
         """Devuelve un alta ficticia válida con sobrescrituras para provocar cada escenario; no
         crea datos.
         """
-        data = dict(email=' persona@example.com ', password=PASSWORD, password_confirmation=PASSWORD,
+        data = dict(password=PASSWORD, password_confirmation=PASSWORD,
                     first_name='Ana', last_name='Prueba', apellido_materno='López', codigo_empleado='SA-001',
                     role='NUEVO_TRABAJADOR', area_id=self.area.pk, cargo_id=self.cargo.pk)
         return data | changes
@@ -53,7 +53,7 @@ class SuperadminApiTests(TestCase):
         """Envía POST a una acción de persona con ID y datos opcionales; devuelve la respuesta."""
         return self.client.post(f'/api/superadmin/users/{user_id}/{action}/', data or {}, format='json')
 
-    def login(self, email='persona@example.com', password=PASSWORD):
+    def login(self, email='ana.prueba@saspel.com', password=PASSWORD):
         """Usa un cliente sin token administrativo para comprobar que las credenciales de la
         persona permiten entrar.
         """
@@ -66,8 +66,8 @@ class SuperadminApiTests(TestCase):
         paths = {'NUEVO_TRABAJADOR': 'nuevo-trabajador', 'PSICOLOGO': 'psicologo', 'ADMIN': 'admin', 'SUPERADMIN': 'superadmin'}
         for index, (role, path) in enumerate(paths.items()):
             with self.subTest(role=role):
-                email = f'person{index}@example.com'
-                response = self.create(role=role, email=email.upper(), codigo_empleado=f'EMP-{index}')
+                email = 'ana.prueba' + (str(index + 1) if index else '') + '@saspel.com'
+                response = self.create(role=role, codigo_empleado=f'EMP-{index}')
                 self.assertEqual(response.status_code, 201, response.data)
                 user = User.objects.get(pk=response.data['id'])
                 self.assertEqual(user.email, email)
@@ -134,16 +134,53 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.create(role='TRABAJADOR').status_code, 400)
         self.assertEqual(User.objects.count(), 1)
 
-    def test_duplicate_email_case_and_employee_code(self):
-        """Repite correo con distintas mayúsculas y código empleado; los intentos fallidos no
-        crean cuentas.
-        """
-        self.assertEqual(self.create().status_code, 201)
-        for changes in ({'email': 'persona@example.com', 'codigo_empleado': 'OTHER'},
-                        {'email': 'PERSONA@EXAMPLE.COM', 'codigo_empleado': 'OTHER'},
-                        {'email': 'other@example.com'}):
-            self.assertEqual(self.create(**changes).status_code, 400)
-        self.assertEqual(User.objects.count(), 2)
+    def test_generated_email_accents_and_special_characters(self):
+        response = self.create(first_name='  Jesús Gabriel  ', last_name='Crúz Lavadenz')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'jesus.cruz@saspel.com')
+        response = self.create(first_name="Ána-María", last_name="O'Ñéill", codigo_empleado='OTHER')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'anamaria.oneill@saspel.com')
+
+    def test_duplicate_emails_get_numbered_including_inactive_accounts(self):
+        first = self.create()
+        self.assertEqual(first.status_code, 201)
+        self.action(first.data['id'], 'deactivate')
+        for number in (2, 3):
+            response = self.create(codigo_empleado=f'OTHER-{number}')
+            self.assertEqual(response.status_code, 201, response.data)
+            self.assertEqual(response.data['email'], f'ana.prueba{number}@saspel.com')
+        self.assertEqual(self.create().status_code, 400)  # Código duplicado revierte el alta.
+        self.assertEqual(User.objects.count(), 4)
+
+    def test_collision_checks_email_and_username_case_insensitively(self):
+        User.objects.create_user(username='ANA.PRUEBA@SASPEL.COM', email='legacy@example.com')
+        User.objects.create_user(username='legacy', email='ANA.PRUEBA2@SASPEL.COM')
+        response = self.create()
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'ana.prueba3@saspel.com')
+
+    def test_manual_email_and_invalid_name_rejected(self):
+        for fields in ({'email': 'manual@example.com'}, {'username': 'manual'},
+                       {'first_name': '!!!'}, {'last_name': '   '}):
+            self.assertEqual(self.create(**fields).status_code, 400, fields)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_long_names_produce_valid_email(self):
+        response = self.create(first_name='a' * 150, last_name='b' * 150)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertLessEqual(len(response.data['email'].split('@')[0]), 64)
+
+    def test_existing_external_email_login_is_still_allowed(self):
+        self.assertEqual(self.login('root@example.com').status_code, 200)
+
+    def test_administrators_category_includes_admin_and_superadmin(self):
+        self.create(role='ADMIN')
+        self.create(role='PSICOLOGO', codigo_empleado='PSI')
+        response = self.client.get('/api/superadmin/users/', {'role': 'ADMINISTRADORES'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 2)
+        self.assertCountEqual([u['role'] for u in response.data['results']], ['ADMIN', 'SUPERADMIN'])
 
     def test_password_validators_and_confirmation(self):
         """Prueba claves débiles y confirmación distinta para impedir altas que no cumplen las
@@ -179,7 +216,7 @@ class SuperadminApiTests(TestCase):
         user.is_active = False
         user.groups.set([Group.objects.get(name='TRABAJADOR')])
         user.save()
-        for params in ({'role': 'TRABAJADOR'}, {'active': 'false'}, {'search': 'PERSONA@'},
+        for params in ({'role': 'TRABAJADOR'}, {'active': 'false'}, {'search': 'ANA.PRUEBA@'},
                        {'search': 'SA-001'}, {'area': self.area.pk}, {'cargo': self.cargo.pk}):
             response = self.client.get('/api/superadmin/users/', params)
             self.assertEqual(response.data['count'], 1, params)
@@ -188,20 +225,22 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.client.get('/api/superadmin/users/', {'page': 2}).data['results'], [])
         self.assertEqual(self.client.get('/api/superadmin/users/', {'page': 0}).status_code, 400)
 
-    def test_edit_person_and_email(self):
-        """Edita datos y correo; comprueba username sincronizado, login con nuevo correo y
-        rechazo de correo ocupado.
-        """
+    def test_edit_person_preserves_generated_email_and_password(self):
         user_id = self.create().data['id']
+        previous = User.objects.get(pk=user_id)
         response = self.client.patch(f'/api/superadmin/users/{user_id}/',
-                                    {'email': ' EDITADO@Example.com ', 'telefono': '+591 123', 'first_name': 'Editada'}, format='json')
+                                    {'telefono': '+591 123', 'first_name': 'Editada'}, format='json')
         self.assertEqual(response.status_code, 200, response.data)
         user = User.objects.get(pk=user_id)
-        self.assertEqual(user.username, 'editado@example.com')
-        self.assertEqual(user.email, user.username)
+        self.assertEqual(user.first_name, 'Editada')
+        self.assertEqual(user.email, previous.email)
+        self.assertEqual(user.username, previous.username)
+        self.assertEqual(user.password, previous.password)
         self.assertEqual(user.perfil_usuario.telefono, '+591 123')
         self.assertEqual(self.login(user.email).status_code, 200)
-        self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', {'email': self.root.email}, format='json').status_code, 400)
+        for field in ('email', 'username'):
+            self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/',
+                                              {field: 'manual@saspel.com'}, format='json').status_code, 400)
 
     def test_edit_rejects_sensitive_fields_and_inactive_references(self):
         """Envía privilegios y datos sensibles por PATCH y selecciona área inactiva; las
@@ -211,7 +250,7 @@ class SuperadminApiTests(TestCase):
         for data in ({'role': 'ADMIN'}, {'password': PASSWORD}, {'is_active': False}, {'tamizaje_resuelto': True}, {'is_superuser': True}):
             self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', data, format='json').status_code, 400)
         area = AreaInstitucional.objects.create(nombre='Inactiva', activo=False)
-        self.assertEqual(self.create(email='new@example.com', codigo_empleado='NEW', area_id=area.pk).status_code, 400)
+        self.assertEqual(self.create(codigo_empleado='NEW', area_id=area.pk).status_code, 400)
         self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', {'area_id': area.pk}, format='json').status_code, 400)
 
     def test_deactivate_blocks_login_activate_restores(self):
@@ -271,7 +310,7 @@ class SuperadminApiTests(TestCase):
         recientes.
         """
         for i in range(6):
-            self.create(email=f'recent{i}@example.com', codigo_empleado=f'R-{i}')
+            self.create(codigo_empleado=f'R-{i}')
         response = self.client.get('/api/superadmin/dashboard/summary/')
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['users_total'], User.objects.count())
@@ -279,7 +318,7 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(response.data['active_users'], 7)
         self.assertEqual(response.data['inactive_users'], 0)
         self.assertEqual(len(response.data['recent_users']), 5)
-        self.assertEqual(response.data['recent_users'][0]['email'], 'recent5@example.com')
+        self.assertEqual(response.data['recent_users'][0]['email'], 'ana.prueba6@saspel.com')
 
     def test_institution_crud_preserves_associated_profiles(self):
         """Crea, edita y cambia estados de catálogos; comprueba que se conserve la referencia del

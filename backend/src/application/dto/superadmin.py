@@ -12,7 +12,6 @@ class CreateUserCommand:
     """Datos para dar de alta cuenta, perfil y rol desde Superadmin. area_id/cargo_id son
     referencias opcionales; habilitado_asignaciones solo se conserva para PSICOLOGO.
     """
-    email: str
     password: str = field(repr=False)
     first_name: str
     last_name: str

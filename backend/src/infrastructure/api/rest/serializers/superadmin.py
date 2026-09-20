@@ -22,10 +22,9 @@ class StrictSerializer(serializers.Serializer):
 
 
 class UserEditSerializer(StrictSerializer):
-    """Datos personales editables: correo, nombres, código, contacto, fecha/sexo,
+    """Datos personales editables: nombres, código, contacto, fecha/sexo,
     area_id/cargo_id y habilitación. PATCH usa partial=True; no acepta rol, estado ni claves.
     """
-    email = serializers.EmailField(max_length=150)
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     apellido_materno = serializers.CharField(max_length=150, allow_blank=True)
@@ -61,7 +60,7 @@ class UserFilterSerializer(serializers.Serializer):
     demás filtros ausentes no restringen resultados.
     """
     search = serializers.CharField(required=False, allow_blank=True, max_length=200)
-    role = serializers.ChoiceField(choices=[role.value for role in FunctionalRole], required=False)
+    role = serializers.ChoiceField(choices=[role.value for role in FunctionalRole] + ['ADMINISTRADORES'], required=False)
     active = serializers.BooleanField(required=False)
     area = serializers.IntegerField(min_value=1, required=False)
     cargo = serializers.IntegerField(min_value=1, required=False)

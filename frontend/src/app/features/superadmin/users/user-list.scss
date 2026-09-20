@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+.sa-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.sa-categories button {
+  border: 1px solid #c8d9d3;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  background: white;
+  color: #215744;
+  cursor: pointer;
+}
+.sa-categories button[aria-pressed='true'] {
+  background: #215744;
+  color: white;
+  border-color: #215744;
+}
+.sa-user-dialog {
+  width: min(960px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  box-sizing: border-box;
+  padding: 1.5rem;
+  border: 1px solid #c8d9d3;
+  border-radius: 1rem;
+  background: #f5f8f6;
+  color: #203d34;
+  overscroll-behavior: contain;
+}
+.sa-user-dialog::backdrop {
+  background: rgb(13 35 28 / 55%);
+}
+.sa-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.sa-dialog-heading button {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .sa-user-dialog {
+    padding: 1rem;
+  }
+}

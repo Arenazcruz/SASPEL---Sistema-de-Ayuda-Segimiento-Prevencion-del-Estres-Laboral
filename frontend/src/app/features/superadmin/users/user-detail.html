@@ -16,11 +16,20 @@
       <h1>{{ user.nombre_completo || user.email }}</h1>
       <app-role-badge [role]="user.role" />
     </div>
-    <a class="text-link" routerLink="/dashboard/superadmin/personas">Volver a usuarios</a>
+    <a class="text-link" routerLink="/dashboard/superadmin/personas" queryParamsHandling="preserve"
+      >Volver a usuarios</a
+    >
   </div>
   <div class="sa-actions">
-    <a class="button button-small" [routerLink]="['editar']">Editar persona</a
-    ><a class="button button-outline button-small" [routerLink]="['password']"
+    <a
+      class="button button-small"
+      [routerLink]="['/dashboard/superadmin/personas', user.id, 'editar']"
+      queryParamsHandling="preserve"
+      >Editar usuario</a
+    ><a
+      class="button button-outline button-small"
+      [routerLink]="['/dashboard/superadmin/personas', user.id, 'password']"
+      queryParamsHandling="preserve"
       >Restablecer contraseña</a
     ><button
       class="button button-outline button-small"

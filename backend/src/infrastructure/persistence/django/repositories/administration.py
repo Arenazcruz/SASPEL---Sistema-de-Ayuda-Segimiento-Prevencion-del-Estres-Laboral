@@ -14,6 +14,7 @@ from django.db.models import Case, CharField, Count, Q, Value, When
 from src.application.dto.superadmin import DashboardSummary, InstitutionDTO, UserDTO, UserPage
 from src.application.services.auth_identity import ROLE_DASHBOARDS
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
+from src.domain.services.institutional_email import institutional_email
 from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
 
 User = get_user_model()
@@ -115,7 +116,9 @@ class DjangoAdministrationRepository:
                 Q(email__icontains=filters.search) | Q(first_name__icontains=filters.search)
                 | Q(last_name__icontains=filters.search) | Q(perfil_usuario__codigo_empleado__icontains=filters.search)
             )
-        if filters.role:
+        if filters.role == 'ADMINISTRADORES':
+            query = query.filter(functional_role__in=['ADMIN', 'SUPERADMIN'])
+        elif filters.role:
             query = query.filter(functional_role=filters.role)
         if filters.active is not None:
             query = query.filter(is_active=filters.active)
@@ -128,12 +131,14 @@ class DjangoAdministrationRepository:
         return UserPage(count, filters.page, size, [self.user_dto(u) for u in query.order_by('-date_joined', '-pk')[start:start + size]])
 
     @staticmethod
-    def check_email(email, user_id=None):
-        """Rechaza correo o username ya utilizado sin distinguir mayúsculas; user_id excluye la
-        propia cuenta en ediciones. No escribe; lanza AdministrationError para email.
-        """
-        if User.objects.filter(Q(email__iexact=email) | Q(username__iexact=email)).exclude(pk=user_id).exists():
-            raise AdministrationError('Ya existe una cuenta con este correo.', 'email')
+    def available_email(first_name, last_name):
+        """Reserva lógica bajo el bloqueo de atomic(); incluye cuentas inactivas y usernames."""
+        sequence = 1
+        email = institutional_email(first_name, last_name, sequence)
+        while User.objects.filter(Q(email__iexact=email) | Q(username__iexact=email)).exists():
+            sequence += 1
+            email = institutional_email(first_name, last_name, sequence)
+        return email
 
     @staticmethod
     def check_references(changes, profile=None):
@@ -159,14 +164,14 @@ class DjangoAdministrationRepository:
         user.set_password(password)
 
     def create_user(self, command):
-        """Comprueba correo y referencias, guarda User con hash, perfil sin tamizaje resuelto y
+        """Genera correo único y comprueba referencias, guarda User con hash, perfil sin tamizaje resuelto y
         un único grupo. Solo psicólogos conservan habilitado_asignaciones. Devuelve UserDTO;
         atomic() del caso garantiza que un fallo de perfil/grupo revierta también la cuenta.
         """
-        self.check_email(command.email)
+        email = self.available_email(command.first_name, command.last_name)
         data = asdict(command)
         self.check_references(data)
-        user = User(username=command.email, email=command.email,
+        user = User(username=email, email=email,
                     first_name=command.first_name, last_name=command.last_name,
                     is_superuser=command.role == 'SUPERADMIN', is_staff=command.role == 'SUPERADMIN')
         self.set_password(user, command.password)
@@ -183,23 +188,18 @@ class DjangoAdministrationRepository:
         return self.get_user(user.pk)
 
     def update_user(self, user_id, changes):
-        """Actualiza cuenta y perfil desde cambios parciales; email también cambia username.
+        """Actualiza cuenta y perfil desde cambios parciales, conservando email y username.
         Puede completar un perfil ausente si se proporciona código. Guarda solo campos de
         cuenta editados para no sobrescribir last_login concurrente; devuelve UserDTO y
         requiere atomic() del caso.
         """
         user = self.find_user(user_id)
-        if 'email' in changes:
-            self.check_email(changes['email'], user_id)
-            user.username = changes['email']
-        for name in ('email', 'first_name', 'last_name'):
+        for name in ('first_name', 'last_name'):
             if name in changes:
                 setattr(user, name, changes[name])
         user.full_clean()
         # Solo escribe los campos de cuenta editados: no pisa un last_login concurrente.
-        account_fields = set(changes) & {'email', 'first_name', 'last_name'}
-        if 'email' in account_fields:
-            account_fields.add('username')
+        account_fields = set(changes) & {'first_name', 'last_name'}
         if account_fields:
             user.save(update_fields=account_fields)
         profile_changes = {key: value for key, value in changes.items() if key not in ('email', 'first_name', 'last_name')}

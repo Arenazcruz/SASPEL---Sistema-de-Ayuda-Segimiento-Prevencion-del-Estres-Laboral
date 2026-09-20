@@ -1,6 +1,6 @@
 /**
  * Prepara alta o edición con SuperadminService, catálogos activos y datos de la persona cuando
- * hay ID. Gestiona validación, confirmación visual de alta SUPERADMIN y navegación al detalle;
+ * hay ID. Gestiona validación, confirmación visual de alta SUPERADMIN y retorno al listado;
  * el backend vuelve a validar las reglas.
  */
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
@@ -30,7 +30,6 @@ export class UserFormViewModel {
   readonly confirmSuperadmin = signal(false);
   readonly form = inject(FormBuilder).nonNullable.group(
     {
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       password: ['', [Validators.required, passwordStrength, Validators.maxLength(128)]],
       password_confirmation: ['', Validators.required],
       role: ['NUEVO_TRABAJADOR', Validators.required],
@@ -117,10 +116,26 @@ export class UserFormViewModel {
     const field = this.form.get(name);
     return !!field?.touched && field.invalid;
   }
+  emailPreview() {
+    if (this.id) return this.person()?.email || '';
+    const part = (value: string) =>
+      (value.trim().split(/\s+/)[0] || '')
+        .normalize('NFKD')
+        .replace(/[^\x00-\x7F]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    const first = part(this.form.controls.first_name.value);
+    const last = part(this.form.controls.last_name.value);
+    if (!first || !last) return '';
+    let nameSize = Math.min(first.length, 31);
+    const lastSize = Math.min(last.length, 63 - nameSize);
+    nameSize = Math.min(first.length, 63 - lastSize);
+    return `${first.slice(0, nameSize)}.${last.slice(0, lastSize)}@saspel.com`;
+  }
   /**
    * Valida preparación y formulario, exige confirmación visual al crear SUPERADMIN y construye
    * payload. En edición omite rol/contraseña; solo psicólogos envían habilitado_asignaciones.
-   * Al guardar vacía claves y navega al detalle con aviso; errores quedan en pantalla.
+   * Al guardar vacía claves y vuelve al listado conservando filtros; errores quedan en el modal.
    */
   submit() {
     if (this.saving() || !this.ready()) return;
@@ -138,7 +153,6 @@ export class UserFormViewModel {
     const { password, password_confirmation, role, habilitado_asignaciones, ...personal } = value;
     const data = {
       ...personal,
-      email: personal.email.trim().toLowerCase(),
       fecha_nacimiento: personal.fecha_nacimiento || null,
       ...(role === 'PSICOLOGO' ? { habilitado_asignaciones } : {}),
       ...(!this.id ? { password, password_confirmation, role } : {}),
@@ -150,11 +164,11 @@ export class UserFormViewModel {
         finalize(() => this.saving.set(false)),
       )
       .subscribe({
-        next: (person) => {
+        next: () => {
           this.form.controls.password.reset();
           this.form.controls.password_confirmation.reset();
-          void this.router.navigate(['/dashboard/superadmin/personas', person.id], {
-            queryParams: { saved: this.id ? 'updated' : 'created' },
+          void this.router.navigate(['/dashboard/superadmin/personas'], {
+            queryParamsHandling: 'preserve',
           });
         },
         error: (e) => this.error.set(apiError(e)),

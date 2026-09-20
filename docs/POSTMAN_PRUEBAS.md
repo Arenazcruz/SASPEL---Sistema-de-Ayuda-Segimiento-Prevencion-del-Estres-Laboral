@@ -226,7 +226,7 @@ Variables adicionales del entorno Postman:
 | --- | --- |
 | `base_url` | Origen del backend, por ejemplo `http://127.0.0.1:8000` (sin `/api`). |
 | `superadmin_access` | Access token obtenido con el login del Superadmin. |
-| `test_user_email` | Correo único de la persona de prueba. |
+| `test_user_email` | Correo generado por el backend y devuelto al crear la persona. |
 | `test_user_password` | Clave de prueba definida localmente; no guardar en documentación. |
 | `test_user_new_password` | Nueva clave para comprobar el restablecimiento. |
 | `test_user_id` | ID devuelto al registrar la persona. |
@@ -243,6 +243,7 @@ una letra y un número; también se aplican los validadores de Django.
 GET {{base_url}}/api/superadmin/dashboard/summary/
 GET {{base_url}}/api/superadmin/users/
 GET {{base_url}}/api/superadmin/users/?role=NUEVO_TRABAJADOR&active=true&page=1
+GET {{base_url}}/api/superadmin/users/?role=ADMINISTRADORES
 GET {{base_url}}/api/superadmin/users/?search={{test_employee_code}}&area={{area_id}}&cargo={{cargo_id}}
 ```
 
@@ -253,6 +254,8 @@ El resumen calcula `users_total`, `new_workers`, `workers`, `psychologists`,
 Listado: `search` busca correo, nombres, apellido paterno y código;
 `role`, `active=true|false`, `area`, `cargo` son opcionales. Omitir `active`
 incluye ambos estados. `page` empieza en 1; las páginas contienen hasta 20 filas.
+`role=ADMINISTRADORES` incluye ADMIN y SUPERADMIN; los valores de rol individuales
+siguen disponibles. Es un filtro, no un nuevo rol funcional.
 
 Estructura de paginación:
 
@@ -279,7 +282,6 @@ POST {{base_url}}/api/superadmin/users/
 
 ```json
 {
-  "email": "{{test_user_email}}",
   "password": "{{test_user_password}}",
   "password_confirmation": "{{test_user_password}}",
   "first_name": "Persona",
@@ -297,15 +299,22 @@ POST {{base_url}}/api/superadmin/users/
 ```
 
 Respuesta 201: la persona creada, sin contraseña ni hash. Copiar `id` a
-`test_user_id`. Opcionalmente, usar en **Tests / Post-response**:
+`test_user_id` y `email` a `test_user_email`. Opcionalmente, usar en **Tests / Post-response**:
 
 ```javascript
 pm.test('Persona registrada', () => pm.response.to.have.status(201));
 pm.environment.set('test_user_id', pm.response.json().id);
+pm.environment.set('test_user_email', pm.response.json().email);
 ```
 
-El correo se normaliza; correo y username quedan sincronizados. Se rechazan
-duplicados de correo sin distinguir mayúsculas y códigos de empleado repetidos.
+El backend genera `primer_nombre.primer_apellido@saspel.com`: minúsculas, sin
+tildes, caracteres especiales ni espacios. Por ejemplo, Jesús Gabriel Cruz
+Lavadenz produce `jesus.cruz@saspel.com`. Si email o username ya está ocupado
+(incluyendo cuentas inactivas y diferencias de mayúsculas), se asigna
+`jesus.cruz2@saspel.com`, luego `jesus.cruz3@saspel.com`, etc. Para nombres
+extensos, el local-part se limita a 64 caracteres, reservando espacio al sufijo.
+`username = email`. Enviar `email` o `username` manualmente devuelve 400.
+Los nombres que no permiten generar una parte válida y códigos de empleado repetidos se rechazan.
 Cuenta, perfil y grupo se crean en una sola transacción.
 
 Roles de creación: `NUEVO_TRABAJADOR`, `PSICOLOGO`, `ADMIN`, `SUPERADMIN`.
@@ -324,7 +333,6 @@ Ejemplo de PATCH:
 
 ```json
 {
-  "email": "{{test_user_email}}",
   "first_name": "Persona editada",
   "apellido_materno": "Temporal",
   "nombre_preferido": "Prueba",
@@ -340,7 +348,8 @@ También admite `last_name`, `codigo_empleado`, `fecha_nacimiento`, `sexo`
 deben estar activas. `habilitado_asignaciones` solo se edita para PSICOLOGO.
 Para completar una cuenta sin perfil hay que proporcionar `codigo_empleado`.
 
-PATCH rechaza `password`, `role`, `is_active`, `is_superuser`,
+El correo generado y username se conservan aunque se editen nombres o apellidos.
+PATCH rechaza `email`, `username`, `password`, `role`, `is_active`, `is_superuser`,
 `tamizaje_resuelto` y cualquier campo no previsto (400).
 
 ### Activar y desactivar
@@ -443,7 +452,13 @@ campo existente `activo`. No hay eliminación física ni nuevas tablas.
 14. El login del trabajador vuelve a funcionar y conserva su perfil.
 
 Comprobar también 403 con JWT de ADMIN/TRABAJADOR contra `/api/superadmin/users/`,
-correo duplicado en mayúsculas, contraseña inválida y auto-desactivación rechazada.
+generación con tildes, colisiones con sufijos 2/3, correo manual rechazado,
+contraseña inválida y auto-desactivación rechazada. El login sigue admitiendo
+cuentas existentes con otros dominios; no se restringe a `@saspel.com`.
+En Angular, Usuarios reúne Todos, Nuevos trabajadores, Trabajadores, Psicólogos
+y Administradores como filtros de la misma tabla. Nuevo usuario, Editar y Ver
+abren un modal; al cerrarlo se conservan los filtros. Comprobar creación sin
+correo editable, edición y Desactivar/Reactivar desde la tabla.
 Los registros reales se desactivan. La limpieza física solo corresponde a datos
 locales puramente temporales y sin historial; nunca se ofrece desde esta API.
 
