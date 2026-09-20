@@ -6,7 +6,6 @@ campos editables o las transiciones de rol; revisar serializers y formularios al
 reglas.
 """
 
-from dataclasses import replace
 from src.application.dto.superadmin import CreateUserCommand, ResetPasswordCommand, UpdateUserCommand, UserFilters
 from src.application.ports.output.administration import AdministrationRepository
 from src.application.ports.input.administration import (
@@ -18,7 +17,7 @@ from src.domain.value_objects.functional_role import FunctionalRole
 CREATION_ROLES = {role.value for role in FunctionalRole} - {'TRABAJADOR'}
 ADMINISTRATIVE_ROLES = {'PSICOLOGO', 'ADMIN', 'SUPERADMIN'}
 EDITABLE_FIELDS = {
-    'email', 'first_name', 'last_name', 'apellido_materno', 'codigo_empleado',
+    'first_name', 'last_name', 'apellido_materno', 'codigo_empleado',
     'nombre_preferido', 'fecha_nacimiento', 'sexo', 'telefono', 'area_id', 'cargo_id',
     'habilitado_asignaciones',
 }
@@ -61,7 +60,7 @@ class GetUserDetail(UseCase, UserDetail):
 
 
 class CreateUser(UseCase, UserRegistration):
-    """Registro desde Superadmin: valida rol y clave, normaliza correo y crea cuenta, perfil y
+    """Registro desde Superadmin: valida rol y clave y crea cuenta con correo institucional, perfil y
     grupo en una transacción. Requiere AdministrationRepository; no permite crear TRABAJADOR
     directamente.
     """
@@ -74,7 +73,6 @@ class CreateUser(UseCase, UserRegistration):
         if command.role not in CREATION_ROLES:
             raise AdministrationError('El rol TRABAJADOR se obtiene mediante la evaluación inicial.', 'role')
         validate_password(command.password)
-        command = replace(command, email=command.email.strip().lower())
         with self.repository.atomic():
             return self.repository.create_user(command)
 
@@ -83,14 +81,12 @@ class UpdateUser(UseCase, UserEdition):
     """Edita datos personales desde la ficha; rol, estado y contraseña tienen acciones separadas."""
     def execute(self, command: UpdateUserCommand):
         """Recibe ID y cambios parciales en UpdateUserCommand; devuelve la ficha actualizada.
-        Normaliza correo y solo permite habilitado_asignaciones a psicólogos. Rechaza campos
+        Conserva el correo y solo permite habilitado_asignaciones a psicólogos. Rechaza campos
         ajenos a EDITABLE_FIELDS y revierte la escritura si falla el repositorio.
         """
         if set(command.changes) - EDITABLE_FIELDS:
             raise AdministrationError('Utiliza las acciones específicas para cambiar rol, estado o contraseña.')
         changes = dict(command.changes)
-        if 'email' in changes:
-            changes['email'] = changes['email'].strip().lower()
         with self.repository.atomic():
             user = self.repository.get_user(command.user_id)
             if 'habilitado_asignaciones' in changes and user.role != 'PSICOLOGO':

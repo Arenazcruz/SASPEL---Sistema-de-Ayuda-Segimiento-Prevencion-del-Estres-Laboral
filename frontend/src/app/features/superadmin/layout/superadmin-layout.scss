@@ -33,6 +33,7 @@
   margin: 20px 10px;
 }
 nav a,
+.submenu button,
 .group {
   display: flex;
   justify-content: space-between;
@@ -53,6 +54,10 @@ nav a,
 }
 .submenu {
   padding-left: 10px;
+}
+.submenu button:disabled {
+  opacity: 0.65;
+  cursor: default;
 }
 nav a:hover,
 nav a.active {

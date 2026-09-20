@@ -7,7 +7,17 @@ import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, combineLatest, finalize, forkJoin, of, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  finalize,
+  forkJoin,
+  of,
+  Subject,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Institution, Person, ROLES, UserPage } from '../superadmin.models';
 import { apiError, SuperadminService } from '../superadmin.service';
@@ -27,8 +37,14 @@ export class UserListViewModel {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly notice = signal('');
-  readonly title = signal('Usuarios');
-  readonly fixedRole = signal('');
+  private readonly refresh = new Subject<void>();
+  readonly categories = [
+    ['', 'Todos'],
+    ['NUEVO_TRABAJADOR', 'Nuevos trabajadores'],
+    ['TRABAJADOR', 'Trabajadores'],
+    ['PSICOLOGO', 'Psicólogos'],
+    ['ADMINISTRADORES', 'Administradores'],
+  ];
   readonly filters = inject(FormBuilder).nonNullable.group({
     search: '',
     role: '',
@@ -52,20 +68,18 @@ export class UserListViewModel {
         error: (e) => this.error.set(apiError(e)),
       });
     // switchMap cancela búsquedas anteriores para que una respuesta tardía no cambie el filtro visible.
-    combineLatest([this.route.data, this.route.queryParamMap])
+    combineLatest([this.route.queryParamMap, this.refresh.pipe(startWith(undefined))])
       .pipe(
-        tap(([data, params]) => {
-          this.title.set(data['title'] || 'Usuarios');
-          this.fixedRole.set(data['filterRole'] || '');
+        tap(([params]) => {
           this.filters.patchValue({
             search: params.get('search') || '',
-            role: this.fixedRole() || params.get('role') || '',
+            role: params.get('role') || '',
             active: params.get('active') || '',
             area: params.get('area') || '',
             cargo: params.get('cargo') || '',
           });
         }),
-        switchMap(([, params]) => {
+        switchMap(([params]) => {
           this.loading.set(true);
           this.error.set('');
           return this.api
@@ -96,22 +110,16 @@ export class UserListViewModel {
       queryParams: { ...this.filters.getRawValue(), page },
     });
   }
+  selectCategory(role: string) {
+    this.filters.controls.role.setValue(role);
+    this.search();
+  }
   /**
    * Recarga filtros y página actuales tras una acción; actualiza resultados, carga o error sin
    * navegar.
    */
   reload() {
-    this.loading.set(true);
-    this.api
-      .users({ ...this.filters.getRawValue(), page: this.page()?.page || 1 })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe({
-        next: (page) => this.page.set(page),
-        error: (e) => this.error.set(apiError(e)),
-      });
+    this.refresh.next();
   }
   /**
    * Recibe persona, pide confirmación y envía activación/desactivación. Evita acciones

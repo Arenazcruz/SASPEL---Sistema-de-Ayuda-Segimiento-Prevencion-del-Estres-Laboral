@@ -108,7 +108,10 @@ export class UserPasswordViewModel {
       <div class="sa-actions">
         <button class="button" type="submit" [disabled]="vm.busy() || !vm.person()">
           {{ vm.busy() ? 'Guardando…' : 'Restablecer contraseña' }}</button
-        ><a class="text-link" [routerLink]="['/dashboard/superadmin/personas', vm.id]"
+        ><a
+          class="text-link"
+          [routerLink]="vm.busy() ? null : ['/dashboard/superadmin/personas', vm.id]"
+          queryParamsHandling="preserve"
           >Volver al detalle</a
         >
       </div>

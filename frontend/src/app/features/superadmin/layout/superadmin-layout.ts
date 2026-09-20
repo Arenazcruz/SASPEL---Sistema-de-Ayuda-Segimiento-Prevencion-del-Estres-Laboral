@@ -9,13 +9,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Brand } from '../../../shared/brand/brand';
 
 // El menú publica únicamente las funciones disponibles en SA-01.
-export const PERSON_LINKS = [
-  ['Usuarios', 'personas'],
-  ['Nuevos trabajadores', 'personas/nuevos-trabajadores'],
-  ['Trabajadores', 'personas/trabajadores'],
-  ['Psicólogos', 'personas/psicologos'],
-  ['Administradores', 'personas/administradores'],
-];
+export const PERSON_LINKS = [['Usuarios', 'personas']];
 
 @Component({
   selector: 'app-superadmin-layout',

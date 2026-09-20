@@ -66,7 +66,7 @@ export class SuperadminDashboardViewModel {
         <h1>Administración de SASPEL</h1>
         <p>Gestiona las personas y la estructura de la institución.</p>
       </div>
-      <a class="button" routerLink="personas/nuevo">Registrar persona</a>
+      <a class="button" routerLink="personas/nuevo">Nuevo usuario</a>
     </div>
     @if (vm.error()) {
       <div class="sa-error" role="alert">
