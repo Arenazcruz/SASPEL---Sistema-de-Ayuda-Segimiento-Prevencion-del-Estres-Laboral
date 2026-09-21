@@ -11,6 +11,14 @@ import { finalize, forkJoin } from 'rxjs';
 import { CREATION_ROLES, Institution, Person } from '../superadmin.models';
 import { apiError, SuperadminService } from '../superadmin.service';
 import { passwordsMatch, passwordStrength } from './password-validation';
+import {
+  birthDate,
+  birthDateBounds,
+  employeeCode,
+  normalizeName,
+  personName,
+  phoneNumber,
+} from './user-validation';
 
 @Injectable()
 export class UserFormViewModel {
@@ -33,14 +41,14 @@ export class UserFormViewModel {
       password: ['', [Validators.required, passwordStrength, Validators.maxLength(128)]],
       password_confirmation: ['', Validators.required],
       role: ['NUEVO_TRABAJADOR', Validators.required],
-      codigo_empleado: ['', [Validators.required, Validators.maxLength(50)]],
-      first_name: ['', [Validators.required, Validators.maxLength(150)]],
-      last_name: ['', [Validators.required, Validators.maxLength(150)]],
-      apellido_materno: ['', Validators.maxLength(150)],
-      nombre_preferido: ['', Validators.maxLength(150)],
-      fecha_nacimiento: '',
+      codigo_empleado: ['', [Validators.required, Validators.maxLength(50), employeeCode]],
+      first_name: ['', [Validators.required, Validators.maxLength(150), personName]],
+      last_name: ['', [Validators.required, Validators.maxLength(150), personName]],
+      apellido_materno: ['', [Validators.maxLength(150), personName]],
+      nombre_preferido: ['', [Validators.maxLength(150), personName]],
+      fecha_nacimiento: ['', [Validators.required, birthDate]],
       sexo: '',
-      telefono: ['', Validators.maxLength(30)],
+      telefono: ['', [Validators.maxLength(15), phoneNumber]],
       area_id: [null as number | null],
       cargo_id: [null as number | null],
       habilitado_asignaciones: true,
@@ -54,6 +62,8 @@ export class UserFormViewModel {
    */
   constructor() {
     if (this.id) {
+      this.form.controls.fecha_nacimiento.removeValidators(Validators.required);
+      this.form.controls.fecha_nacimiento.updateValueAndValidity();
       this.form.controls.password.clearValidators();
       this.form.controls.password_confirmation.clearValidators();
       this.form.controls.password.updateValueAndValidity();
@@ -89,6 +99,9 @@ export class UserFormViewModel {
               .subscribe({
                 next: (person) => {
                   this.person.set(person);
+                  if (person.fecha_nacimiento) {
+                    this.form.controls.fecha_nacimiento.addValidators(Validators.required);
+                  }
                   this.form.patchValue({
                     ...person,
                     role: person.role || '',
@@ -116,6 +129,23 @@ export class UserFormViewModel {
     const field = this.form.get(name);
     return !!field?.touched && field.invalid;
   }
+  birthDateLimits = birthDateBounds;
+  fieldError(name: string): string {
+    const errors = this.form.get(name)?.errors;
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Este campo es obligatorio.';
+    if (errors['maxlength']) return `Máximo ${errors['maxlength'].requiredLength} caracteres.`;
+    if (errors['personName']) return 'Usa solo letras y espacios; se permiten tildes y ñ.';
+    if (errors['employeeCode'])
+      return 'Usa letras y números, con guiones entre grupos; sin espacios.';
+    if (errors['phoneNumber'])
+      return 'El teléfono debe contener entre 8 y 15 dígitos, sin letras ni símbolos.';
+    if (errors['birthDate']) return 'Ingresa una fecha de nacimiento válida.';
+    if (errors['ageRange'])
+      return 'La edad debe ser mayor de 18 y menor de 78 años (19 a 77 años cumplidos).';
+    return 'Revisa el valor de este campo.';
+  }
   emailPreview() {
     if (this.id) return this.person()?.email || '';
     const part = (value: string) =>
@@ -139,10 +169,19 @@ export class UserFormViewModel {
    */
   submit() {
     if (this.saving() || !this.ready()) return;
+    const raw = this.form.getRawValue();
+    this.form.patchValue({
+      first_name: normalizeName(raw.first_name),
+      last_name: normalizeName(raw.last_name),
+      apellido_materno: normalizeName(raw.apellido_materno),
+      nombre_preferido: normalizeName(raw.nombre_preferido),
+      codigo_empleado: raw.codigo_empleado.trim(),
+      telefono: raw.telefono.trim(),
+    });
     this.form.markAllAsTouched();
     this.error.set('');
     if (this.form.invalid) {
-      this.error.set('Revisa los campos obligatorios y las contraseñas.');
+      this.error.set('Revisa los campos indicados antes de guardar.');
       return;
     }
     const value = this.form.getRawValue();
@@ -150,10 +189,17 @@ export class UserFormViewModel {
       this.error.set('Confirma la administración global antes de crear otro Superadmin.');
       return;
     }
-    const { password, password_confirmation, role, habilitado_asignaciones, ...personal } = value;
+    const {
+      password,
+      password_confirmation,
+      role,
+      habilitado_asignaciones,
+      fecha_nacimiento,
+      ...personal
+    } = value;
     const data = {
       ...personal,
-      fecha_nacimiento: personal.fecha_nacimiento || null,
+      ...(fecha_nacimiento ? { fecha_nacimiento } : {}),
       ...(role === 'PSICOLOGO' ? { habilitado_asignaciones } : {}),
       ...(!this.id ? { password, password_confirmation, role } : {}),
     };
@@ -171,7 +217,20 @@ export class UserFormViewModel {
             queryParamsHandling: 'preserve',
           });
         },
-        error: (e) => this.error.set(apiError(e)),
+        error: (e) => {
+          let fields = false;
+          if (e.status === 400 && e.error && typeof e.error === 'object') {
+            for (const [name, messages] of Object.entries(e.error)) {
+              const control = this.form.get(name);
+              if (!control) continue;
+              const message = Array.isArray(messages) ? messages.join(' ') : String(messages);
+              control.setErrors({ ...control.errors, server: message });
+              control.markAsTouched();
+              fields = true;
+            }
+          }
+          this.error.set(fields ? 'Revisa los campos indicados antes de guardar.' : apiError(e));
+        },
       });
   }
 }

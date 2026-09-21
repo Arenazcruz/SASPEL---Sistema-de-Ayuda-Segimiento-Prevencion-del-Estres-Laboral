@@ -151,7 +151,7 @@ describe('Formulario de personas', () => {
     vm.form.patchValue({
       ...person,
       role: 'NUEVO_TRABAJADOR',
-      fecha_nacimiento: '',
+      fecha_nacimiento: '1990-05-15',
       password: 'Clave-segura-528!',
       password_confirmation: 'Clave-segura-528!',
     });
@@ -208,6 +208,67 @@ describe('Formulario de personas', () => {
     http.expectNone('/api/superadmin/users/');
     expect(vm.error()).toContain('Confirma');
   });
+  it('rechaza datos personales inválidos antes de crear y muestra errores por campo', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vm.form.patchValue({
+      first_name: 'Ana123',
+      last_name: 'Pérez!',
+      codigo_empleado: 'AB 01',
+      telefono: 'telefono',
+      fecha_nacimiento: '2099-01-01',
+    });
+    vm.submit();
+    await fixture.whenStable();
+    http.expectNone('/api/superadmin/users/');
+    expect(fixture.nativeElement.textContent).toContain('Usa solo letras y espacios');
+    expect(fixture.nativeElement.textContent).toContain('entre 8 y 15 dígitos');
+    expect(fixture.nativeElement.textContent).toContain('19 a 77 años cumplidos');
+    expect(
+      fixture.nativeElement
+        .querySelector('[formcontrolname="first_name"]')
+        .getAttribute('aria-invalid'),
+    ).toBe('true');
+  });
+  it('exige fecha al crear y normaliza espacios conservando tildes y ceros del teléfono', () => {
+    const vm = form().componentInstance.vm;
+    fill(vm);
+    vm.form.controls.fecha_nacimiento.setValue('');
+    vm.submit();
+    http.expectNone('/api/superadmin/users/');
+    expect(vm.form.controls.fecha_nacimiento.hasError('required')).toBe(true);
+    vm.form.patchValue({
+      fecha_nacimiento: '1990-05-15',
+      first_name: '  Jesús   Gabriel ',
+      telefono: '0012345678',
+    });
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.submit();
+    const request = http.expectOne('/api/superadmin/users/');
+    expect(request.request.body.first_name).toBe('Jesús Gabriel');
+    expect(request.request.body.telefono).toBe('0012345678');
+    request.flush(person);
+  });
+  it('muestra errores del backend junto al campo y permite corregirlos', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    await fixture.whenStable();
+    vm.submit();
+    http
+      .expectOne('/api/superadmin/users/')
+      .flush(
+        { codigo_empleado: ['Este código ya existe.'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('#employee-error').textContent).toContain(
+      'Este código ya existe.',
+    );
+    vm.form.controls.codigo_empleado.setValue('OTRO-123');
+    expect(vm.form.controls.codigo_empleado.valid).toBe(true);
+  });
   // La edición personal usa PATCH; clave, rol y estado deben conservar sus acciones dedicadas.
   it('edita sin enviar contraseña, rol ni estado', () => {
     const vm = form(2).componentInstance.vm;
@@ -218,7 +279,16 @@ describe('Formulario de personas', () => {
     expect(req.request.method).toBe('PATCH');
     for (const key of ['email', 'password', 'password_confirmation', 'role', 'is_active'])
       expect(req.request.body).not.toHaveProperty(key);
+    expect(req.request.body).not.toHaveProperty('fecha_nacimiento');
     req.flush({ ...person, first_name: 'Editada' });
+  });
+  it('aplica las mismas validaciones durante la edición', () => {
+    const vm = form(2).componentInstance.vm;
+    vm.form.patchValue({ telefono: '123abc45', fecha_nacimiento: '2099-01-01' });
+    vm.submit();
+    http.expectNone('/api/superadmin/users/2/');
+    expect(vm.form.controls.telefono.invalid).toBe(true);
+    expect(vm.form.controls.fecha_nacimiento.invalid).toBe(true);
   });
 });
 

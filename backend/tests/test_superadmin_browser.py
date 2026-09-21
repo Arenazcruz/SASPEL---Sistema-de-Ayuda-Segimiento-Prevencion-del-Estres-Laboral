@@ -38,6 +38,6 @@ class UnifiedUsersBrowserTests(LiveServerTestCase):
         created = get_user_model().objects.get(email='jesus.cruz@saspel.com')
         self.assertTrue(created.is_active)
         self.assertEqual(created.username, created.email)
-        self.assertEqual(created.perfil_usuario.telefono, '+591 70000000')
+        self.assertEqual(created.perfil_usuario.telefono, '59170000000')
         self.assertTrue(created.check_password(password))
         self.assertTrue(created.groups.filter(name='NUEVO_TRABAJADOR').exists())
