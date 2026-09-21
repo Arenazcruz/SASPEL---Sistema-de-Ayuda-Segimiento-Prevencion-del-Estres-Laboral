@@ -289,7 +289,7 @@ POST {{base_url}}/api/superadmin/users/
   "apellido_materno": "Temporal",
   "codigo_empleado": "{{test_employee_code}}",
   "nombre_preferido": "",
-  "fecha_nacimiento": null,
+  "fecha_nacimiento": "1990-05-15",
   "sexo": "",
   "telefono": "",
   "area_id": {{area_id}},
@@ -317,6 +317,15 @@ extensos, el local-part se limita a 64 caracteres, reservando espacio al sufijo.
 Los nombres que no permiten generar una parte válida y códigos de empleado repetidos se rechazan.
 Cuenta, perfil y grupo se crean en una sola transacción.
 
+Nombres y apellidos admiten solo letras (incluidas tildes y ñ) y espacios;
+se normalizan los espacios repetidos. `first_name` y `last_name` son obligatorios;
+`apellido_materno` y `nombre_preferido` pueden estar vacíos. `codigo_empleado`
+admite letras y números, con guiones entre grupos (por ejemplo, `EMP-123`), sin espacios.
+`telefono` puede estar vacío; si se proporciona, debe contener entre 8 y 15 dígitos,
+sin prefijo `+`, espacios ni otros símbolos. `fecha_nacimiento` es obligatoria al crear
+y debe corresponder a una edad mayor de 18 y menor de 78 años (19 a 77 años cumplidos),
+calculada con la fecha de La Paz. Los datos inválidos devuelven 400 con errores por campo.
+
 Roles de creación: `NUEVO_TRABAJADOR`, `PSICOLOGO`, `ADMIN`, `SUPERADMIN`.
 `TRABAJADOR` devuelve 400. Para PSICOLOGO puede agregarse
 `"habilitado_asignaciones": true` (valor predeterminado). Solo SUPERADMIN
@@ -336,7 +345,7 @@ Ejemplo de PATCH:
   "first_name": "Persona editada",
   "apellido_materno": "Temporal",
   "nombre_preferido": "Prueba",
-  "telefono": "+591 70000000",
+  "telefono": "59170000000",
   "area_id": {{area_id}},
   "cargo_id": {{cargo_id}}
 }
@@ -347,6 +356,9 @@ También admite `last_name`, `codigo_empleado`, `fecha_nacimiento`, `sexo`
 `null`. Se conservan vínculos históricos inactivos, pero las nuevas selecciones
 deben estar activas. `habilitado_asignaciones` solo se edita para PSICOLOGO.
 Para completar una cuenta sin perfil hay que proporcionar `codigo_empleado`.
+La edición aplica las mismas validaciones a los campos enviados. Puede omitirse
+`fecha_nacimiento` para conservar el dato histórico, incluso si está vacío;
+no se acepta `null` ni borrar una fecha existente.
 
 El correo generado y username se conservan aunque se editen nombres o apellidos.
 PATCH rechaza `email`, `username`, `password`, `role`, `is_active`, `is_superuser`,

@@ -3,6 +3,7 @@ permisos, estados, roles, claves y catálogos. Usa hash rápido solo en pruebas;
 escenarios de rollback y de acceso con token anterior al cambiar el módulo.
 """
 
+from datetime import date
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -42,7 +43,7 @@ class SuperadminApiTests(TestCase):
         """
         data = dict(password=PASSWORD, password_confirmation=PASSWORD,
                     first_name='Ana', last_name='Prueba', apellido_materno='López', codigo_empleado='SA-001',
-                    role='NUEVO_TRABAJADOR', area_id=self.area.pk, cargo_id=self.cargo.pk)
+                    role='NUEVO_TRABAJADOR', fecha_nacimiento='1990-05-15', area_id=self.area.pk, cargo_id=self.cargo.pk)
         return data | changes
 
     def create(self, **changes):
@@ -134,11 +135,11 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.create(role='TRABAJADOR').status_code, 400)
         self.assertEqual(User.objects.count(), 1)
 
-    def test_generated_email_accents_and_special_characters(self):
+    def test_generated_email_accents_and_normalized_names(self):
         response = self.create(first_name='  Jesús Gabriel  ', last_name='Crúz Lavadenz')
         self.assertEqual(response.status_code, 201, response.data)
         self.assertEqual(response.data['email'], 'jesus.cruz@saspel.com')
-        response = self.create(first_name="Ána-María", last_name="O'Ñéill", codigo_empleado='OTHER')
+        response = self.create(first_name='ÁnaMaría', last_name='OÑéill', codigo_empleado='OTHER')
         self.assertEqual(response.status_code, 201, response.data)
         self.assertEqual(response.data['email'], 'anamaria.oneill@saspel.com')
 
@@ -229,14 +230,14 @@ class SuperadminApiTests(TestCase):
         user_id = self.create().data['id']
         previous = User.objects.get(pk=user_id)
         response = self.client.patch(f'/api/superadmin/users/{user_id}/',
-                                    {'telefono': '+591 123', 'first_name': 'Editada'}, format='json')
+                                    {'telefono': '59170000123', 'first_name': 'Editada'}, format='json')
         self.assertEqual(response.status_code, 200, response.data)
         user = User.objects.get(pk=user_id)
         self.assertEqual(user.first_name, 'Editada')
         self.assertEqual(user.email, previous.email)
         self.assertEqual(user.username, previous.username)
         self.assertEqual(user.password, previous.password)
-        self.assertEqual(user.perfil_usuario.telefono, '+591 123')
+        self.assertEqual(user.perfil_usuario.telefono, '59170000123')
         self.assertEqual(self.login(user.email).status_code, 200)
         for field in ('email', 'username'):
             self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/',
@@ -340,3 +341,85 @@ class SuperadminApiTests(TestCase):
         """Consulta IDs ausentes de persona, área y cargo para proteger el contrato HTTP 404."""
         for url in ('users/999999/', 'areas/999999/', 'cargos/999999/'):
             self.assertEqual(self.client.get('/api/superadmin/' + url).status_code, 404)
+
+    def test_personal_data_rejects_invalid_types_with_field_errors(self):
+        response = self.create(first_name='Ana123', last_name='Pérez!', apellido_materno='123',
+                               nombre_preferido='<Ana>', codigo_empleado='EMP 01', telefono='abcdefghi')
+        self.assertEqual(response.status_code, 400)
+        for field in ('first_name', 'last_name', 'apellido_materno', 'nombre_preferido', 'codigo_empleado', 'telefono'):
+            self.assertIn(field, response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_names_accents_spaces_and_alphanumeric_code_are_accepted(self):
+        response = self.create(first_name='  Jesu\u0301s   Gabriel  ', last_name='Muñoz',
+                               apellido_materno='', nombre_preferido='', codigo_empleado='AB12-34',
+                               telefono='0012345678')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['first_name'], 'Jesús Gabriel')
+        self.assertEqual(response.data['telefono'], '0012345678')
+
+    def test_names_and_codes_reject_symbols_and_embedded_whitespace(self):
+        for values in ({'first_name': 'Ana\nMaría'}, {'last_name': "O'Neill"},
+                       {'first_name': 'Ana-María'}, {'codigo_empleado': '-AB12'},
+                       {'codigo_empleado': 'AB--12'}, {'codigo_empleado': 'AB_12'},
+                       {'codigo_empleado': '   '}):
+            with self.subTest(values=values):
+                response = self.create(**values)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(values)), response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_phone_requires_eight_to_fifteen_ascii_digits(self):
+        for phone in ('1234567', '1' * 16, '+59170000000', '7000 0000', '7000000x', '１２３４５６７８'):
+            with self.subTest(phone=phone):
+                response = self.create(telefono=phone)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('telefono', response.data)
+        for index, phone in enumerate(('', '12345678', '1' * 15)):
+            self.assertEqual(self.create(telefono=phone, codigo_empleado=f'PHONE-{index}').status_code, 201)
+
+    @patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2026, 9, 21))
+    def test_age_boundaries_and_invalid_birth_dates(self, _today):
+        for birth in ('2008-09-21', '2007-09-22', '1948-09-21', '2027-01-01', '2000-02-30', None):
+            with self.subTest(birth=birth):
+                response = self.create(fecha_nacimiento=birth)
+                self.assertEqual(response.status_code, 400, response.data)
+                self.assertIn('fecha_nacimiento', response.data)
+        for index, birth in enumerate(('2007-09-21', '1948-09-22', '1949-09-21')):
+            response = self.create(fecha_nacimiento=birth, codigo_empleado=f'AGE-{index}')
+            self.assertEqual(response.status_code, 201, response.data)
+
+    def test_birth_date_required_when_creating(self):
+        data = self.payload()
+        data.pop('fecha_nacimiento')
+        response = self.client.post('/api/superadmin/users/', data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('fecha_nacimiento', response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_birth_date_handles_leap_year_birthday(self):
+        with patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2027, 2, 28)):
+            self.assertEqual(self.create(fecha_nacimiento='2008-02-29').status_code, 400)
+        with patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2027, 3, 1)):
+            self.assertEqual(self.create(fecha_nacimiento='2008-02-29').status_code, 201)
+
+    def test_edit_validates_supplied_fields_and_preserves_existing_data_on_failure(self):
+        created = self.create().data
+        url = f'/api/superadmin/users/{created["id"]}/'
+        for values in ({'first_name': '123'}, {'telefono': 'texto'}, {'fecha_nacimiento': '2099-01-01'},
+                       {'fecha_nacimiento': None}, {'codigo_empleado': 'AB_12'}):
+            with self.subTest(values=values):
+                response = self.client.patch(url, values, format='json')
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(values)), response.data)
+        unchanged = self.client.get(url).data
+        for field in ('first_name', 'telefono', 'fecha_nacimiento', 'codigo_empleado', 'email'):
+            self.assertEqual(unchanged[field], created[field])
+        self.assertEqual(self.client.patch(url, {'telefono': '70000000'}, format='json').status_code, 200)
+
+    def test_legacy_account_without_birth_date_can_edit_other_fields(self):
+        created = self.create().data
+        PerfilUsuario.objects.filter(usuario_id=created['id']).update(fecha_nacimiento=None)
+        response = self.client.patch(f'/api/superadmin/users/{created["id"]}/', {'telefono': '70000000'}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.data['fecha_nacimiento'])

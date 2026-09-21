@@ -17,7 +17,7 @@
   </div>
 }
 @if (vm.ready()) {
-  <form [formGroup]="vm.form" (ngSubmit)="vm.submit()" class="sa-form">
+  <form [formGroup]="vm.form" (ngSubmit)="vm.submit()" class="sa-form" novalidate>
     <section class="sa-panel">
       <h2>Cuenta</h2>
       <div class="sa-form-grid">
@@ -103,26 +103,88 @@
       <h2>Información personal</h2>
       <div class="sa-form-grid">
         <label
-          >Código empleado *<input formControlName="codigo_empleado" maxlength="50" />
+          >Código empleado *<input
+            formControlName="codigo_empleado"
+            maxlength="50"
+            [attr.aria-invalid]="vm.invalid('codigo_empleado')"
+            aria-describedby="employee-error"
+          />
+          <small class="sa-help">Letras y números; puedes separar grupos con guiones.</small>
           @if (vm.invalid('codigo_empleado')) {
-            <small class="sa-field-error">El código es obligatorio.</small>
+            <small id="employee-error" class="sa-field-error">{{
+              vm.fieldError('codigo_empleado')
+            }}</small>
           }
         </label>
         <label
-          >Nombres *<input formControlName="first_name" maxlength="150" />
+          >Nombres *<input
+            formControlName="first_name"
+            maxlength="150"
+            [attr.aria-invalid]="vm.invalid('first_name')"
+            aria-describedby="first-name-error"
+          />
           @if (vm.invalid('first_name')) {
-            <small class="sa-field-error">Los nombres son obligatorios.</small>
+            <small id="first-name-error" class="sa-field-error">{{
+              vm.fieldError('first_name')
+            }}</small>
           }
         </label>
         <label
-          >Apellido paterno *<input formControlName="last_name" maxlength="150" />
+          >Apellido paterno *<input
+            formControlName="last_name"
+            maxlength="150"
+            [attr.aria-invalid]="vm.invalid('last_name')"
+            aria-describedby="last-name-error"
+          />
           @if (vm.invalid('last_name')) {
-            <small class="sa-field-error">El apellido paterno es obligatorio.</small>
+            <small id="last-name-error" class="sa-field-error">{{
+              vm.fieldError('last_name')
+            }}</small>
           }
         </label>
-        <label>Apellido materno<input formControlName="apellido_materno" maxlength="150" /></label>
-        <label>Nombre preferido<input formControlName="nombre_preferido" maxlength="150" /></label>
-        <label>Fecha de nacimiento<input type="date" formControlName="fecha_nacimiento" /></label>
+        <label
+          >Apellido materno<input
+            formControlName="apellido_materno"
+            maxlength="150"
+            [attr.aria-invalid]="vm.invalid('apellido_materno')"
+            aria-describedby="maternal-name-error"
+          />
+          @if (vm.invalid('apellido_materno')) {
+            <small id="maternal-name-error" class="sa-field-error">{{
+              vm.fieldError('apellido_materno')
+            }}</small>
+          }
+        </label>
+        <label
+          >Nombre preferido<input
+            formControlName="nombre_preferido"
+            maxlength="150"
+            [attr.aria-invalid]="vm.invalid('nombre_preferido')"
+            aria-describedby="preferred-name-error"
+          />
+          @if (vm.invalid('nombre_preferido')) {
+            <small id="preferred-name-error" class="sa-field-error">{{
+              vm.fieldError('nombre_preferido')
+            }}</small>
+          }
+        </label>
+        <label
+          >Fecha de nacimiento {{ !vm.id || vm.person()?.fecha_nacimiento ? '*' : '' }}
+          <input
+            type="date"
+            formControlName="fecha_nacimiento"
+            [min]="vm.birthDateLimits().min"
+            [max]="vm.birthDateLimits().max"
+            [attr.aria-invalid]="vm.invalid('fecha_nacimiento')"
+            aria-describedby="birth-help birth-error"
+          />
+          <small id="birth-help" class="sa-help">De 19 a 77 años cumplidos.</small>
+          @if (vm.invalid('fecha_nacimiento')) {
+            <small id="birth-error" class="sa-field-error">{{
+              vm.fieldError('fecha_nacimiento')
+            }}</small>
+          }
+        </label>
         <label
           >Sexo<select formControlName="sexo">
             <option value="">Sin especificar</option>
@@ -131,7 +193,22 @@
             <option value="O">Otro</option>
           </select></label
         >
-        <label>Teléfono<input type="tel" formControlName="telefono" maxlength="30" /></label>
+        <label
+          >Teléfono<input
+            type="tel"
+            inputmode="numeric"
+            formControlName="telefono"
+            maxlength="15"
+            [attr.aria-invalid]="vm.invalid('telefono')"
+            aria-describedby="phone-help phone-error"
+          />
+          <small id="phone-help" class="sa-help"
+            >De 8 a 15 dígitos, sin espacios ni símbolos.</small
+          >
+          @if (vm.invalid('telefono')) {
+            <small id="phone-error" class="sa-field-error">{{ vm.fieldError('telefono') }}</small>
+          }
+        </label>
       </div>
     </section>
     <section class="sa-panel">
