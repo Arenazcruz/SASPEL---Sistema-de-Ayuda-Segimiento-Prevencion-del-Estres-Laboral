@@ -11,16 +11,25 @@ from src.application.dto.auth import AuthIdentity
 from src.application.services.auth_identity import InactiveAccount, InvalidCredentials
 
 
+def is_institutional_identifier(value: str) -> bool:
+    """Exige el dominio completo saspel.com; no admite subdominios ni sufijos añadidos."""
+    local, separator, domain = value.strip().lower().partition('@')
+    return bool(local) and separator == '@' and domain == 'saspel.com'
+
+
 class DjangoAuthProvider:
     """Implementa AuthProvider sobre User y sus grupos; devuelve DTO sin exponer modelos a
     Application.
     """
     def authenticate(self, email: str, password: str) -> AuthIdentity:
-        """Busca correo sin distinguir mayúsculas y exige exactamente una cuenta. Verifica clave
+        """Exige correo y username institucionales y busca una sola cuenta sin distinguir mayúsculas. Verifica clave
         y actividad, actualiza last_login y devuelve AuthIdentity. Duplicados o clave
         incorrecta producen InvalidCredentials; solo una clave correcta revela
         InactiveAccount.
         """
+        if not is_institutional_identifier(email):
+            make_password(password)
+            raise InvalidCredentials()
         User = get_user_model()
         candidates = list(User.objects.filter(email__iexact=email.strip())[:2])
         # Django permite correos repetidos. Si hay ambigüedad no elegimos una
@@ -29,6 +38,9 @@ class DjangoAuthProvider:
             make_password(password)
             raise InvalidCredentials()
         user = candidates[0]
+        if not all(is_institutional_identifier(value) for value in (user.email, user.get_username())):
+            make_password(password)
+            raise InvalidCredentials()
         if not user.is_active:
             # Solo distinguimos una cuenta inactiva después de verificar su clave.
             if check_password(password, user.password):

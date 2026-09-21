@@ -13,7 +13,7 @@ import { LoginComponent } from './login';
 describe('LoginComponent', () => {
   const user: AuthUser = {
     id: 1,
-    email: 'test@example.com',
+    email: 'test@saspel.com',
     first_name: '',
     last_name: '',
     role: 'SUPERADMIN',
@@ -50,11 +50,11 @@ describe('LoginComponent', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const fixture = TestBed.createComponent(LoginComponent);
     fixture.componentInstance.vm.form.setValue({
-      email: 'test@example.com',
+      email: 'test@SASPEL.COM',
       password: 'test-secret',
     });
     fixture.componentInstance.vm.submit();
-    expect(login).toHaveBeenCalledWith('test@example.com', 'test-secret');
+    expect(login).toHaveBeenCalledWith('test@SASPEL.COM', 'test-secret');
     expect(navigate).toHaveBeenCalledWith('/dashboard/superadmin');
     expect(fixture.componentInstance.vm.form.controls.password.value).toBe('');
   });
@@ -63,13 +63,13 @@ describe('LoginComponent', () => {
     login.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
     const fixture = TestBed.createComponent(LoginComponent);
     fixture.componentInstance.vm.form.setValue({
-      email: 'test@example.com',
+      email: 'test@saspel.com',
       password: 'incorrecta',
     });
     fixture.componentInstance.vm.submit();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain(
-      'Correo o contraseña incorrectos.',
+      'Credenciales no válidas.',
     );
     expect(fixture.componentInstance.vm.loading()).toBe(false);
   });
@@ -80,7 +80,7 @@ describe('LoginComponent', () => {
     login.mockReturnValue(response);
     const fixture = TestBed.createComponent(LoginComponent);
     fixture.componentInstance.vm.form.setValue({
-      email: 'test@example.com',
+      email: 'test@saspel.com',
       password: 'test-secret',
     });
     fixture.componentInstance.vm.submit();
@@ -89,5 +89,45 @@ describe('LoginComponent', () => {
     expect(login).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('[type=submit]').disabled).toBe(true);
     response.complete();
+  });
+
+  it('rechaza dominios externos y sufijos engañosos con un mensaje genérico', async () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    for (const email of [
+      'test@example.com',
+      'test@saspel.com.evil.com',
+      'test@sub.saspel.com',
+      'test@falsosaspel.com',
+    ]) {
+      fixture.componentInstance.vm.form.setValue({ email, password: 'test-secret' });
+      fixture.componentInstance.vm.submit();
+      await fixture.whenStable();
+      expect(login).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.querySelector('#email-error').textContent).toContain(
+        'Credenciales no válidas.',
+      );
+    }
+  });
+
+  it('conserva el mensaje de cuenta inactiva enviado por backend', async () => {
+    login.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 403,
+            error: { detail: 'Esta cuenta no está habilitada para ingresar.' },
+          }),
+      ),
+    );
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.componentInstance.vm.form.setValue({
+      email: 'test@saspel.com',
+      password: 'test-secret',
+    });
+    fixture.componentInstance.vm.submit();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain(
+      'Esta cuenta no está habilitada para ingresar.',
+    );
   });
 });

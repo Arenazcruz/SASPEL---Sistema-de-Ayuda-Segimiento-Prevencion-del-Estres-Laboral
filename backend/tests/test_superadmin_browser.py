@@ -21,7 +21,7 @@ class UnifiedUsersBrowserTests(LiveServerTestCase):
     def test_unified_table_modals_and_login(self):
         password = secrets.token_urlsafe(24) + 'A9'
         user = get_user_model().objects.create_user(
-            username='browser.admin@example.com', email='browser.admin@example.com',
+            username='browser.admin@saspel.com', email='browser.admin@saspel.com',
             password=password, is_staff=True, is_superuser=True,
         )
         for name in ('SUPERADMIN', 'ADMIN', 'PSICOLOGO', 'NUEVO_TRABAJADOR', 'TRABAJADOR'):

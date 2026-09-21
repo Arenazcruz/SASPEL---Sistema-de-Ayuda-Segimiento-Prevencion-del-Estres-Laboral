@@ -49,7 +49,7 @@ Respuesta **200 OK** (el id depende de la cuenta existente):
   "refresh": "<refresh_token>",
   "user": {
     "id": 1,
-    "email": "superadmin@example.com",
+    "email": "superadmin@saspel.com",
     "first_name": "",
     "last_name": "",
     "role": "SUPERADMIN"
@@ -74,19 +74,25 @@ Errores principales:
 | Estado | Situación |
 | --- | --- |
 | 400 | Correo con formato incorrecto, contraseña vacía o datos requeridos ausentes. |
-| 401 | Correo o contraseña incorrectos; también correo ambiguo entre varias cuentas. |
+| 401 | Dominio no institucional, correo o contraseña incorrectos, o correo ambiguo entre varias cuentas. |
 | 403 | Cuenta inactiva con contraseña correcta, o cuenta sin rol funcional. |
 | 405 | Método diferente de POST. |
 
-Correo inexistente y contraseña incorrecta reciben el mismo mensaje:
+Dominio no permitido, correo inexistente y contraseña incorrecta reciben el mismo mensaje:
 
 ```json
-{"detail": "Correo o contraseña incorrectos."}
+{"detail": "Credenciales no válidas."}
 ```
 
-La búsqueda del correo no distingue mayúsculas. Solo después de verificar la
-contraseña se distingue una cuenta inactiva; una clave incorrecta sigue dando 401.
+El login exige que el correo enviado y el email/username almacenados tengan
+exactamente el dominio `saspel.com`, sin distinguir mayúsculas. No acepta
+subdominios ni direcciones como `persona@saspel.com.otro.com`. Una cuenta externa
+existente también recibe 401, sin modificar sus datos ni revelar su existencia.
+Solo después de cumplir esta regla y verificar la contraseña se distingue una
+cuenta inactiva; una clave incorrecta sigue dando 401.
 Los usuarios creados por SASPEL utilizan el correo como `username` y `email`.
+Esta restricción se aplica al inicio de sesión; JWT, refresh y permisos mantienen
+su comportamiento y no se revocan sesiones emitidas anteriormente.
 
 ## 3. Consultar la cuenta autenticada
 
@@ -99,7 +105,7 @@ Los usuarios creados por SASPEL utilizan el correo como `username` y `email`.
 ```json
 {
   "id": 1,
-  "email": "superadmin@example.com",
+  "email": "superadmin@saspel.com",
   "first_name": "",
   "last_name": "",
   "role": "SUPERADMIN",
@@ -453,8 +459,9 @@ campo existente `activo`. No hay eliminación física ni nuevas tablas.
 
 Comprobar también 403 con JWT de ADMIN/TRABAJADOR contra `/api/superadmin/users/`,
 generación con tildes, colisiones con sufijos 2/3, correo manual rechazado,
-contraseña inválida y auto-desactivación rechazada. El login sigue admitiendo
-cuentas existentes con otros dominios; no se restringe a `@saspel.com`.
+contraseña inválida y auto-desactivación rechazada. El login admite únicamente
+cuentas con email y username `@saspel.com`; otros dominios reciben 401 con
+`Credenciales no válidas.`.
 En Angular, Usuarios reúne Todos, Nuevos trabajadores, Trabajadores, Psicólogos
 y Administradores como filtros de la misma tabla. Nuevo usuario, Editar y Ver
 abren un modal; al cerrarlo se conservan los filtros. Comprobar creación sin

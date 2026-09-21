@@ -16,7 +16,10 @@ export class LoginViewModel {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly form = inject(FormBuilder).nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: [
+      '',
+      [Validators.required, Validators.email, Validators.pattern(/^[^@\s]+@saspel\.com$/i)],
+    ],
     password: ['', [Validators.required]],
   });
   readonly loading = signal(false);
@@ -51,7 +54,7 @@ export class LoginViewModel {
             this.error.set(error.error?.detail ?? 'Tu cuenta no está habilitada para ingresar.');
           else if (error.status === 0)
             this.error.set('No pudimos conectar con SASPEL. Inténtalo nuevamente.');
-          else if (error.status === 401) this.error.set('Correo o contraseña incorrectos.');
+          else if (error.status === 401) this.error.set('Credenciales no válidas.');
           else
             this.error.set('No pudimos iniciar sesión. Revisa tus datos e inténtalo nuevamente.');
         },

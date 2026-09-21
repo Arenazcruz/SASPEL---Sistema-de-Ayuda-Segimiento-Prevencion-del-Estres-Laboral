@@ -171,8 +171,10 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(response.status_code, 201, response.data)
         self.assertLessEqual(len(response.data['email'].split('@')[0]), 64)
 
-    def test_existing_external_email_login_is_still_allowed(self):
-        self.assertEqual(self.login('root@example.com').status_code, 200)
+    def test_existing_external_email_login_is_rejected(self):
+        response = self.login('root@example.com')
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, {'detail': 'Credenciales no válidas.'})
 
     def test_administrators_category_includes_admin_and_superadmin(self):
         self.create(role='ADMIN')

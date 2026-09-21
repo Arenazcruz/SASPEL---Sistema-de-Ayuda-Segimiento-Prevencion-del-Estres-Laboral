@@ -28,7 +28,7 @@ class AuthErrorMixin:
         errores a DRF sin revelar si un correo existe.
         """
         if isinstance(exc, InvalidCredentials):
-            exc = AuthenticationFailed('Correo o contraseña incorrectos.')
+            exc = AuthenticationFailed('Credenciales no válidas.')
         elif isinstance(exc, InactiveAccount):
             exc = PermissionDenied('Esta cuenta no está habilitada para ingresar.')
         elif isinstance(exc, MissingFunctionalRole):

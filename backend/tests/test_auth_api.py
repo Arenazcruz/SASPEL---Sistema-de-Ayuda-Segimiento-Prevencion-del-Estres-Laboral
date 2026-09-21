@@ -14,7 +14,7 @@ class AuthApiTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = get_user_model().objects.create_user(
-            username='persona@example.com', email='Persona@Example.com',
+            username='persona@saspel.com', email='Persona@Saspel.com',
             password='Test-password-2026!', first_name='Ana', last_name='Prueba',
         )
         cls.user.groups.add(Group.objects.get(name='TRABAJADOR'))
@@ -26,7 +26,7 @@ class AuthApiTests(TestCase):
         """Devuelve respuesta de login con credenciales ficticias y cambios opcionales para
         escenarios de error.
         """
-        data = {'email': 'PERSONA@example.COM', 'password': 'Test-password-2026!'}
+        data = {'email': 'PERSONA@saspel.COM', 'password': 'Test-password-2026!'}
         data.update(changes)
         return self.client.post('/api/auth/login/', data, format='json')
 
@@ -44,11 +44,40 @@ class AuthApiTests(TestCase):
     def test_password_incorrecto_y_correo_inexistente_mismo_error(self):
         """Compara fallos por correo y por clave para evitar revelar si una cuenta existe."""
         incorrect = self.login(password='incorrecta')
-        unknown = self.login(email='nadie@example.com')
+        unknown = self.login(email='nadie@saspel.com')
         self.assertEqual(incorrect.status_code, 401)
         self.assertEqual(unknown.status_code, 401)
         self.assertEqual(incorrect.data, unknown.data)
-        self.assertEqual(str(incorrect.data['detail']), 'Correo o contraseña incorrectos.')
+        self.assertEqual(str(incorrect.data['detail']), 'Credenciales no válidas.')
+
+    def test_dominio_externo_rechazado_sin_revelar_existencia(self):
+        for domain in ('example.com', 'saspel.com.evil.com', 'sub.saspel.com', 'falsosaspel.com'):
+            with self.subTest(domain=domain):
+                email = f'persona@{domain}'
+                account = get_user_model().objects.create_user(
+                    username=email, email=email, password='Test-password-2026!',
+                )
+                account.groups.add(Group.objects.get(name='TRABAJADOR'))
+                before = account.password
+                for candidate in (email, f'nadie@{domain}'):
+                    response = self.login(email=candidate)
+                    self.assertEqual(response.status_code, 401)
+                    self.assertEqual(response.data, {'detail': 'Credenciales no válidas.'})
+                    self.assertNotIn('access', response.data)
+                    self.assertNotIn('refresh', response.data)
+                account.refresh_from_db()
+                self.assertIsNone(account.last_login)
+                self.assertEqual(account.password, before)
+                self.assertEqual(account.email, email)
+
+    def test_username_externo_rechazado_aunque_email_sea_institucional(self):
+        self.user.username = 'persona@example.com'
+        self.user.save(update_fields=['username'])
+        response = self.login()
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, {'detail': 'Credenciales no válidas.'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.last_login)
 
     def test_usuario_inactivo_con_clave_correcta_recibe_403(self):
         self.user.is_active = False
@@ -60,7 +89,7 @@ class AuthApiTests(TestCase):
         """Introduce correo duplicado para exigir rechazo del login aunque una clave sea
         correcta.
         """
-        get_user_model().objects.create_user(username='duplicada', email='persona@example.com', password='otra')
+        get_user_model().objects.create_user(username='duplicada', email='persona@saspel.com', password='otra')
         self.assertEqual(self.login().status_code, 401)
 
     def test_formato_invalido_recibe_400(self):
