@@ -6,6 +6,7 @@ escenarios de rollback y de acceso con token anterior al cambiar el módulo.
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import caches
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
@@ -18,7 +19,13 @@ User = get_user_model()
 PASSWORD = 'Prueba-segura-8274!'
 
 
-@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+@override_settings(
+    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
+    CACHES={
+        'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'},
+        'login_attempts': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'saspel-superadmin-tests'},
+    },
+)
 class SuperadminApiTests(TestCase):
     """Escenarios integrados de SA-01 con cuenta administrativa y catálogos ficticios."""
     @classmethod
@@ -29,6 +36,8 @@ class SuperadminApiTests(TestCase):
         cls.cargo = CargoInstitucional.objects.create(nombre='Cargo de pruebas')
 
     def setUp(self):
+        caches['login_attempts'].clear()
+        self.addCleanup(caches['login_attempts'].clear)
         self.client = APIClient()
         self.authorize(self.root)
 

@@ -77,12 +77,35 @@ Errores principales:
 | 401 | Dominio no institucional, correo o contraseña incorrectos, o correo ambiguo entre varias cuentas. |
 | 403 | Cuenta inactiva con contraseña correcta, o cuenta sin rol funcional. |
 | 405 | Método diferente de POST. |
+| 429 | Límite temporal de fallos alcanzado; `Retry-After` indica los segundos restantes. |
 
 Dominio no permitido, correo inexistente y contraseña incorrecta reciben el mismo mensaje:
 
 ```json
 {"detail": "Credenciales no válidas."}
 ```
+
+El login admite hasta **5 fallos por correo** (normalizado, independiente de la IP)
+y **20 por IP** dentro de ventanas fijas de **5 minutos**. Tras alcanzar cualquiera
+de los límites, también se rechaza una contraseña correcta hasta la siguiente
+ventana. Un 429 devuelve exactamente el mismo JSON genérico anterior, sin tokens;
+los intentos bloqueados no prolongan el plazo. Los éxitos no consumen intentos
+ni borran fallos previos. Los fallos de autenticación 401/403 cuentan; los errores
+de formato 400 no llegan a verificar credenciales ni consumen este presupuesto.
+Las peticiones en curso reservan temporalmente un intento; al tener éxito lo liberan.
+El control funciona igual para correos existentes, inexistentes y externos.
+No cambia `is_active`, roles ni contraseñas; al vencer el plazo vuelve a permitir
+autenticación normal. La IP procede de `REMOTE_ADDR`, no de cabeceras enviadas
+por el cliente. Detrás de un proxy, hay que configurar la IP real en infraestructura
+de confianza; de lo contrario, los clientes comparten el límite del proxy.
+
+Los contadores usan exclusivamente la caché `login_attempts`, sin tablas nuevas.
+Por defecto es memoria local por proceso para desarrollo; un despliegue con varios
+procesos necesita una caché compartida con operaciones atómicas (Redis/Memcached),
+configurable mediante `SASPEL_LOGIN_CACHE_BACKEND` y `SASPEL_LOGIN_CACHE_LOCATION`,
+con su servicio y cliente correspondientes. Reiniciar/vaciar esa caché reinicia
+los contadores. Para probar: enviar cinco claves incorrectas, comprobar 429 y
+`Retry-After` en el siguiente intento y reintentar la clave correcta al vencerlo.
 
 El login exige que el correo enviado y el email/username almacenados tengan
 exactamente el dominio `saspel.com`, sin distinguir mayúsculas. No acepta

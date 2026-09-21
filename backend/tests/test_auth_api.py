@@ -3,12 +3,19 @@
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import caches
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 
-@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+@override_settings(
+    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
+    CACHES={
+        'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'},
+        'login_attempts': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'saspel-auth-tests'},
+    },
+)
 class AuthApiTests(TestCase):
     """Prueba login, me, refresh y CORS usando Django, JWT y cuentas ficticias en BD temporal."""
     @classmethod
@@ -20,6 +27,8 @@ class AuthApiTests(TestCase):
         cls.user.groups.add(Group.objects.get(name='TRABAJADOR'))
 
     def setUp(self):
+        caches['login_attempts'].clear()
+        self.addCleanup(caches['login_attempts'].clear)
         self.client = APIClient()
 
     def login(self, **changes):

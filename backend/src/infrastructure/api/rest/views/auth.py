@@ -17,6 +17,7 @@ from src.application.services.auth_identity import (
 )
 from src.infrastructure.api.rest.serializers.auth import LoginSerializer, RefreshSerializer
 from src.infrastructure.auth.jwt_token_provider import JWTTokenProvider
+from src.infrastructure.auth.login_attempts import LoginAttemptBudget
 from src.infrastructure.dependencies.auth import build_authentication, build_current_identity
 
 
@@ -51,11 +52,27 @@ class LoginView(AuthErrorMixin, APIView):
         """
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = build_authentication().execute(LoginCommand(**serializer.validated_data))
+        # REMOTE_ADDR viene de la conexión; no confiar en X-Forwarded-For del cliente.
+        attempt = LoginAttemptBudget(serializer.validated_data['email'], request.META.get('REMOTE_ADDR', 'unknown'))
+        if not attempt.reserve():
+            return Response(
+                {'detail': 'Credenciales no válidas.'}, status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={'Retry-After': str(attempt.wait), 'Cache-Control': 'no-store'},
+            )
+        try:
+            user = build_authentication().execute(LoginCommand(**serializer.validated_data))
+            tokens = JWTTokenProvider.issue(user.id)
+        except (InvalidCredentials, InactiveAccount, MissingFunctionalRole):
+            # Mantiene la reserva como fallo hasta el final de esta ventana.
+            raise
+        except Exception:
+            attempt.release()
+            raise
+        attempt.release()
         identity = asdict(user)
         dashboard_path = identity.pop('dashboard_path')
         return Response({
-            **JWTTokenProvider.issue(user.id), 'user': identity,
+            **tokens, 'user': identity,
             'dashboard_path': dashboard_path,
         }, status=status.HTTP_200_OK, headers={'Cache-Control': 'no-store'})
 
