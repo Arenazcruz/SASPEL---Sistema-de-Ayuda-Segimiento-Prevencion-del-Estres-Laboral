@@ -103,6 +103,10 @@ describe('Superadmin layout y permisos', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Usuarios');
+    expect(el.querySelector('#evaluations-menu')?.textContent).toContain('Instrumentos');
+    expect(el.querySelector('#evaluations-menu a')?.getAttribute('href')).toBe(
+      '/dashboard/superadmin/evaluaciones/instrumentos',
+    );
     expect(
       el.querySelector('a[href="/dashboard/superadmin/personas/asignaciones-profesionales"]')
         ?.textContent,

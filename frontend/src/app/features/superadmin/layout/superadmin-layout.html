@@ -68,6 +68,25 @@
           >
         </div>
       }
+      <button
+        class="group"
+        (click)="evaluationsOpen.set(!evaluationsOpen())"
+        [attr.aria-expanded]="evaluationsOpen()"
+        aria-controls="evaluations-menu"
+      >
+        Evaluaciones <span>{{ evaluationsOpen() ? '−' : '+' }}</span>
+      </button>
+      @if (evaluationsOpen()) {
+        <div id="evaluations-menu" class="submenu">
+          <a
+            [routerLink]="base + '/evaluaciones/instrumentos'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Instrumentos</a
+          >
+        </div>
+      }
     </nav>
     <p class="sidebar-foot">SASPEL · CRECER IFD</p>
   </aside>

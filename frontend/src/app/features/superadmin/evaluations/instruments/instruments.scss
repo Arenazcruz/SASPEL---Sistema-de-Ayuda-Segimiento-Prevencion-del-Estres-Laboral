@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+.instrument-filters {
+  grid-template-columns: 2fr 1fr 1fr auto;
+}
+.instrument-dialog {
+  width: min(960px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  box-sizing: border-box;
+  padding: 1.5rem;
+  border: 1px solid #c8d9d3;
+  border-radius: 1rem;
+  background: #f5f8f6;
+  color: #203d34;
+  overscroll-behavior: contain;
+}
+.instrument-dialog::backdrop {
+  background: rgb(13 35 28 / 55%);
+}
+.sa-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.sa-dialog-heading h2 {
+  margin: 0;
+}
+.sa-dialog-heading button {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.multiline {
+  white-space: pre-wrap;
+}
+fieldset {
+  min-width: 0;
+}
+@media (max-width: 650px) {
+  .instrument-filters {
+    grid-template-columns: 1fr;
+  }
+  .instrument-dialog {
+    padding: 1rem;
+  }
+}
