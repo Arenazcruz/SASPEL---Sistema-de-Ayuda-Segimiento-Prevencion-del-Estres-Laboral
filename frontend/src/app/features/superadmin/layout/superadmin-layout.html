@@ -85,6 +85,27 @@
             (click)="mobileOpen.set(false)"
             >Instrumentos</a
           >
+          <a
+            [routerLink]="base + '/evaluaciones/preguntas'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Preguntas</a
+          >
+          <a
+            [routerLink]="base + '/evaluaciones/escalas'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Escalas de respuesta</a
+          >
+          <a
+            [routerLink]="base + '/evaluaciones/rangos'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Rangos de interpretación</a
+          >
         </div>
       }
     </nav>

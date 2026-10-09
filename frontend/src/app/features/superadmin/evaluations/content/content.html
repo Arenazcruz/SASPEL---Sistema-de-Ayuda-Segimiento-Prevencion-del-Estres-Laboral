@@ -1,0 +1,356 @@
+<div class="sa-heading">
+  <div>
+    <p class="eyebrow">SUPERADMIN / EVALUACIONES</p>
+    <h1>{{ vm.config().title }}</h1>
+    <p>{{ vm.config().description }}</p>
+  </div>
+  <button
+    class="button"
+    type="button"
+    (click)="vm.open('create')"
+    [disabled]="!vm.canManage() || vm.busy() || vm.loading()"
+  >
+    Crear {{ vm.config().singular }}
+  </button>
+</div>
+@if (vm.scale(); as scale) {
+  <div class="content-context">
+    <button type="button" (click)="vm.backToScales()" [disabled]="vm.busy()">
+      ← Volver a escalas
+    </button>
+    <h2>{{ scale.nombre }}</h2>
+    <p>{{ scale.descripcion }}</p>
+    <span class="sa-badge" [class.inactive]="!scale.activo">{{
+      scale.activo ? 'Escala activa' : 'Escala inactiva'
+    }}</span>
+  </div>
+}
+@if (vm.catalogError()) {
+  <div class="sa-error" role="alert">
+    {{ vm.catalogError() }} <button (click)="vm.loadCatalogs()">Reintentar catálogos</button>
+  </div>
+}
+@if (!vm.ready() && !vm.catalogError()) {
+  <p role="status">Cargando catálogos…</p>
+}
+@if (vm.needsInstrument()) {
+  <section class="sa-panel parent-picker">
+    <label
+      >Instrumento<select
+        #instrument
+        [value]="vm.instrumentId()"
+        (change)="vm.chooseInstrument(instrument.value)"
+        [disabled]="!vm.ready() || vm.busy()"
+      >
+        <option value="">Selecciona un instrumento</option>
+        @for (item of vm.instruments(); track item.id) {
+          <option [value]="item.id">
+            {{ item.codigo }} · {{ item.nombre }} · v{{ item.version
+            }}{{ item.activo ? '' : ' (inactivo)' }}
+          </option>
+        }
+      </select></label
+    >
+    @if (vm.ready() && !vm.instruments().length) {
+      <p>No hay instrumentos. Crea uno desde Instrumentos.</p>
+    }
+  </section>
+}
+@if (vm.canManage()) {
+  <form
+    class="sa-panel sa-filters content-filters"
+    [formGroup]="vm.filters"
+    (ngSubmit)="vm.search()"
+  >
+    <label
+      >Buscar<input formControlName="search" maxlength="200" placeholder="Buscar en este catálogo"
+    /></label>
+    <label
+      >Estado<select formControlName="activo">
+        <option value="">Todos</option>
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select></label
+    >
+    <button class="button button-small" type="submit" [disabled]="vm.loading() || vm.busy()">
+      Buscar
+    </button>
+  </form>
+}
+@if (vm.error()) {
+  <div class="sa-error" role="alert">
+    {{ vm.error() }} <button (click)="vm.reload()">Reintentar</button>
+  </div>
+}
+@if (vm.notice()) {
+  <p class="sa-success" role="status">{{ vm.notice() }}</p>
+}
+@if (vm.loading()) {
+  <p role="status">Cargando registros…</p>
+}
+@if (vm.page(); as page) {
+  <section class="sa-panel" [attr.aria-busy]="vm.loading()">
+    <div class="sa-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            @if (vm.kind() !== 'scales') {
+              <th>Orden</th>
+            }
+            <th>
+              {{
+                vm.kind() === 'questions'
+                  ? 'Pregunta'
+                  : vm.kind() === 'options'
+                    ? 'Etiqueta'
+                    : 'Nombre'
+              }}
+            </th>
+            @if (vm.kind() === 'questions') {
+              <th>Tipo / escala</th>
+              <th>Propiedades</th>
+            }
+            @if (vm.kind() === 'options') {
+              <th>Valor</th>
+            }
+            @if (vm.kind() === 'ranges') {
+              <th>Mínimo / máximo</th>
+            }
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of page.results; track item.id) {
+            <tr>
+              @if (vm.kind() !== 'scales') {
+                <td>{{ item.orden }}</td>
+              }
+              <td class="content-text">{{ item.texto ?? item.etiqueta ?? item.nombre }}</td>
+              @if (vm.kind() === 'questions') {
+                <td>
+                  {{ item.tipo_respuesta }}
+                  @if (item.escala_id) {
+                    <br />{{ vm.scaleName(item.escala_id) }}
+                  }
+                </td>
+                <td>
+                  {{ item.obligatoria ? 'Obligatoria' : 'Opcional'
+                  }}{{ item.invertida ? ' · Invertida' : '' }}
+                </td>
+              }
+              @if (vm.kind() === 'options') {
+                <td>{{ item.valor }}</td>
+              }
+              @if (vm.kind() === 'ranges') {
+                <td>{{ item.puntaje_minimo }} / {{ item.puntaje_maximo }}</td>
+              }
+              <td>
+                <span class="sa-badge" [class.inactive]="!item.activo">{{
+                  item.activo ? 'Activo' : 'Inactivo'
+                }}</span>
+              </td>
+              <td>
+                <div class="sa-row-actions">
+                  <button type="button" (click)="vm.open('detail', item)" [disabled]="vm.busy()">
+                    Ver
+                  </button>
+                  <button type="button" (click)="vm.open('edit', item)" [disabled]="vm.busy()">
+                    Editar
+                  </button>
+                  @if (vm.kind() === 'scales') {
+                    <button type="button" (click)="vm.openOptions(item)" [disabled]="vm.busy()">
+                      Opciones
+                    </button>
+                  }
+                  @if (vm.kind() === 'questions' || vm.kind() === 'options') {
+                    <button
+                      type="button"
+                      (click)="vm.move(item, 'up')"
+                      [disabled]="vm.busy()"
+                      aria-label="Subir en el orden"
+                    >
+                      ↑ Subir
+                    </button>
+                    <button
+                      type="button"
+                      (click)="vm.move(item, 'down')"
+                      [disabled]="vm.busy()"
+                      aria-label="Bajar en el orden"
+                    >
+                      ↓ Bajar
+                    </button>
+                  }
+                  <button type="button" (click)="vm.toggle(item)" [disabled]="vm.busy()">
+                    {{ item.activo ? 'Desactivar' : 'Reactivar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">No se encontraron registros con estos filtros.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <nav class="sa-pagination" aria-label="Paginación del catálogo">
+      <span>{{ page.count }} registros · Página {{ page.page }}</span>
+      <button (click)="vm.goTo(page.page - 1)" [disabled]="page.page <= 1 || vm.busy()">
+        Anterior
+      </button>
+      <button
+        (click)="vm.goTo(page.page + 1)"
+        [disabled]="page.page * page.page_size >= page.count || vm.busy()"
+      >
+        Siguiente
+      </button>
+    </nav>
+  </section>
+}
+<dialog
+  #contentDialog
+  class="instrument-dialog"
+  aria-labelledby="content-title"
+  (cancel)="close($event)"
+>
+  <div class="sa-dialog-heading">
+    <h2 id="content-title">
+      {{ vm.mode() === 'create' ? 'Crear' : vm.mode() === 'edit' ? 'Editar' : 'Detalle de' }}
+      {{ vm.config().singular }}
+    </h2>
+    <button type="button" (click)="close()" [disabled]="vm.saving()" aria-label="Cerrar modal">
+      Cerrar ✕
+    </button>
+  </div>
+  @if (vm.modalError()) {
+    <div class="sa-error" role="alert">{{ vm.modalError() }}</div>
+  }
+  @if (vm.detailLoading()) {
+    <p role="status">Cargando detalle…</p>
+  }
+  @if (vm.mode() === 'detail') {
+    @if (vm.selected(); as item) {
+      <section class="sa-panel">
+        <dl class="sa-details">
+          @for (field of vm.config().fields; track field.name) {
+            <div [class.wide]="field.type === 'textarea'">
+              <dt>{{ field.label }}</dt>
+              <dd class="multiline">
+                {{
+                  field.type === 'scale'
+                    ? vm.scaleName(item.escala_id)
+                    : field.type === 'checkbox'
+                      ? vm.form.get(field.name)?.value
+                        ? 'Sí'
+                        : 'No'
+                      : (vm.form.get(field.name)?.value ?? '—')
+                }}
+              </dd>
+            </div>
+          }
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ item.activo ? 'Activo' : 'Inactivo' }}</dd>
+          </div>
+          <div>
+            <dt>Actualizado</dt>
+            <dd>{{ item.actualizado_en | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        </dl>
+      </section>
+      <button class="button" (click)="vm.open('edit', item)">
+        Editar {{ vm.config().singular }}
+      </button>
+      @if (vm.kind() === 'scales') {
+        <button (click)="vm.openOptions(item)">Administrar opciones</button>
+      }
+    }
+  } @else if (vm.mode() === 'create' || (vm.mode() === 'edit' && vm.selected())) {
+    <form [formGroup]="vm.form" (ngSubmit)="vm.save()" novalidate>
+      <fieldset class="sa-panel" [disabled]="vm.saving()">
+        <div class="sa-form-grid">
+          @for (field of vm.config().fields; track field.name) {
+            @if (field.type !== 'scale' || vm.form.get('tipo_respuesta')?.value === 'ESCALA') {
+              <label
+                [class.wide]="field.type === 'textarea'"
+                [class.sa-check]="field.type === 'checkbox'"
+              >
+                {{ field.label }}{{ field.required || field.type === 'scale' ? ' *' : '' }}
+                @switch (field.type) {
+                  @case ('textarea') {
+                    <textarea
+                      [formControlName]="field.name"
+                      rows="3"
+                      [attr.aria-invalid]="!!vm.fieldError(field.name)"
+                    ></textarea>
+                  }
+                  @case ('type') {
+                    <select [formControlName]="field.name">
+                      <option value="TEXTO">Texto</option>
+                      <option value="ESCALA">Escala</option>
+                      <option value="NUMERO">Número</option>
+                      <option value="BOOLEANO">Sí / No</option>
+                    </select>
+                  }
+                  @case ('scale') {
+                    <select [formControlName]="field.name">
+                      <option [ngValue]="null">Selecciona una escala</option>
+                      @for (scale of vm.scales(); track scale.id) {
+                        @if (vm.scaleAllowed(scale)) {
+                          <option [ngValue]="scale.id">
+                            {{ scale.nombre }}{{ scale.activo ? '' : ' (inactiva)' }}
+                          </option>
+                        }
+                      }
+                    </select>
+                  }
+                  @case ('checkbox') {
+                    <input type="checkbox" [formControlName]="field.name" />
+                  }
+                  @case ('number') {
+                    <input
+                      type="number"
+                      step="1"
+                      [formControlName]="field.name"
+                      [attr.min]="field.min"
+                      [attr.max]="field.max"
+                      [attr.aria-invalid]="!!vm.fieldError(field.name)"
+                    />
+                  }
+                  @default {
+                    <input
+                      [formControlName]="field.name"
+                      [attr.maxlength]="field.maxLength"
+                      [attr.aria-invalid]="!!vm.fieldError(field.name)"
+                    />
+                  }
+                }
+                @if (vm.fieldError(field.name)) {
+                  <small class="sa-field-error">{{ vm.fieldError(field.name) }}</small>
+                }
+              </label>
+            }
+          }
+        </div>
+        @if (vm.form.touched && vm.form.hasError('scaleRequired')) {
+          <p class="sa-field-error" role="alert">Selecciona una escala de respuesta.</p>
+        }
+        @if (vm.form.touched && vm.form.hasError('range')) {
+          <p class="sa-field-error" role="alert">El mínimo no puede superar al máximo.</p>
+        }
+        @if (vm.kind() === 'questions' || vm.kind() === 'options') {
+          <p class="sa-help">
+            El orden debe ser único. Usa Subir y Bajar en la tabla para intercambiar posiciones.
+          </p>
+        }
+      </fieldset>
+      <div class="sa-actions">
+        <button class="button" type="submit" [disabled]="vm.saving()">
+          {{ vm.saving() ? 'Guardando…' : 'Guardar' }}</button
+        ><button type="button" (click)="close()" [disabled]="vm.saving()">Cancelar</button>
+      </div>
+    </form>
+  }
+</dialog>
