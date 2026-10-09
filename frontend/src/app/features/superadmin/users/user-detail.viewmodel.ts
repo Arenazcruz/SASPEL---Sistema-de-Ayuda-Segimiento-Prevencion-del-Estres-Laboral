@@ -16,7 +16,7 @@ export class UserDetailViewModel {
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
-  readonly id = Number(this.route.snapshot.paramMap.get('id'));
+  readonly id = this.route.snapshot.paramMap.get('id') ?? '';
   readonly currentUser = inject(AuthService).user;
   readonly person = signal<Person | null>(null);
   readonly loading = signal(false);

@@ -12,7 +12,7 @@ import { LoginComponent } from './login';
 
 describe('LoginComponent', () => {
   const user: AuthUser = {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000001',
     email: 'test@saspel.com',
     first_name: '',
     last_name: '',

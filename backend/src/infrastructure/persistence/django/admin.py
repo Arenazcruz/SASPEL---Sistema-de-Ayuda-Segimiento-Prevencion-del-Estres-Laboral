@@ -6,8 +6,10 @@ solo; esas funciones se implementarán más adelante.
 """
 
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from .models import (
+    Usuario,
     AplicacionInstrumento,
     AreaInstitucional,
     AsignacionInstrumento,
@@ -41,3 +43,11 @@ admin.site.register([
     ResultadoInstrumento,
 ])
 admin.site.register([DisponibilidadPsicologo, Cita])
+
+
+@admin.register(Usuario)
+class UsuarioAdmin(UserAdmin):
+    readonly_fields = ('id', 'creado_en', 'actualizado_en')
+    fieldsets = UserAdmin.fieldsets + (
+        ('Auditoría', {'fields': ('id', 'creado_en', 'actualizado_en', 'creado_por', 'actualizado_por', 'deleted')}),
+    )

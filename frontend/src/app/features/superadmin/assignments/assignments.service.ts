@@ -32,18 +32,18 @@ export class AssignmentsService {
     return this.http.get<PsychologistLoad[]>(`${this.base}/psychologists/`);
   }
 
-  assign(trabajador_id: number, psicologo_id: number) {
+  assign(trabajador_id: string, psicologo_id: string) {
     return this.http.post<ProfessionalAssignment>(`${this.base}/`, { trabajador_id, psicologo_id });
   }
 
-  reassign(id: number, psicologo_id: number, motivo_fin: string) {
+  reassign(id: string, psicologo_id: string, motivo_fin: string) {
     return this.http.post<ProfessionalAssignment>(`${this.base}/${id}/reassign/`, {
       psicologo_id,
       motivo_fin,
     });
   }
 
-  finish(id: number, motivo_fin: string) {
+  finish(id: string, motivo_fin: string) {
     return this.http.post<ProfessionalAssignment>(`${this.base}/${id}/finish/`, { motivo_fin });
   }
 }

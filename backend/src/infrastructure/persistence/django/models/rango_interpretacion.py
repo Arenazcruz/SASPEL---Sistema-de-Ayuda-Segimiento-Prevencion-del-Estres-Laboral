@@ -10,10 +10,12 @@ que los rangos no se superpongan y se elegirá el adecuado para cada resultado.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .instrumento_psicologico import InstrumentoPsicologico
 
 
-class RangoInterpretacion(models.Model):
+class RangoInterpretacion(AuditableModel):
     # Cuestionario y versión para los que se define este rango.
     """Intervalo y etiqueta de interpretación de una versión; aquí se guardan límites, no se
     clasifican resultados.
@@ -31,8 +33,6 @@ class RangoInterpretacion(models.Model):
     # Posición del rango al mostrar los niveles del cuestionario.
     orden = models.PositiveSmallIntegerField()
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_rango_interpretacion'

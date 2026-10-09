@@ -1,5 +1,7 @@
 """Administra metadatos y estado, sin intervenir en el contenido ni aplicación de pruebas."""
 
+from uuid import UUID
+
 from src.application.dto.instruments import InstrumentDTO, InstrumentData, InstrumentFilters, InstrumentPage
 from src.application.ports.input.instruments import (
     InstrumentActivation, InstrumentCreation, InstrumentDetail, InstrumentEditing, InstrumentListing,
@@ -21,7 +23,7 @@ class ListInstruments(InstrumentCase, InstrumentListing):
 
 
 class GetInstrument(InstrumentCase, InstrumentDetail):
-    def execute(self, instrument_id: int) -> InstrumentDTO:
+    def execute(self, instrument_id: UUID) -> InstrumentDTO:
         return self.repository.get(instrument_id)
 
 
@@ -31,12 +33,12 @@ class CreateInstrument(InstrumentCase, InstrumentCreation):
 
 
 class EditInstrument(InstrumentCase, InstrumentEditing):
-    def execute(self, instrument_id: int, changes: dict) -> InstrumentDTO:
+    def execute(self, instrument_id: UUID, changes: dict) -> InstrumentDTO:
         if set(changes) - EDITABLE_FIELDS:
             raise AdministrationError('La edición solo admite los metadatos del instrumento.')
         return self.repository.update(instrument_id, changes)
 
 
 class SetInstrumentActive(InstrumentCase, InstrumentActivation):
-    def execute(self, instrument_id: int, active: bool) -> InstrumentDTO:
+    def execute(self, instrument_id: UUID, active: bool) -> InstrumentDTO:
         return self.repository.set_active(instrument_id, active)

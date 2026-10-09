@@ -4,6 +4,8 @@ Todas las validaciones de elegibilidad se repiten dentro de la transacción: un
 selector mostrado antes en la interfaz no autoriza por sí mismo una asignación.
 """
 
+from uuid import UUID
+
 from src.application.dto.assignments import (
     AssignmentFilters, AssignWorkerCommand, FinishAssignmentCommand, ReassignWorkerCommand,
 )
@@ -22,7 +24,7 @@ class AssignmentCase:
     def __init__(self, repository: AssignmentRepository):
         self.repository = repository
 
-    def validate_pair(self, worker_id: int, psychologist_id: int):
+    def validate_pair(self, worker_id: UUID, psychologist_id: UUID):
         if worker_id == psychologist_id:
             raise AdministrationError('Trabajador y psicólogo deben ser personas diferentes.', 'psicologo_id')
         worker = self.repository.get_person(worker_id)

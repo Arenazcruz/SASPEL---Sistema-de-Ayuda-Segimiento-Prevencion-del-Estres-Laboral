@@ -2,12 +2,13 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID
 
 
 @dataclass(frozen=True)
 class AssignmentPerson:
     """Datos de selección y elegibilidad; no expone claves ni información clínica."""
-    id: int
+    id: UUID
     nombre_completo: str
     email: str
     codigo_empleado: str
@@ -19,7 +20,7 @@ class AssignmentPerson:
 @dataclass(frozen=True)
 class AssignmentDTO:
     """Vínculo vigente o histórico; fecha_fin y motivo_fin describen su cierre."""
-    id: int
+    id: UUID
     trabajador: AssignmentPerson
     psicologo: AssignmentPerson
     fecha_asignacion: datetime
@@ -32,8 +33,8 @@ class AssignmentDTO:
 class AssignmentFilters:
     """Estado vacío incluye historial; trabajador_id permite consultar una persona."""
     estado: str = ''
-    trabajador_id: int | None = None
-    psicologo_id: int | None = None
+    trabajador_id: UUID | None = None
+    psicologo_id: UUID | None = None
     search: str = ''
     page: int = 1
 
@@ -63,18 +64,18 @@ class PsychologistLoad:
 
 @dataclass(frozen=True)
 class AssignWorkerCommand:
-    trabajador_id: int
-    psicologo_id: int
+    trabajador_id: UUID
+    psicologo_id: UUID
 
 
 @dataclass(frozen=True)
 class FinishAssignmentCommand:
-    asignacion_id: int
+    asignacion_id: UUID
     motivo_fin: str
 
 
 @dataclass(frozen=True)
 class ReassignWorkerCommand:
-    asignacion_id: int
-    psicologo_id: int
+    asignacion_id: UUID
+    psicologo_id: UUID
     motivo_fin: str

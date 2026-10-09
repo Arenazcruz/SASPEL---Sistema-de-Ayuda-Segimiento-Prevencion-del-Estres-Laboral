@@ -11,8 +11,10 @@ se implementará más adelante.
 
 from django.db import models
 
+from .auditable import AuditableModel
 
-class InstrumentoPsicologico(models.Model):
+
+class InstrumentoPsicologico(AuditableModel):
     # Código corto que identifica el cuestionario a través de sus versiones.
     """Versión concreta del cuestionario, identificada por código y versión para conservar
     evaluaciones anteriores.
@@ -28,8 +30,6 @@ class InstrumentoPsicologico(models.Model):
     es_inicial = models.BooleanField(default=False)
     # Permite dejar de utilizar esta versión sin borrar las evaluaciones anteriores.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_instrumento_psicologico'

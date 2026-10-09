@@ -43,7 +43,7 @@ export class AssignmentsViewModel {
   readonly filters = this.fb.nonNullable.group({ estado: 'ACTIVA', search: '' });
   readonly workerFilters = this.fb.nonNullable.group({ search: '' });
   readonly form = this.fb.nonNullable.group({
-    psicologo_id: [0, Validators.min(1)],
+    psicologo_id: ['', Validators.required],
     motivo_fin: ['', Validators.maxLength(2000)],
   });
   readonly selectedWorker = computed(() => {
@@ -132,7 +132,7 @@ export class AssignmentsViewModel {
     this.notice.set('');
     this.form.reset();
     this.form.controls.psicologo_id.setValidators(
-      action.kind === 'finish' ? [] : [Validators.min(1)],
+      action.kind === 'finish' ? [] : [Validators.required],
     );
     this.form.controls.motivo_fin.setValidators(
       action.kind === 'assign' ? [] : [Validators.required, Validators.maxLength(2000)],

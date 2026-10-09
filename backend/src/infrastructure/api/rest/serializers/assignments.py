@@ -12,13 +12,13 @@ class WorkerFilterSerializer(StrictSerializer):
 
 class AssignmentFilterSerializer(WorkerFilterSerializer):
     estado = serializers.ChoiceField(choices=['', *ASSIGNMENT_STATES], required=False, default='')
-    trabajador_id = serializers.IntegerField(min_value=1, required=False)
-    psicologo_id = serializers.IntegerField(min_value=1, required=False)
+    trabajador_id = serializers.UUIDField(required=False)
+    psicologo_id = serializers.UUIDField(required=False)
 
 
 class AssignWorkerSerializer(StrictSerializer):
-    trabajador_id = serializers.IntegerField(min_value=1)
-    psicologo_id = serializers.IntegerField(min_value=1)
+    trabajador_id = serializers.UUIDField()
+    psicologo_id = serializers.UUIDField()
 
 
 class FinishAssignmentSerializer(StrictSerializer):
@@ -26,4 +26,4 @@ class FinishAssignmentSerializer(StrictSerializer):
 
 
 class ReassignWorkerSerializer(FinishAssignmentSerializer):
-    psicologo_id = serializers.IntegerField(min_value=1)
+    psicologo_id = serializers.UUIDField()

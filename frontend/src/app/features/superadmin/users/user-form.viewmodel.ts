@@ -25,7 +25,7 @@ export class UserFormViewModel {
   private readonly api = inject(SuperadminService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id')) || null;
+  readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id');
   readonly roles = CREATION_ROLES;
   readonly person = signal<Person | null>(null);
   readonly areas = signal<Institution[]>([]);
@@ -49,8 +49,8 @@ export class UserFormViewModel {
       fecha_nacimiento: ['', [Validators.required, birthDate]],
       sexo: '',
       telefono: ['', [Validators.maxLength(15), phoneNumber]],
-      area_id: [null as number | null],
-      cargo_id: [null as number | null],
+      area_id: [null as string | null],
+      cargo_id: [null as string | null],
       habilitado_asignaciones: true,
     },
     { validators: passwordsMatch },

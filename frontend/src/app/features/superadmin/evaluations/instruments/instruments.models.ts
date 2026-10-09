@@ -8,7 +8,7 @@ export interface InstrumentData {
 }
 
 export interface Instrument extends InstrumentData {
-  id: number;
+  id: string;
   activo: boolean;
   creado_en: string;
   actualizado_en: string;

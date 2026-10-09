@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID
 
 
 @dataclass(frozen=True)
@@ -16,7 +17,7 @@ class InstrumentData:
 
 @dataclass(frozen=True)
 class InstrumentDTO:
-    id: int
+    id: UUID
     codigo: str
     nombre: str
     version: str

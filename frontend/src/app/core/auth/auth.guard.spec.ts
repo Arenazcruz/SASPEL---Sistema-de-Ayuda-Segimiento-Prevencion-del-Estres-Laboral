@@ -57,7 +57,7 @@ describe('Guards de sesión y rol', () => {
     requests
       .expectOne('/api/auth/me/')
       .flush({
-        id: 1,
+        id: '00000000-0000-0000-0000-000000000001',
         email: 'test@example.com',
         first_name: '',
         last_name: '',
@@ -76,7 +76,7 @@ describe('Guards de sesión y rol', () => {
     requests
       .expectOne('/api/auth/me/')
       .flush({
-        id: 1,
+        id: '00000000-0000-0000-0000-000000000001',
         email: 'test@example.com',
         first_name: '',
         last_name: '',
@@ -92,7 +92,7 @@ describe('Guards de sesión y rol', () => {
       requests
         .expectOne('/api/auth/me/')
         .flush({
-          id: 1,
+          id: '00000000-0000-0000-0000-000000000001',
           email: 'test@example.com',
           first_name: '',
           last_name: '',

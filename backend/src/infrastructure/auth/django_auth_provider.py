@@ -3,6 +3,8 @@ comprobación de actividad; la prioridad de roles está en Application y la emis
 jwt_token_provider.py.
 """
 
+from uuid import UUID
+
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password, make_password
 from django.utils import timezone
@@ -50,10 +52,11 @@ class DjangoAuthProvider:
         if verified is None or verified.pk != user.pk:
             raise InvalidCredentials()
         # El login propio no utiliza la vista de SimpleJWT que actualiza este dato.
-        User.objects.filter(pk=verified.pk).update(last_login=timezone.now())
+        verified.last_login = timezone.now()
+        verified.save(update_fields=['last_login'])
         return self._identity(verified)
 
-    def get_identity(self, user_id: int) -> AuthIdentity:
+    def get_identity(self, user_id: UUID) -> AuthIdentity:
         """Busca ID de cuenta y devuelve identidad con grupos actuales. Lanza InvalidCredentials
         si falta e InactiveAccount si está desactivada; no modifica datos.
         """

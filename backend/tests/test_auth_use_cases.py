@@ -1,6 +1,7 @@
 """Comprueba la elección de paneles sin cargar Django ni acceder a una base de datos."""
 
 from unittest import TestCase
+from uuid import UUID
 from src.application.dto.auth import AuthIdentity, LoginCommand
 from src.application.services.auth_identity import MissingFunctionalRole, present_identity
 from src.application.use_cases.authenticate_user import AuthenticateUser
@@ -12,7 +13,7 @@ class FakeProvider:
     Django.
     """
     def __init__(self, groups=('TRABAJADOR',), superuser=False):
-        self.identity = AuthIdentity(1, 'test@example.com', 'Ana', 'Prueba', groups, superuser)
+        self.identity = AuthIdentity(UUID(int=1), 'test@example.com', 'Ana', 'Prueba', groups, superuser)
 
     def authenticate(self, email, password):
         """Registra credenciales recibidas y devuelve identidad ficticia; no verifica hashes
@@ -66,6 +67,6 @@ class AuthUseCaseTests(TestCase):
 
     def test_recupera_identidad_actual(self):
         provider = FakeProvider(('PSICOLOGO',))
-        user = GetAuthenticatedUser(provider).execute(1)
-        self.assertEqual(provider.requested_id, 1)
+        user = GetAuthenticatedUser(provider).execute(provider.identity.id)
+        self.assertEqual(provider.requested_id, provider.identity.id)
         self.assertEqual(user.role, 'PSICOLOGO')

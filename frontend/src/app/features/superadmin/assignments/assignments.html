@@ -59,7 +59,7 @@
         <label
           >Psicólogo {{ selection.kind === 'reassign' ? 'nuevo' : '' }} *
           <select formControlName="psicologo_id">
-            <option [ngValue]="0">Selecciona un psicólogo</option>
+            <option [ngValue]="''">Selecciona un psicólogo</option>
             @for (load of vm.availablePsychologists(); track load.psicologo.id) {
               <option [ngValue]="load.psicologo.id">
                 {{ load.psicologo.nombre_completo }} · {{ load.psicologo.email }} —

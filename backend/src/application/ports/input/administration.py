@@ -5,6 +5,7 @@ casos concretos.
 """
 
 from typing import Protocol
+from uuid import UUID
 from src.application.dto.superadmin import (
     CreateUserCommand, DashboardSummary, ResetPasswordCommand,
     UpdateUserCommand, UserDTO, UserFilters, UserPage,
@@ -18,7 +19,7 @@ class UserListing(Protocol):
 
 class UserDetail(Protocol):
     """Recibe ID de cuenta y devuelve su ficha; cuenta inexistente produce PersonNotFound."""
-    def execute(self, user_id: int) -> UserDTO: ...
+    def execute(self, user_id: UUID) -> UserDTO: ...
 
 
 class UserRegistration(Protocol):
