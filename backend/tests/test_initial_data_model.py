@@ -204,7 +204,7 @@ class InitialRolesMigrationTests(TestCase):
         group = Group.objects.get(name='PSICOLOGO')
         usuario = get_user_model().objects.create_user(username='profesional')
         usuario.groups.add(group)
-        permiso = Permission.objects.get(content_type__app_label='auth', codename='view_user')
+        permiso = Permission.objects.get(content_type__app_label='api', codename='view_usuario')
         group.permissions.add(permiso)
         unrelated = Group.objects.create(name='GRUPO_EXISTENTE')
         with connection.schema_editor() as editor:

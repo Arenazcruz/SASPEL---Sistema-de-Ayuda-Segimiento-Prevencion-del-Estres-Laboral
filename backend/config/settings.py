@@ -76,6 +76,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTH_USER_MODEL = 'api.Usuario'
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
@@ -181,7 +183,7 @@ CACHES = {
 # se crean tablas nuevas; cerrar sesión elimina los tokens del navegador.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'src.infrastructure.auth.jwt_authentication.UUIDJWTAuthentication',
     ],
 }
 SIMPLE_JWT = {

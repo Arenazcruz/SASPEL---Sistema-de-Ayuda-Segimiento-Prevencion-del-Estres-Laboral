@@ -19,7 +19,7 @@ import { passwordsMatch, passwordStrength } from './password-validation';
 export class UserPasswordViewModel {
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
+  readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
   readonly person = signal<Person | null>(null);
   readonly error = signal('');
   readonly notice = signal('');

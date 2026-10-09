@@ -15,16 +15,16 @@ export class InstrumentsService {
     }
     return this.http.get<InstrumentPage>(this.base, { params });
   }
-  get(id: number) {
+  get(id: string) {
     return this.http.get<Instrument>(`${this.base}${id}/`);
   }
   create(data: InstrumentData) {
     return this.http.post<Instrument>(this.base, data);
   }
-  update(id: number, data: InstrumentData) {
+  update(id: string, data: InstrumentData) {
     return this.http.patch<Instrument>(`${this.base}${id}/`, data);
   }
-  active(id: number, active: boolean) {
+  active(id: string, active: boolean) {
     return this.http.post<Instrument>(
       `${this.base}${id}/${active ? 'activate' : 'deactivate'}/`,
       {},

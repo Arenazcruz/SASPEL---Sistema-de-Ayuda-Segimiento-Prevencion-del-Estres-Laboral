@@ -9,11 +9,13 @@ proporcionado; su cálculo automático se implementará más adelante.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .aplicacion_instrumento import AplicacionInstrumento
 from .rango_interpretacion import RangoInterpretacion
 
 
-class ResultadoInstrumento(models.Model):
+class ResultadoInstrumento(AuditableModel):
     # Evaluación a la que pertenece el resultado; solo puede tener uno.
     """Resultado único de una aplicación con puntaje y rango opcional; requiere que otro proceso
     lo calcule y guarde.
@@ -30,8 +32,6 @@ class ResultadoInstrumento(models.Model):
     )
     # Momento en que se calculó el puntaje, distinto del momento de guardarlo.
     fecha_calculo = models.DateTimeField()
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_resultado_instrumento'

@@ -4,6 +4,8 @@ Cada modelo se mantiene en su propio archivo para encontrarlo fácilmente.
 Importarlos aquí permite que Django los descubra; no crea registros de ejemplo.
 """
 
+from .usuario import Usuario
+from .auditable import AuditableModel
 from .aplicacion_instrumento import AplicacionInstrumento
 from .area_institucional import AreaInstitucional
 from .asignacion_instrumento import AsignacionInstrumento
@@ -21,6 +23,8 @@ from .respuesta_pregunta import RespuestaPregunta
 from .resultado_instrumento import ResultadoInstrumento
 
 __all__ = [
+    'Usuario',
+    'AuditableModel',
     'AplicacionInstrumento',
     'AreaInstitucional',
     'AsignacionInstrumento',

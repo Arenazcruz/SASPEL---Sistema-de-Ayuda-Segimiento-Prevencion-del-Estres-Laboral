@@ -14,7 +14,7 @@ import { AuthUser } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 const user: AuthUser = {
-  id: 1,
+  id: '00000000-0000-0000-0000-000000000001',
   email: 'test@example.com',
   first_name: 'Ana',
   last_name: '',

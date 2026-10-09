@@ -15,8 +15,10 @@ Las notas de atención psicológica pertenecerán al módulo de seguimiento.
 from django.conf import settings
 from django.db import models
 
+from .auditable import AuditableModel
 
-class Cita(models.Model):
+
+class Cita(AuditableModel):
     """Cita solicitada entre un trabajador y un psicólogo."""
 
     class Prioridad(models.TextChoices):
@@ -72,8 +74,6 @@ class Cita(models.Model):
         'self', on_delete=models.PROTECT, null=True, blank=True,
         related_name='reprogramaciones',
     )
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_cita'

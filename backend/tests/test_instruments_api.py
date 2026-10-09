@@ -151,7 +151,7 @@ class InstrumentsApiTests(TestCase):
 
     def test_missing_instrument_returns_404(self):
         for method, suffix in (('get', ''), ('patch', ''), ('post', 'activate/'), ('post', 'deactivate/')):
-            response = getattr(self.client, method)(f'{BASE}999999/{suffix}', {}, format='json')
+            response = getattr(self.client, method)(f'{BASE}00000000-0000-0000-0000-000000999999/{suffix}', {}, format='json')
             self.assertEqual(response.status_code, 404)
 
     def requests(self):

@@ -31,7 +31,7 @@ export class SuperadminService {
   /**
    * GET users/{id}/: devuelve Observable<Person>; un ID inexistente produce error HTTP.
    */
-  user(id: number) {
+  user(id: string) {
     return this.http.get<Person>(`${this.base}/users/${id}/`);
   }
   /**
@@ -45,14 +45,14 @@ export class SuperadminService {
    * PATCH users/{id}/: envía cambios personales parciales y devuelve Observable<Person>. No
    * usar para rol, estado o clave.
    */
-  update(id: number, data: object) {
+  update(id: string, data: object) {
     return this.http.patch<Person>(`${this.base}/users/${id}/`, data);
   }
   /**
    * POST users/{id}/activate/ o deactivate/ según active; devuelve persona actualizada y
    * conserva el registro.
    */
-  active(id: number, active: boolean) {
+  active(id: string, active: boolean) {
     return this.http.post<Person>(
       `${this.base}/users/${id}/${active ? 'activate' : 'deactivate'}/`,
       {},
@@ -62,13 +62,13 @@ export class SuperadminService {
    * POST users/{id}/role/: devuelve persona con nuevo rol; el backend protege transiciones y
    * último Superadmin.
    */
-  role(id: number, role: string) {
+  role(id: string, role: string) {
     return this.http.post<Person>(`${this.base}/users/${id}/role/`, { role });
   }
   /**
    * POST users/{id}/reset-password/: envía clave y confirmación y devuelve mensaje detail.
    */
-  password(id: number, data: object) {
+  password(id: string, data: object) {
     return this.http.post<{ detail: string }>(`${this.base}/users/${id}/reset-password/`, data);
   }
   /**
@@ -84,7 +84,7 @@ export class SuperadminService {
    * POST {kind}/ si no hay ID o PATCH {kind}/{id}/ al editar; recibe nombre/descripcion y
    * devuelve catálogo guardado.
    */
-  saveInstitution(kind: InstitutionKind, id: number | null, data: object) {
+  saveInstitution(kind: InstitutionKind, id: string | null, data: object) {
     return id
       ? this.http.patch<Institution>(`${this.base}/${kind}/${id}/`, data)
       : this.http.post<Institution>(`${this.base}/${kind}/`, data);
@@ -93,7 +93,7 @@ export class SuperadminService {
    * POST {kind}/{id}/activate/ o deactivate/; devuelve registro actualizado sin borrar
    * vínculos.
    */
-  institutionActive(kind: InstitutionKind, id: number, active: boolean) {
+  institutionActive(kind: InstitutionKind, id: string, active: boolean) {
     return this.http.post<Institution>(
       `${this.base}/${kind}/${id}/${active ? 'activate' : 'deactivate'}/`,
       {},

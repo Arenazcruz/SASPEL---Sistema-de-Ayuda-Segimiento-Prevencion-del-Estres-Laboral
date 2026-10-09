@@ -29,7 +29,7 @@ import { UserPassword } from './users/user-password';
 import { superadminChildGuard } from './superadmin.routes';
 
 const person: Person = {
-  id: 2,
+  id: '00000000-0000-0000-0000-000000000002',
   email: 'ana@example.com',
   first_name: 'Ana',
   last_name: 'Prueba',
@@ -51,7 +51,7 @@ const person: Person = {
   tiene_perfil: true,
 };
 const authUser = signal({
-  id: 1,
+  id: '00000000-0000-0000-0000-000000000001',
   email: 'root@example.com',
   first_name: 'Root',
   role: 'SUPERADMIN' as FunctionalRole,
@@ -60,7 +60,7 @@ const authUser = signal({
 const routeData = new BehaviorSubject({});
 const query = new BehaviorSubject(convertToParamMap({}));
 
-function setup(component: unknown, id?: number) {
+function setup(component: unknown, id?: string) {
   routeData.next({});
   query.next(convertToParamMap({}));
   TestBed.configureTestingModule({
@@ -90,7 +90,9 @@ function catalogs(http: HttpTestingController, active = false) {
   for (const kind of ['areas', 'cargos'])
     http
       .expectOne(`/api/superadmin/${kind}/${active ? '?active=true' : ''}`)
-      .flush([{ id: 1, nombre: kind, descripcion: '', activo: true }]);
+      .flush([
+        { id: '00000000-0000-0000-0000-000000000001', nombre: kind, descripcion: '', activo: true },
+      ]);
 }
 
 describe('Superadmin layout y permisos', () => {
@@ -144,7 +146,7 @@ describe('Superadmin layout y permisos', () => {
 describe('Formulario de personas', () => {
   let http: HttpTestingController;
   afterEach(() => http.verify());
-  function form(id?: number) {
+  function form(id?: string) {
     http = setup(UserForm, id);
     const fixture = TestBed.createComponent(UserForm);
     catalogs(http, true);
@@ -275,11 +277,11 @@ describe('Formulario de personas', () => {
   });
   // La edición personal usa PATCH; clave, rol y estado deben conservar sus acciones dedicadas.
   it('edita sin enviar contraseña, rol ni estado', () => {
-    const vm = form(2).componentInstance.vm;
+    const vm = form(person.id).componentInstance.vm;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     vm.form.controls.first_name.setValue('Editada');
     vm.submit();
-    const req = http.expectOne('/api/superadmin/users/2/');
+    const req = http.expectOne('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(req.request.method).toBe('PATCH');
     for (const key of ['email', 'password', 'password_confirmation', 'role', 'is_active'])
       expect(req.request.body).not.toHaveProperty(key);
@@ -287,10 +289,10 @@ describe('Formulario de personas', () => {
     req.flush({ ...person, first_name: 'Editada' });
   });
   it('aplica las mismas validaciones durante la edición', () => {
-    const vm = form(2).componentInstance.vm;
+    const vm = form(person.id).componentInstance.vm;
     vm.form.patchValue({ telefono: '123abc45', fecha_nacimiento: '2099-01-01' });
     vm.submit();
-    http.expectNone('/api/superadmin/users/2/');
+    http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(vm.form.controls.telefono.invalid).toBe(true);
     expect(vm.form.controls.fecha_nacimiento.invalid).toBe(true);
   });
@@ -348,7 +350,9 @@ describe('Listado y estado', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     for (const active of [true, false]) {
       vm.toggle({ ...person, is_active: active });
-      const req = http.expectOne(`/api/superadmin/users/2/${active ? 'deactivate' : 'activate'}/`);
+      const req = http.expectOne(
+        `/api/superadmin/users/00000000-0000-0000-0000-000000000002/${active ? 'deactivate' : 'activate'}/`,
+      );
       expect(req.request.method).toBe('POST');
       req.flush({ ...person, is_active: !active });
       http
@@ -360,20 +364,22 @@ describe('Listado y estado', () => {
 
 describe('Restablecer contraseña', () => {
   it('valida, permite mostrar/ocultar y limpia ambos campos al guardar', async () => {
-    const http = setup(UserPassword, 2);
+    const http = setup(UserPassword, person.id);
     const fixture = TestBed.createComponent(UserPassword);
     const vm = fixture.componentInstance.vm;
-    http.expectOne('/api/superadmin/users/2/').flush(person);
+    http.expectOne('/api/superadmin/users/00000000-0000-0000-0000-000000000002/').flush(person);
     vm.form.setValue({ password: 'Nueva-segura-912!', password_confirmation: 'distinta' });
     vm.submit();
-    http.expectNone('/api/superadmin/users/2/reset-password/');
+    http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/reset-password/');
     vm.form.controls.password_confirmation.setValue('Nueva-segura-912!');
     await fixture.whenStable();
     fixture.nativeElement.querySelector('.sa-plain').click();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('input').type).toBe('text');
     vm.submit();
-    const req = http.expectOne('/api/superadmin/users/2/reset-password/');
+    const req = http.expectOne(
+      '/api/superadmin/users/00000000-0000-0000-0000-000000000002/reset-password/',
+    );
     req.flush({ detail: 'Contraseña restablecida.' });
     expect(vm.form.controls.password.value).toBe('');
     expect(vm.notice()).toContain('correctamente');

@@ -4,7 +4,7 @@ import { FunctionalRole } from '../../../core/auth/auth.models';
 export type AssignmentState = 'ACTIVA' | 'FINALIZADA' | 'REASIGNADA';
 
 export interface AssignmentPerson {
-  id: number;
+  id: string;
   nombre_completo: string;
   email: string;
   codigo_empleado: string;
@@ -14,7 +14,7 @@ export interface AssignmentPerson {
 }
 
 export interface ProfessionalAssignment {
-  id: number;
+  id: string;
   trabajador: AssignmentPerson;
   psicologo: AssignmentPerson;
   fecha_asignacion: string;

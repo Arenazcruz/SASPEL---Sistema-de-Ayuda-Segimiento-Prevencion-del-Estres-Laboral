@@ -8,7 +8,7 @@ import { ProfessionalAssignments } from './assignments';
 
 const base = '/api/superadmin/assignments/';
 const worker: AssignmentPerson = {
-  id: 2,
+  id: '00000000-0000-0000-0000-000000000002',
   nombre_completo: 'Ana Prueba',
   email: 'ana@example.com',
   codigo_empleado: 'T23-2',
@@ -18,7 +18,7 @@ const worker: AssignmentPerson = {
 };
 const psychologist: AssignmentPerson = {
   ...worker,
-  id: 3,
+  id: '00000000-0000-0000-0000-000000000003',
   nombre_completo: 'Psicóloga Uno',
   email: 'psych-one@example.com',
   role: 'PSICOLOGO',
@@ -26,12 +26,12 @@ const psychologist: AssignmentPerson = {
 };
 const replacement: AssignmentPerson = {
   ...psychologist,
-  id: 4,
+  id: '00000000-0000-0000-0000-000000000004',
   nombre_completo: 'Psicólogo Dos',
   email: 'psych-two@example.com',
 };
 const assignment: ProfessionalAssignment = {
-  id: 10,
+  id: '00000000-0000-0000-0000-00000000000a',
   trabajador: worker,
   psicologo: psychologist,
   estado: 'ACTIVA',
@@ -146,17 +146,21 @@ describe('Asignaciones profesionales T23', () => {
     expect(vm.availablePsychologists().map((row) => row.psicologo.id)).toEqual([replacement.id]);
     vm.form.setValue({ psicologo_id: replacement.id, motivo_fin: ' Cambio de disponibilidad ' });
     vm.submit();
-    const request = http.expectOne(base + '10/reassign/');
+    const request = http.expectOne(base + '00000000-0000-0000-0000-00000000000a/reassign/');
     expect(request.request.body).toEqual({
       psicologo_id: replacement.id,
       motivo_fin: 'Cambio de disponibilidad',
     });
-    const next = { ...assignment, id: 11, psicologo: replacement };
+    const next = {
+      ...assignment,
+      id: '00000000-0000-0000-0000-00000000000b',
+      psicologo: replacement,
+    };
     request.flush(next, { status: 201, statusText: 'Created' });
     load([next], []);
     vm.history(worker);
     const queriesForHistory = queries();
-    expect(queriesForHistory.rows.request.params.get('trabajador_id')).toBe('2');
+    expect(queriesForHistory.rows.request.params.get('trabajador_id')).toBe(worker.id);
     expect(queriesForHistory.rows.request.params.has('estado')).toBe(false);
     queriesForHistory.rows.flush(
       page([
@@ -182,10 +186,10 @@ describe('Asignaciones profesionales T23', () => {
     const vm = fixture.componentInstance.vm;
     vm.open({ kind: 'finish', assignment });
     vm.submit();
-    http.expectNone(base + '10/finish/');
+    http.expectNone(base + '00000000-0000-0000-0000-00000000000a/finish/');
     vm.form.controls.motivo_fin.setValue('Cierre de acompañamiento');
     vm.submit();
-    const request = http.expectOne(base + '10/finish/');
+    const request = http.expectOne(base + '00000000-0000-0000-0000-00000000000a/finish/');
     expect(request.request.body).toEqual({ motivo_fin: 'Cierre de acompañamiento' });
     request.flush({ ...assignment, estado: 'FINALIZADA' });
     load([], [worker]);
@@ -200,7 +204,7 @@ describe('Asignaciones profesionales T23', () => {
     vm.form.setValue({ psicologo_id: replacement.id, motivo_fin: 'Cambio' });
     vm.submit();
     http
-      .expectOne(base + '10/reassign/')
+      .expectOne(base + '00000000-0000-0000-0000-00000000000a/reassign/')
       .flush(
         { psicologo_id: ['El psicólogo ya no está habilitado.'] },
         { status: 400, statusText: 'Bad Request' },

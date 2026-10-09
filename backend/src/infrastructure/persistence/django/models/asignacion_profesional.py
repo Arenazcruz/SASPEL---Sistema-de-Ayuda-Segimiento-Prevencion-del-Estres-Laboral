@@ -10,8 +10,10 @@ La elección automática del psicólogo se implementará más adelante.
 from django.conf import settings
 from django.db import models
 
+from .auditable import AuditableModel
 
-class AsignacionProfesional(models.Model):
+
+class AsignacionProfesional(AuditableModel):
     """Vínculo e historial trabajador/psicólogo; constraints impiden autoasignación y dos
     vínculos activos por trabajador.
     """
@@ -43,8 +45,6 @@ class AsignacionProfesional(models.Model):
     )
     # Explica por qué terminó el vínculo, por ejemplo un cambio de profesional.
     motivo_fin = models.TextField(blank=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_asignacion_profesional'

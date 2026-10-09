@@ -9,7 +9,7 @@ from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from src.infrastructure.auth.jwt_authentication import UUIDJWTAuthentication
 
 from src.application.dto.auth import LoginCommand
 from src.application.services.auth_identity import (
@@ -80,7 +80,7 @@ class LoginView(AuthErrorMixin, APIView):
 class MeView(AuthErrorMixin, APIView):
     """GET /api/auth/me/: expone la identidad vigente de la cuenta autenticada por JWT."""
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [UUIDJWTAuthentication]
 
     def get(self, request):
         """Usa request.user.pk y devuelve DTO con dashboard_path dentro del objeto; propaga

@@ -38,8 +38,8 @@ class UserEditSerializer(StrictSerializer):
     fecha_nacimiento = serializers.DateField(required=False)
     sexo = serializers.ChoiceField(choices=['', 'F', 'M', 'O'], required=False)
     telefono = serializers.CharField(max_length=15, allow_blank=True, required=False)
-    area_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
-    cargo_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    area_id = serializers.UUIDField(allow_null=True, required=False)
+    cargo_id = serializers.UUIDField(allow_null=True, required=False)
     habilitado_asignaciones = serializers.BooleanField(required=False)
 
     def validate(self, data):
@@ -88,8 +88,8 @@ class UserFilterSerializer(serializers.Serializer):
     search = serializers.CharField(required=False, allow_blank=True, max_length=200)
     role = serializers.ChoiceField(choices=[role.value for role in FunctionalRole] + ['ADMINISTRADORES'], required=False)
     active = serializers.BooleanField(required=False)
-    area = serializers.IntegerField(min_value=1, required=False)
-    cargo = serializers.IntegerField(min_value=1, required=False)
+    area = serializers.UUIDField(required=False)
+    cargo = serializers.UUIDField(required=False)
     page = serializers.IntegerField(min_value=1, required=False, default=1)
 
 

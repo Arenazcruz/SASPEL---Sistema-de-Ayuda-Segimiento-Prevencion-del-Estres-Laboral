@@ -8,7 +8,7 @@ import { SUPERADMIN_ROUTES } from '../../superadmin.routes';
 
 const base = '/api/superadmin/instruments/';
 const item: Instrument = {
-  id: 3,
+  id: '00000000-0000-0000-0000-000000000003',
   codigo: 'TEST-A',
   nombre: 'Instrumento ficticio',
   version: '1.0',
@@ -179,17 +179,17 @@ describe('Instrumentos T25-A', () => {
   it('consulta detalle y pasa a edición en el mismo modal usando PATCH', async () => {
     load();
     button('Ver').click();
-    http.expectOne(base + '3/').flush(item);
+    http.expectOne(base + '00000000-0000-0000-0000-000000000003/').flush(item);
     await fixture.whenStable();
     expect(dialog().open).toBe(true);
     expect(dialog().textContent).toContain('Primera línea');
     expect(dialog().textContent).toContain('Descripción');
     button('Editar instrumento').click();
-    http.expectOne(base + '3/').flush(item);
+    http.expectOne(base + '00000000-0000-0000-0000-000000000003/').flush(item);
     await fixture.whenStable();
     input('nombre', 'Nombre editado');
     submit();
-    const request = http.expectOne(base + '3/');
+    const request = http.expectOne(base + '00000000-0000-0000-0000-000000000003/');
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body.nombre).toBe('Nombre editado');
     expect(request.request.body.es_inicial).toBe(true);
@@ -207,14 +207,14 @@ describe('Instrumentos T25-A', () => {
     load();
     vm.toggle(item);
     vm.toggle(item);
-    const request = http.expectOne(base + '3/deactivate/');
+    const request = http.expectOne(base + '00000000-0000-0000-0000-000000000003/deactivate/');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({});
     request.flush({ ...item, activo: false });
     const reload = load([]);
     expect(reload.request.params.get('activo')).toBe('true');
     vm.toggle({ ...item, activo: false });
-    http.expectOne(base + '3/activate/').flush(item);
+    http.expectOne(base + '00000000-0000-0000-0000-000000000003/activate/').flush(item);
     load();
     expect(vm.notice()).toContain('activado');
   });
@@ -225,13 +225,17 @@ describe('Instrumentos T25-A', () => {
     button('Reintentar').click();
     load();
     button('Ver').click();
-    http.expectOne(base + '3/').flush({}, { status: 404, statusText: 'Not Found' });
+    http
+      .expectOne(base + '00000000-0000-0000-0000-000000000003/')
+      .flush({}, { status: 404, statusText: 'Not Found' });
     await fixture.whenStable();
     expect(dialog().textContent).toContain('no existe');
     fixture.componentInstance.close();
     await fixture.whenStable();
     fixture.componentInstance.vm.toggle(item);
-    http.expectOne(base + '3/deactivate/').flush({}, { status: 403, statusText: 'Forbidden' });
+    http
+      .expectOne(base + '00000000-0000-0000-0000-000000000003/deactivate/')
+      .flush({}, { status: 403, statusText: 'Forbidden' });
     await fixture.whenStable();
     expect(fixture.componentInstance.vm.busy()).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('No tienes acceso');
@@ -241,7 +245,7 @@ describe('Instrumentos T25-A', () => {
     load();
     const vm = fixture.componentInstance.vm;
     vm.open('edit', item);
-    const detail = http.expectOne(base + '3/');
+    const detail = http.expectOne(base + '00000000-0000-0000-0000-000000000003/');
     await fixture.whenStable();
     dialog().dispatchEvent(new Event('cancel', { cancelable: true }));
     expect(detail.cancelled).toBe(true);
@@ -259,7 +263,9 @@ describe('Instrumentos T25-A', () => {
     vm.goTo(2);
     http.expectOne((r) => r.url === base).flush(page([item], 21, 2));
     vm.toggle(item);
-    http.expectOne(base + '3/deactivate/').flush({ ...item, activo: false });
+    http
+      .expectOne(base + '00000000-0000-0000-0000-000000000003/deactivate/')
+      .flush({ ...item, activo: false });
     http.expectOne((r) => r.url === base).flush(page([], 20, 2));
     await fixture.whenStable();
     const request = http.expectOne((r) => r.url === base);

@@ -2,6 +2,8 @@
 en config/settings.py; actualmente no hay blacklist ni rotación del refresh.
 """
 
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.settings import api_settings
@@ -11,7 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class JWTTokenProvider:
     """Responsable técnico de tokens; exige cuenta activa pero no resuelve roles funcionales."""
     @staticmethod
-    def issue(user_id: int) -> dict[str, str]:
+    def issue(user_id: UUID) -> dict[str, str]:
         """Recibe ID y devuelve access/refresh para una cuenta activa. Sin cuenta válida lanza
         InvalidToken. No guarda una sesión adicional; el login debe resolver el rol antes de
         invocarlo.
@@ -30,7 +32,7 @@ class JWTTokenProvider:
         """
         try:
             refresh = RefreshToken(raw_token)
-            user_id = refresh[api_settings.USER_ID_CLAIM]
+            user_id = UUID(str(refresh[api_settings.USER_ID_CLAIM]))
             # Una cuenta borrada o desactivada tampoco puede renovar su sesión.
             if not get_user_model().objects.filter(pk=user_id, is_active=True).exists():
                 raise InvalidToken('La sesión ya no es válida.')

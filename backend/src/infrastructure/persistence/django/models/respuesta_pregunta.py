@@ -10,12 +10,14 @@ del tipo que pide la pregunta y que corresponda al cuestionario aplicado.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .aplicacion_instrumento import AplicacionInstrumento
 from .opcion_respuesta import OpcionRespuesta
 from .pregunta_instrumento import PreguntaInstrumento
 
 
-class RespuestaPregunta(models.Model):
+class RespuestaPregunta(AuditableModel):
     # Evaluación en la que el trabajador dio esta respuesta.
     """Respuesta única por pregunta y aplicación; conserva opción, texto, número o booleano sin
     validar todavía su correspondencia con el tipo.
@@ -38,8 +40,6 @@ class RespuestaPregunta(models.Model):
     valor_numerico = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
     # Respuesta de sí/no; vacío significa que ese dato no se proporcionó.
     valor_booleano = models.BooleanField(null=True, blank=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_respuesta_pregunta'

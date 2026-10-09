@@ -5,6 +5,8 @@ escenarios de rollback y de acceso con token anterior al cambiar el módulo.
 
 from datetime import date
 from unittest.mock import patch
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import caches
@@ -284,7 +286,7 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.action(self.root.pk, 'deactivate').status_code, 400)
         self.assertEqual(self.action(self.root.pk, 'role', {'role': 'ADMIN'}).status_code, 400)
         # Se ejercita la regla del último activo separadamente de la autooperación.
-        for case, args in ((DeactivateUser, (self.root.pk, -1)), (ChangeUserRole, (self.root.pk, 'ADMIN', -1))):
+        for case, args in ((DeactivateUser, (self.root.pk, UUID(int=999999))), (ChangeUserRole, (self.root.pk, 'ADMIN', UUID(int=999999)))):
             with self.assertRaisesMessage(AdministrationError, 'al menos un SUPERADMIN'):
                 build_administration(case).execute(*args)
         other = self.create(role='SUPERADMIN').data['id']
@@ -350,7 +352,7 @@ class SuperadminApiTests(TestCase):
 
     def test_unknown_ids_are_404(self):
         """Consulta IDs ausentes de persona, área y cargo para proteger el contrato HTTP 404."""
-        for url in ('users/999999/', 'areas/999999/', 'cargos/999999/'):
+        for url in ('users/00000000-0000-0000-0000-000000999999/', 'areas/00000000-0000-0000-0000-000000999999/', 'cargos/00000000-0000-0000-0000-000000999999/'):
             self.assertEqual(self.client.get('/api/superadmin/' + url).status_code, 404)
 
     def test_personal_data_rejects_invalid_types_with_field_errors(self):

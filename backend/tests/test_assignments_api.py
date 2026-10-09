@@ -99,10 +99,10 @@ class AssignmentApiTests(TestCase):
         self.assertFalse(AsignacionProfesional.objects.exists())
 
     def test_missing_person_or_assignment_is_404(self):
-        response = self.client.post(BASE, {'trabajador_id': 999999, 'psicologo_id': self.psychologist.pk}, format='json')
+        response = self.client.post(BASE, {'trabajador_id': '00000000-0000-0000-0000-000000999999', 'psicologo_id': self.psychologist.pk}, format='json')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(self.action(999999, 'finish', motivo_fin='Fin').status_code, 404)
-        self.assertEqual(self.action(999999, 'reassign', motivo_fin='Cambio', psicologo_id=self.psychologist.pk).status_code, 404)
+        self.assertEqual(self.action('00000000-0000-0000-0000-000000999999', 'finish', motivo_fin='Fin').status_code, 404)
+        self.assertEqual(self.action('00000000-0000-0000-0000-000000999999', 'reassign', motivo_fin='Cambio', psicologo_id=self.psychologist.pk).status_code, 404)
 
     def test_reassignment_preserves_history_and_load(self):
         old_id = self.assign().data['id']
@@ -204,7 +204,7 @@ class AssignmentApiTests(TestCase):
         endpoints = [
             ('get', BASE, {}), ('post', BASE, {}),
             ('get', BASE + 'unassigned-workers/', {}), ('get', BASE + 'psychologists/', {}),
-            ('post', BASE + '1/finish/', {}), ('post', BASE + '1/reassign/', {}),
+            ('post', BASE + '00000000-0000-0000-0000-000000000001/finish/', {}), ('post', BASE + '00000000-0000-0000-0000-000000000001/reassign/', {}),
         ]
         self.client.credentials()
         for method, path, data in endpoints:

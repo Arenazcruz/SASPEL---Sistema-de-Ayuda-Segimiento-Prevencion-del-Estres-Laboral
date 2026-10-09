@@ -8,7 +8,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from src.infrastructure.auth.jwt_authentication import UUIDJWTAuthentication
 from src.application.dto.superadmin import CreateUserCommand, ResetPasswordCommand, UpdateUserCommand, UserFilters
 from src.application.use_cases import superadmin as cases
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
@@ -36,7 +36,7 @@ class IsFunctionalSuperadmin(BasePermission):
 
 class SuperadminView(APIView):
     """Base que comparte JWT, permiso funcional, traducción de errores y respuesta no-store."""
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [UUIDJWTAuthentication]
     permission_classes = [IsFunctionalSuperadmin]
 
     def handle_exception(self, exc):

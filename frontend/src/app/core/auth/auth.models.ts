@@ -15,7 +15,7 @@ export type FunctionalRole = keyof typeof ROLE_DASHBOARDS;
  * Identidad validada en memoria: dashboard_path viene del servidor y debe coincidir con role.
  */
 export interface AuthUser {
-  id: number;
+  id: string;
   email: string;
   first_name: string;
   last_name: string;
