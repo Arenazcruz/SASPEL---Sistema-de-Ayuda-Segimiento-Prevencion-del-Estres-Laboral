@@ -26,6 +26,7 @@ export class SuperadminLayout {
   readonly mobileOpen = signal(false);
   readonly peopleOpen = signal(true);
   readonly institutionOpen = signal(true);
+  readonly evaluationsOpen = signal(true);
   readonly links = PERSON_LINKS;
   readonly base = '/dashboard/superadmin';
 }
