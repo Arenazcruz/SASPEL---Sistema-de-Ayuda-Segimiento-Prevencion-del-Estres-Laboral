@@ -18,6 +18,15 @@ export const superadminChildGuard: CanActivateChildFn = () => {
 };
 const list = () => import('./users/user-list').then((m) => m.UserList);
 export const SUPERADMIN_ROUTES: Routes = [
+  ...[
+    ['preguntas', 'questions'],
+    ['escalas', 'scales'],
+    ['rangos', 'ranges'],
+  ].map(([path, kind]) => ({
+    path: `evaluaciones/${path}`,
+    data: { kind },
+    loadComponent: () => import('./evaluations/content/content').then((m) => m.InstrumentContent),
+  })),
   {
     path: 'evaluaciones/instrumentos',
     loadComponent: () => import('./evaluations/instruments/instruments').then((m) => m.Instruments),

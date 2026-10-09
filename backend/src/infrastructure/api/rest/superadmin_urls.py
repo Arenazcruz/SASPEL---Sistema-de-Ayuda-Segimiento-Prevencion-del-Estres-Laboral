@@ -4,6 +4,7 @@ SuperadminService. No hay borrado físico publicado.
 """
 
 from django.urls import path
+from src.infrastructure.api.rest.views.instrument_content import ContentListView, ContentDetailView, ContentActionView
 from src.infrastructure.api.rest.views.instruments import InstrumentsView, InstrumentDetailView, InstrumentStateView
 from src.infrastructure.api.rest.views.assignments import (
     AssignmentsView, FinishAssignmentView, PsychologistLoadsView, ReassignWorkerView, UnassignedWorkersView,
@@ -33,3 +34,20 @@ for kind in ('areas', 'cargos'):
     ]
     for action in ('activate', 'deactivate'):
         urlpatterns.append(path(f'{kind}/<uuid:item_id>/{action}/', InstitutionView.as_view(), {'kind': kind, 'action': action}))
+
+
+# Contenido T25: las relaciones se fijan en la URL y no se pueden trasladar por PATCH.
+
+for kind, prefix in (
+    ('questions', 'instruments/<uuid:parent_id>/questions/'),
+    ('ranges', 'instruments/<uuid:parent_id>/ranges/'),
+    ('scales', 'scales/'),
+    ('options', 'scales/<uuid:parent_id>/options/'),
+):
+    urlpatterns += [
+        path(prefix, ContentListView.as_view(), {'kind': kind}),
+        path(prefix + '<uuid:item_id>/', ContentDetailView.as_view(), {'kind': kind}),
+    ]
+    for action in ('activate', 'deactivate') + (('move',) if kind in ('questions', 'options') else ()):
+        urlpatterns.append(path(prefix + '<uuid:item_id>/' + action + '/', ContentActionView.as_view(),
+                                {'kind': kind, 'action': action}))

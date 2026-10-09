@@ -106,6 +106,16 @@ describe('Superadmin layout y permisos', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Usuarios');
     expect(el.querySelector('#evaluations-menu')?.textContent).toContain('Instrumentos');
+    expect(el.querySelectorAll('#evaluations-menu a')).toHaveLength(4);
+    for (const [path, label] of [
+      ['preguntas', 'Preguntas'],
+      ['escalas', 'Escalas de respuesta'],
+      ['rangos', 'Rangos de interpretación'],
+    ]) {
+      expect(
+        el.querySelector(`a[href="/dashboard/superadmin/evaluaciones/${path}"]`)?.textContent,
+      ).toContain(label);
+    }
     expect(el.querySelector('#evaluations-menu a')?.getAttribute('href')).toBe(
       '/dashboard/superadmin/evaluaciones/instrumentos',
     );
