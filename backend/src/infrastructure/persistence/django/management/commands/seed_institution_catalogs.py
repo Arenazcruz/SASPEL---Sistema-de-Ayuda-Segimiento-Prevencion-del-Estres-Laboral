@@ -1,0 +1,165 @@
+"""Carga los nombres institucionales solicitados sin reemplazar registros existentes."""
+
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional
+
+
+AREAS = (
+    'Área de Negocios',
+    'Área de Servicios de Desarrollo',
+    'Área de Recursos Humanos.',
+    'Área de operaciones',
+    'Área de finanzas y captaciones',
+    'Área de planificación e innovación',
+    'Area de TIC',
+    'Área de Riesgos',
+    'Área legal',
+)
+
+CARGOS = (
+    'ADMINISTRADOR DE SISTEMAS',
+    'ANALISTA DE ADMINISTRACION',
+    'ANALISTA DE ALMACENES',
+    'ANALISTA DE BASE DE DATOS Y GESTION DE USUARIOS',
+    'ANALISTA DE CALIDAD Y PROCESOS',
+    'ANALISTA DE CIENCIA DE DATOS',
+    'ANALISTA DE CONTABILIDAD 2',
+    'ANALISTA DE CONTRATACIONES',
+    'ANALISTA DE CREDITOS DE OFICINA NACIONAL',
+    'ANALISTA DE CUMPLIMIENTO',
+    'ANALISTA DE DATOS E INFORMACION GERENCIAL',
+    'ANALISTA DE GESTION DE INFORMACION',
+    'ANALISTA DE GESTION DE LIQUIDEZ',
+    'ANALISTA DE GESTION DE RECURSOS HUMANOS',
+    'ANALISTA DE GESTION DE SISTEMAS',
+    'ANALISTA DE IMAGEN Y COMUNICACION',
+    'ANALISTA DE IMPUESTOS',
+    'ANALISTA DE INFRAESTRUCTURA TECNOLOGICA',
+    'ANALISTA DE INVESTIGACION E INNOVACION',
+    'ANALISTA DE NEGOCIOS',
+    'ANALISTA DE NORMAS Y CONTRATOS',
+    'ANALISTA DE PASIVOS E INVERSIONES',
+    'ANALISTA DE PLANIFICACION E INNOVACION',
+    'ANALISTA DE PROCEDIMIENTOS LEGALES',
+    'ANALISTA DE REDES Y COMUNICACIONES',
+    'ANALISTA DE SEGURIDAD Y SALUD EN EL TRABAJO',
+    'ANALISTA DE SERVICIOS DE DESARROLLO',
+    'ANALISTA DE SERVIDORES Y SISTEMAS OPERATIVOS',
+    'ANALISTA OPERATIVO DE CAPTACIONES',
+    'ASISTENTE COMERCIAL DE CAPTACIONES',
+    'ASISTENTE DE ADMINISTRACION DE RRHH',
+    'ASISTENTE DE ARCHIVOS',
+    'ASISTENTE DE CAPACITACION',
+    'ASISTENTE DE CONTABILIDAD',
+    'ASISTENTE DE CONTABILIDAD OFICINA CENTRAL',
+    'ASISTENTE DE IMPUESTOS',
+    'ASISTENTE DE NEGOCIOS',
+    'ASISTENTE DE OPERACIONES',
+    'ASISTENTE DE RETENCIONES',
+    'ASISTENTE DE RETENCIONES JUDICIALES',
+    'ASISTENTE DE RIESGO TECNOLOGICO',
+    'ASISTENTE DE SEGURIDAD FISICA',
+    'ASISTENTE DE SERVICIOS DE DESARROLLO',
+    'ASISTENTE OPERATIVO DE CAPTACIONES',
+    'AUDITOR INTERNO',
+    'AUXILIAR DE CUMPLIMIENTO',
+    'AUXILIAR DE GESTION DE RECURSOS HUMANOS',
+    'AUXILIAR DE MANTENIMIENTO Y ALMACENES',
+    'AUXILIAR DE OPERACIONES Y SEGUROS (PUNTO DE RECLAMO)',
+    'AUXILIAR DE OPERACIONES Y SERVICIOS AUXILIARES',
+    'AUXILIAR DE SEGURIDAD Y SALUD EN EL TRABAJO',
+    'AUXILIAR DE SOPORTE TECNICO',
+    'CONTADOR OFICINA CENTRAL',
+    'FACILITADOR NACIONAL DE CAPACITACION',
+    'FUNCIONARIO RESPONSABLE',
+    'GERENTE GENERAL',
+    'GERENTE NACIONAL DE AUDITORIA INTERNA',
+    'GERENTE NACIONAL DE FINANZAS Y CAPTACIONES',
+    'GERENTE NACIONAL DE NEGOCIOS',
+    'GERENTE NACIONAL DE OPERACIONES',
+    'GERENTE NACIONAL DE PLANIFICACION E INNOVACION',
+    'GERENTE NACIONAL DE RECURSOS HUMANOS',
+    'GERENTE NACIONAL DE RIESGOS',
+    'GERENTE NACIONAL DE SERVICIOS DE DESARROLLO',
+    'GERENTE NACIONAL DE TECNOLOGIA DE INFORMACION',
+    'GERENTE NACIONAL LEGAL',
+    'JEFE DE AUDITORIA INTERNA',
+    'JEFE DE RIESGOS',
+    'JEFE DE RIESGOS DE SUCURSAL',
+    'JEFE EN ANALISIS DE DATOS',
+    'JEFE NACIONAL COMERCIAL DE CAPTACIONES',
+    'JEFE NACIONAL DE ADMINISTRACION',
+    'JEFE NACIONAL DE ADMINISTRACION DE RECURSOS HUMANOS',
+    'JEFE NACIONAL DE AUDITORIA INTERNA',
+    'JEFE NACIONAL DE BANCA COMUNAL',
+    'JEFE NACIONAL DE CALIDAD Y PROCESOS',
+    'JEFE NACIONAL DE CAPACITACION',
+    'JEFE NACIONAL DE CONTABILIDAD',
+    'JEFE NACIONAL DE CONTROL DE CALIDAD',
+    'JEFE NACIONAL DE CREDITO INDIVIDUAL',
+    'JEFE NACIONAL DE GESTION CREDITICIA',
+    'JEFE NACIONAL DE GESTION DE PROYECTOS SOCIALES',
+    'JEFE NACIONAL DE GESTION DE RECURSOS HUMANOS',
+    'JEFE NACIONAL DE GESTION DE SISTEMAS',
+    'JEFE NACIONAL DE INGENIERIA DE DATOS',
+    'JEFE NACIONAL DE NORMAS Y CONTRATOS',
+    'JEFE NACIONAL DE OPERACIONES',
+    'JEFE NACIONAL DE PLANIFICACION E INNOVACION',
+    'JEFE NACIONAL DE PROCEDIMIENTOS LEGALES',
+    'JEFE NACIONAL DE PROMOCION SOCIAL',
+    'JEFE NACIONAL DE REDES Y COMUNICACIONES',
+    'JEFE NACIONAL DE RIESGO CREDITICIO',
+    'JEFE NACIONAL DE RIESGO DE LIQUIDEZ Y DE MERCADO',
+    'JEFE NACIONAL DE RIESGO INTEGRAL',
+    'JEFE NACIONAL DE RIESGO OPERACIONAL',
+    'JEFE NACIONAL DE RIESGO TECNOLOGICO',
+    'JEFE NACIONAL DE SEGURIDAD FISICA',
+    'JEFE NACIONAL DE SERVICIOS EDUCATIVOS',
+    'JEFE NACIONAL DE SERVICIOS FINANCIEROS AUXILIARES',
+    'JEFE NACIONAL DE SERVIDORES Y BASES DE DATOS',
+    'JEFE NACIONAL DE SUPERVISION NORMATIVA',
+    'JEFE NACIONAL DE TESORERIA',
+    'JEFE NACIONAL OPERATIVO DE CAPTACIONES',
+    'MENSAJERIA Y LIMPIEZA OFICINA NACIONAL',
+    'MENSAJERO',
+    'MENSAJERO OFICINA NACIONAL 2',
+    'SECRETARIA OFICINA NACIONAL',
+    'SUB GERENTE NACIONAL DE CONTABILIDAD',
+    'SUB GERENTE NACIONAL DE FINANZAS Y CAPTACIONES',
+    'SUB GERENTE NACIONAL DE IMAGEN Y COMUNICACION',
+    'SUB GERENTE NACIONAL DE NEGOCIOS',
+)
+
+
+class Command(BaseCommand):
+    help = 'Carga o reactiva las 9 áreas y los 111 cargos institucionales sin duplicarlos.'
+
+    def handle(self, *args, **options):
+        results = []
+        with transaction.atomic():
+            for label, model, names in (
+                ('Áreas', AreaInstitucional, AREAS),
+                ('Cargos', CargoInstitucional, CARGOS),
+            ):
+                created_count = updated_count = 0
+                for name in names:
+                    item, created = model.objects.select_for_update().get_or_create(
+                        nombre=name,
+                        defaults={'activo': True, 'deleted': False, 'descripcion': ''},
+                    )
+                    if created:
+                        created_count += 1
+                    elif not item.activo or item.deleted:
+                        item.activo = True
+                        item.deleted = False
+                        item.actualizado_por = 'SYSTEM'
+                        item.save(update_fields=['activo', 'deleted', 'actualizado_por'])
+                        updated_count += 1
+                results.append(
+                    f'{label}: {len(names)} presentes; {created_count} creados, '
+                    f'{updated_count} reactivados, {len(names) - created_count - updated_count} conservados.'
+                )
+        for result in results:
+            self.stdout.write(self.style.SUCCESS(result))
