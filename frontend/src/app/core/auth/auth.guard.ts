@@ -6,6 +6,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { sessionDestination } from './auth.models';
 
 /**
  * Devuelve observable de permiso o URL /login después de comprobar la sesión en el servidor.
@@ -26,5 +27,5 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
   return inject(AuthService)
     .restoreSession()
-    .pipe(map((user) => (user ? router.parseUrl(user.dashboard_path) : true)));
+    .pipe(map((user) => (user ? router.parseUrl(sessionDestination(user)) : true)));
 };

@@ -11,6 +11,17 @@ export const ROLE_DASHBOARDS = {
   SUPERADMIN: '/dashboard/superadmin',
 } as const;
 export type FunctionalRole = keyof typeof ROLE_DASHBOARDS;
+
+export interface PrimerAccesoEstado {
+  debe_cambiar_password: boolean;
+  politicas_pendientes: string[];
+  completo: boolean;
+  siguiente_ruta: string;
+}
+
+export function sessionDestination(user: AuthUser): string {
+  return user.primer_acceso?.siguiente_ruta ?? user.dashboard_path;
+}
 /**
  * Identidad validada en memoria: dashboard_path viene del servidor y debe coincidir con role.
  */
@@ -21,6 +32,7 @@ export interface AuthUser {
   last_name: string;
   role: FunctionalRole;
   dashboard_path: string;
+  primer_acceso?: PrimerAccesoEstado;
 }
 /**
  * Par access/refresh del login; access autoriza solicitudes y refresh permite renovarlo.

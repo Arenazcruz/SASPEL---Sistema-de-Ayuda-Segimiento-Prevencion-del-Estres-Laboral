@@ -5,6 +5,8 @@ Importarlos aquí permite que Django los descubra; no crea registros de ejemplo.
 """
 
 from .usuario import Usuario
+from .politica_sistema import PoliticaSistema
+from .aceptacion_politica import AceptacionPolitica
 from .auditable import AuditableModel
 from .aplicacion_instrumento import AplicacionInstrumento
 from .area_institucional import AreaInstitucional
@@ -23,6 +25,8 @@ from .respuesta_pregunta import RespuestaPregunta
 from .resultado_instrumento import ResultadoInstrumento
 
 __all__ = [
+    'PoliticaSistema',
+    'AceptacionPolitica',
     'Usuario',
     'AuditableModel',
     'AplicacionInstrumento',

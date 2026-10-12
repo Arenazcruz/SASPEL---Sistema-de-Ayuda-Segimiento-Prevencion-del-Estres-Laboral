@@ -182,6 +182,10 @@ CACHES = {
 # Angular identifica la sesión con JWT. No se activa la app de blacklist ni
 # se crean tablas nuevas; cerrar sesión elimina los tokens del navegador.
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'src.infrastructure.api.rest.permissions.PrimerAccesoCompleto',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'src.infrastructure.auth.jwt_authentication.UUIDJWTAuthentication',
     ],

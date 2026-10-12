@@ -7,6 +7,7 @@
  */
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, of, switchMap, throwError } from 'rxjs';
 import { API_URL } from './api-url';
 import { AuthService } from './auth.service';
@@ -21,6 +22,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (endpoint === 'auth/login/' || endpoint === 'auth/refresh/') return next(request);
   const storage = inject(TokenStorageService);
   const auth = inject(AuthService);
+  const router = inject(Router);
   const sentToken = storage.access;
   const sessionRefresh = storage.refresh;
   const authorized = sentToken
@@ -28,6 +30,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     : request;
   return next(authorized).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (
+        error.status === 403 &&
+        storage.refresh === sessionRefresh &&
+        error.error?.code === 'primer_acceso_pendiente' &&
+        ['/primer-acceso/password', '/primer-acceso/politicas'].includes(error.error.siguiente_ruta)
+      ) {
+        void router.navigateByUrl(error.error.siguiente_ruta);
+      }
       if (error.status !== 401) return throwError(() => error);
       if (storage.refresh !== sessionRefresh) return throwError(() => error);
       // Otra solicitud puede haber renovado ya el token mientras esta esperaba.

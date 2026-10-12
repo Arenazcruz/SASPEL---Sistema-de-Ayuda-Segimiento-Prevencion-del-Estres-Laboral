@@ -19,6 +19,7 @@ from src.infrastructure.api.rest.serializers.auth import LoginSerializer, Refres
 from src.infrastructure.auth.jwt_token_provider import JWTTokenProvider
 from src.infrastructure.auth.login_attempts import LoginAttemptBudget
 from src.infrastructure.dependencies.auth import build_authentication, build_current_identity
+from src.infrastructure.dependencies.primer_acceso import build_primer_acceso
 
 
 class AuthErrorMixin:
@@ -70,6 +71,7 @@ class LoginView(AuthErrorMixin, APIView):
             raise
         attempt.release()
         identity = asdict(user)
+        identity['primer_acceso'] = asdict(build_primer_acceso().estado(user.id))
         dashboard_path = identity.pop('dashboard_path')
         return Response({
             **tokens, 'user': identity,
@@ -87,7 +89,9 @@ class MeView(AuthErrorMixin, APIView):
         errores de actividad/rol mediante AuthErrorMixin.
         """
         user = build_current_identity().execute(request.user.pk)
-        return Response(asdict(user), headers={'Cache-Control': 'no-store'})
+        return Response({
+            **asdict(user), 'primer_acceso': asdict(build_primer_acceso().estado(user.id)),
+        }, headers={'Cache-Control': 'no-store'})
 
 
 class RefreshView(APIView):

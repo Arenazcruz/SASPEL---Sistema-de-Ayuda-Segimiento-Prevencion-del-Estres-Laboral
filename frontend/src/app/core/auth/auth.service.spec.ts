@@ -174,4 +174,20 @@ describe('AuthService e interceptor', () => {
     expect(auth.user()).toBeNull();
     expect(storage.access).toBeNull();
   });
+
+  it('un bloqueo de primer acceso redirige sin renovar JWT ni cerrar sesión', () => {
+    storage.save({ access: 'access', refresh: 'refresh' });
+    http.get('/api/functional/').subscribe({ error: () => undefined });
+    requests.expectOne('/api/functional/').flush(
+      {
+        code: 'primer_acceso_pendiente',
+        siguiente_ruta: '/primer-acceso/politicas',
+        detail: 'Completa el primer acceso para continuar.',
+      },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    expect(navigate).toHaveBeenCalledWith('/primer-acceso/politicas');
+    expect(storage.access).toBe('access');
+    requests.expectNone('/api/auth/refresh/');
+  });
 });

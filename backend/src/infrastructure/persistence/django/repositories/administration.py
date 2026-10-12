@@ -15,6 +15,7 @@ from src.application.dto.superadmin import DashboardSummary, InstitutionDTO, Use
 from src.application.services.auth_identity import ROLE_DASHBOARDS
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
 from src.domain.services.institutional_email import institutional_email
+from src.domain.services.primer_acceso import requiere_password_temporal
 from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
 
 User = get_user_model()
@@ -173,6 +174,7 @@ class DjangoAdministrationRepository:
         self.check_references(data)
         user = User(username=email, email=email,
                     first_name=command.first_name, last_name=command.last_name,
+                    debe_cambiar_password=requiere_password_temporal(command.role),
                     is_superuser=command.role == 'SUPERADMIN', is_staff=command.role == 'SUPERADMIN')
         self.set_password(user, command.password)
         user.full_clean()

@@ -19,7 +19,7 @@ from src.infrastructure.persistence.django.models import (
     AsignacionProfesional, AuditableModel, CargoInstitucional, Cita,
     DisponibilidadPsicologo, EscalaRespuesta, InstrumentoPsicologico,
     OpcionRespuesta, PerfilUsuario, PreguntaInstrumento, RangoInterpretacion,
-    RespuestaPregunta, ResultadoInstrumento, Usuario,
+    RespuestaPregunta, ResultadoInstrumento, Usuario, PoliticaSistema, AceptacionPolitica,
 )
 
 
@@ -69,13 +69,17 @@ class UUIDAuditTests(TestCase):
             fecha_inicio=timezone.now(), fecha_fin=timezone.now() + timedelta(hours=1),
             motivo='Prueba UUID',
         )
+        policy = PoliticaSistema.objects.create(
+            tipo='TERMINOS_USO', titulo='Documento de prueba UUID', version='1', contenido='Solo pruebas.',
+        )
+        acceptance = AceptacionPolitica.objects.create(usuario=cls.user, politica=policy)
         cls.records = [cls.user, area, cargo, profile, professional, instrument, scale, option,
-                       question, interval, assignment, application, answer, result, availability, appointment]
+                       question, interval, assignment, application, answer, result, availability, policy, acceptance, appointment]
 
-    def test_all_sixteen_entities_persist_generated_uuid_primary_keys(self):
+    def test_all_entities_persist_generated_uuid_primary_keys(self):
         registered = set(apps.get_app_config('api').get_models())
         self.assertEqual(registered, {type(row) for row in self.records})
-        self.assertEqual(len(registered), 16)
+        self.assertEqual(len(registered), 18)
         self.assertTrue(AuditableModel._meta.abstract)
         ids = set()
         for row in self.records:
@@ -89,7 +93,7 @@ class UUIDAuditTests(TestCase):
                 self.assertEqual(row.pk, original)
                 self.assertEqual(row.pk.version, 4)
                 ids.add(row.pk)
-        self.assertEqual(len(ids), 16)
+        self.assertEqual(len(ids), 18)
 
     def test_uuid_foreign_keys_round_trip_for_every_entity(self):
         for row in self.records:
