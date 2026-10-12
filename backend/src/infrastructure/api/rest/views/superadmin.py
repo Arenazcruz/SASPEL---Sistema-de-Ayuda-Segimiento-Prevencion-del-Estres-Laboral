@@ -146,7 +146,7 @@ class InstitutionView(SuperadminView):
         if item_id:
             return Response(asdict(case.get(kind, item_id)))
         filters = self.validated(UserFilterSerializer, request.query_params.dict())
-        return Response([asdict(item) for item in case.list(kind, filters.get('active'))])
+        return Response([asdict(item) for item in case.list(kind, filters.get('active'), filters.get('area'))])
 
     def post(self, request, kind, item_id=None, action=None):
         """Crea catálogo validado con 201 o activa/desactiva por ID con 200. Rechaza POST de

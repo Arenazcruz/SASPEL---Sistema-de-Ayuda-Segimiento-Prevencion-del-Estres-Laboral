@@ -6,8 +6,8 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 
-from src.infrastructure.persistence.django.management.commands.seed_institution_catalogs import AREAS, CARGOS
-from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional
+from src.infrastructure.persistence.django.management.commands.seed_institution_catalogs import AREAS, CARGOS, AREA_ALIASES, AREA_CARGOS
+from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional
 
 
 class SeedInstitutionCatalogsTests(TestCase):
@@ -20,7 +20,9 @@ class SeedInstitutionCatalogsTests(TestCase):
         groups_before = list(user.groups.values_list('pk', flat=True))
         original = {}
         untouched = {}
-        for model, names, expected in ((AreaInstitucional, AREAS, 9), (CargoInstitucional, CARGOS, 111)):
+        aliases = {canonical: AreaInstitucional.objects.create(nombre=previous)
+                   for canonical, previous in AREA_ALIASES.items()}
+        for model, names, expected in ((AreaInstitucional, AREAS, 13), (CargoInstitucional, CARGOS, 111)):
             self.assertEqual(len(names), expected)
             self.assertEqual(len(set(names)), expected)
             row = model.objects.create(nombre=names[0], descripcion='Conservar descripción',
@@ -30,6 +32,14 @@ class SeedInstitutionCatalogsTests(TestCase):
             untouched[model] = model.objects.values().get(pk=extra.pk)
 
         call_command('seed_institution_catalogs', stdout=StringIO())
+        for canonical, previous in aliases.items():
+            self.assertEqual(AreaInstitucional.objects.get(nombre=canonical).pk, previous.pk)
+            self.assertFalse(AreaInstitucional.objects.filter(nombre=previous.nombre).exists())
+        self.assertEqual(AreaCargo.objects.count(), 111)
+        self.assertEqual(set(AreaCargo.objects.values_list('area__nombre', 'cargo__nombre')),
+                         {(area, cargo) for area, cargos in AREA_CARGOS.items() for cargo in cargos})
+        self.assertEqual(AreaCargo.objects.values('cargo_id').distinct().count(), 111)
+        self.assertFalse(AreaCargo.objects.filter(deleted=True).exists())
         first_run = {}
         for model, names in ((AreaInstitucional, AREAS), (CargoInstitucional, CARGOS)):
             self.assertEqual(model.objects.filter(nombre__in=names).count(), len(names))
@@ -51,6 +61,7 @@ class SeedInstitutionCatalogsTests(TestCase):
             extra_before = untouched[model]
             self.assertEqual(model.objects.values().get(pk=extra_before['id']), extra_before)
             first_run[model] = list(model.objects.order_by('pk').values())
+        first_run[AreaCargo] = list(AreaCargo.objects.order_by('pk').values())
 
         output = StringIO()
         call_command('seed_institution_catalogs', stdout=output)
@@ -59,3 +70,13 @@ class SeedInstitutionCatalogsTests(TestCase):
             self.assertEqual(list(model.objects.order_by('pk').values()), rows)
         self.assertEqual(get_user_model().objects.values().get(pk=user.pk), user_before)
         self.assertEqual(list(user.groups.values_list('pk', flat=True)), groups_before)
+
+    def test_deleted_relation_is_restored_without_changing_uuid(self):
+        call_command('seed_institution_catalogs', stdout=StringIO())
+        relation = AreaCargo.objects.first()
+        relation.deleted = True
+        relation.save(update_fields=['deleted'])
+        call_command('seed_institution_catalogs', stdout=StringIO())
+        relation.refresh_from_db()
+        self.assertFalse(relation.deleted)
+        self.assertEqual(AreaCargo.objects.count(), 111)

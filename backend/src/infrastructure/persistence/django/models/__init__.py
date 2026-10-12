@@ -10,6 +10,7 @@ from .aceptacion_politica import AceptacionPolitica
 from .auditable import AuditableModel
 from .aplicacion_instrumento import AplicacionInstrumento
 from .area_institucional import AreaInstitucional
+from .area_cargo import AreaCargo
 from .asignacion_instrumento import AsignacionInstrumento
 from .asignacion_profesional import AsignacionProfesional
 from .cargo_institucional import CargoInstitucional
@@ -31,6 +32,7 @@ __all__ = [
     'AuditableModel',
     'AplicacionInstrumento',
     'AreaInstitucional',
+    'AreaCargo',
     'AsignacionInstrumento',
     'AsignacionProfesional',
     'CargoInstitucional',

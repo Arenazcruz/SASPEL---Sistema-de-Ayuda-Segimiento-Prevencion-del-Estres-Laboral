@@ -14,6 +14,7 @@ from .models import (
     AceptacionPolitica,
     AplicacionInstrumento,
     AreaInstitucional,
+    AreaCargo,
     AsignacionInstrumento,
     AsignacionProfesional,
     CargoInstitucional,
@@ -30,6 +31,7 @@ from .models import (
 )
 
 admin.site.register([
+    AreaCargo,
     AreaInstitucional,
     CargoInstitucional,
     PerfilUsuario,

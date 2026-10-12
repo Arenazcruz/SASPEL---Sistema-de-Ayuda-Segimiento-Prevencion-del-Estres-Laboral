@@ -22,7 +22,7 @@ import { API_URL } from '../../core/auth/api-url';
 import { FunctionalRole, ROLE_DASHBOARDS } from '../../core/auth/auth.models';
 import { SuperadminLayout } from './layout/superadmin-layout';
 import { SuperadminService } from './superadmin.service';
-import { Person } from './superadmin.models';
+import { Institution, Person } from './superadmin.models';
 import { UserForm } from './users/user-form';
 import { UserDetail } from './users/user-detail';
 import { UserList } from './users/user-list';
@@ -59,6 +59,30 @@ const authUser = signal({
 });
 const routeData = new BehaviorSubject({});
 const query = new BehaviorSubject(convertToParamMap({}));
+const areaTic: Institution = {
+  id: '00000000-0000-0000-0000-000000000011',
+  nombre: 'Área de TIC',
+  descripcion: '',
+  activo: true,
+};
+const areaNegocios: Institution = {
+  id: '00000000-0000-0000-0000-000000000012',
+  nombre: 'Área de Negocios',
+  descripcion: '',
+  activo: true,
+};
+const cargoTic: Institution = {
+  id: '00000000-0000-0000-0000-000000000021',
+  nombre: 'ADMINISTRADOR DE SISTEMAS',
+  descripcion: '',
+  activo: true,
+};
+const cargoNegocios: Institution = {
+  id: '00000000-0000-0000-0000-000000000022',
+  nombre: 'ANALISTA DE NEGOCIOS',
+  descripcion: '',
+  activo: true,
+};
 
 function setup(component: unknown, id?: string) {
   routeData.next({});
@@ -156,11 +180,11 @@ describe('Superadmin layout y permisos', () => {
 describe('Formulario de personas', () => {
   let http: HttpTestingController;
   afterEach(() => http.verify());
-  function form(id?: string) {
+  function form(id?: string, record = person) {
     http = setup(UserForm, id);
     const fixture = TestBed.createComponent(UserForm);
-    catalogs(http, true);
-    if (id) http.expectOne(`/api/superadmin/users/${id}/`).flush(person);
+    http.expectOne('/api/superadmin/areas/?active=true').flush([areaTic, areaNegocios]);
+    if (id) http.expectOne(`/api/superadmin/users/${id}/`).flush(record);
     return fixture;
   }
   function fill(vm: UserForm['vm']) {
@@ -329,6 +353,114 @@ describe('Formulario de personas', () => {
     http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(vm.form.controls.telefono.invalid).toBe(true);
     expect(vm.form.controls.fecha_nacimiento.invalid).toBe(true);
+  });
+
+  it('mantiene Cargo vacío y deshabilitado sin Área, sin consultar todos los cargos', async () => {
+    const fixture = form();
+    await fixture.whenStable();
+    const vm = fixture.componentInstance.vm;
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    expect(vm.cargos()).toEqual([]);
+    const select = fixture.nativeElement.querySelector(
+      'select[formcontrolname="cargo_id"]',
+    ) as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(select.options).toHaveLength(1);
+    http.expectNone((request) => request.url === '/api/superadmin/cargos/');
+  });
+
+  it('seleccionar Área carga solo sus cargos y permite crear con UUID string', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.form.controls.area_id.setValue(areaTic.id);
+    const request = http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`);
+    expect(vm.cargosLoading()).toBe(true);
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    vm.submit();
+    http.expectNone('/api/superadmin/users/');
+    request.flush([cargoTic]);
+    await fixture.whenStable();
+    const select = fixture.nativeElement.querySelector(
+      'select[formcontrolname="cargo_id"]',
+    ) as HTMLSelectElement;
+    expect(select.disabled).toBe(false);
+    expect(select.textContent).toContain(cargoTic.nombre);
+    expect(select.textContent).not.toContain(cargoNegocios.nombre);
+    vm.form.controls.cargo_id.setValue(cargoTic.id);
+    vm.submit();
+    const created = http.expectOne('/api/superadmin/users/');
+    expect(created.request.body.area_id).toBe(areaTic.id);
+    expect(created.request.body.cargo_id).toBe(cargoTic.id);
+    expect(typeof created.request.body.cargo_id).toBe('string');
+    created.flush({ ...person, area: areaTic, cargo: cargoTic });
+  });
+
+  it('cambiar Área limpia Cargo inmediatamente y descarta solicitudes anteriores', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    vm.form.controls.area_id.setValue(areaTic.id);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    vm.form.controls.cargo_id.setValue(cargoTic.id);
+    vm.form.controls.area_id.setValue(areaNegocios.id);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    expect(vm.cargos()).toEqual([]);
+    const stale = http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaNegocios.id}`);
+    vm.form.controls.area_id.setValue(areaTic.id);
+    expect(stale.cancelled).toBe(true);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    await fixture.whenStable();
+    expect(vm.cargos()).toEqual([cargoTic]);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    vm.form.controls.area_id.setValue(null);
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    expect(vm.cargos()).toEqual([]);
+    http.expectNone((request) => request.url === '/api/superadmin/cargos/');
+  });
+
+  it('editar carga únicamente los cargos del Área actual y conserva una combinación válida', () => {
+    const vm = form(person.id, { ...person, area: areaTic, cargo: cargoTic }).componentInstance.vm;
+    expect(vm.form.controls.area_id.value).toBe(areaTic.id);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    expect(vm.form.controls.cargo_id.value).toBe(cargoTic.id);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.form.controls.first_name.setValue('Editada');
+    vm.submit();
+    const request = http.expectOne(`/api/superadmin/users/${person.id}/`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body.area_id).toBe(areaTic.id);
+    expect(request.request.body.cargo_id).toBe(cargoTic.id);
+    request.flush({ ...person, area: areaTic, cargo: cargoTic });
+  });
+
+  it('editar retira un Cargo que ya no tiene relación válida y muestra el aviso', async () => {
+    const fixture = form(person.id, { ...person, area: areaTic, cargo: cargoNegocios });
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance.vm.form.controls.cargo_id.value).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('El cargo anterior ya no está disponible');
+    expect(
+      fixture.nativeElement.querySelector('select[formcontrolname="cargo_id"]').textContent,
+    ).not.toContain(cargoNegocios.nombre);
+  });
+
+  it('un error al cargar cargos bloquea guardar y permite reintentar conservando el Cargo de edición', async () => {
+    const fixture = form(person.id, { ...person, area: areaTic, cargo: cargoTic });
+    const vm = fixture.componentInstance.vm;
+    http
+      .expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`)
+      .flush({}, { status: 500, statusText: 'Error' });
+    vm.submit();
+    http.expectNone(`/api/superadmin/users/${person.id}/`);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Reintentar cargos');
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    vm.retryCargos();
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    expect(vm.cargosError()).toBe('');
+    expect(vm.form.controls.cargo_id.value).toBe(cargoTic.id);
   });
 });
 

@@ -16,7 +16,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from src.application.use_cases.superadmin import ChangeUserRole, DeactivateUser
 from src.domain.exceptions.superadmin import AdministrationError
 from src.infrastructure.dependencies.superadmin import build_administration
-from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional, PerfilUsuario
 
 User = get_user_model()
 PASSWORD = 'Prueba-segura-8274!'
@@ -37,6 +37,7 @@ class SuperadminApiTests(TestCase):
         cls.root.groups.add(Group.objects.get(name='SUPERADMIN'))
         cls.area = AreaInstitucional.objects.create(nombre='Área de pruebas')
         cls.cargo = CargoInstitucional.objects.create(nombre='Cargo de pruebas')
+        AreaCargo.objects.create(area=cls.area, cargo=cls.cargo)
 
     def setUp(self):
         caches['login_attempts'].clear()
