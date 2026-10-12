@@ -1,0 +1,85 @@
+<header class="wrap">
+  <app-brand /><button
+    class="button button-outline"
+    type="button"
+    [disabled]="vm.saving()"
+    (click)="vm.volver()"
+  >
+    Volver al dashboard
+  </button>
+</header>
+<main class="wrap">
+  <p class="eyebrow">MI EVALUACIÓN INICIAL</p>
+  @if (vm.loading()) {
+    <p role="status">Cargando evaluación…</p>
+  }
+  @if (vm.error()) {
+    <p class="error" role="alert">{{ vm.error() }}</p>
+  }
+  @if (!vm.loading() && !vm.detalle()) {
+    <button class="button" type="button" (click)="vm.load()">Reintentar</button>
+  }
+  @if (vm.detalle(); as detalle) {
+    <h1>{{ detalle.nombre }}</h1>
+    <p>Versión {{ detalle.version }}</p>
+    <section class="instructions" aria-labelledby="instructions-title">
+      <h2 id="instructions-title">Instrucciones</h2>
+      <p>{{ detalle.instrucciones || 'Lee cada pregunta y elige o escribe tu respuesta.' }}</p>
+    </section>
+    @if (detalle.estado_aplicacion === 'FINALIZADA') {
+      <p role="status">Evaluación inicial completada. Tus respuestas son de solo lectura.</p>
+    } @else if (!detalle.disponible) {
+      <p role="status">La evaluación inicial todavía está siendo configurada.</p>
+    } @else if (detalle.estado_asignacion === 'PENDIENTE') {
+      <button class="button" type="button" [disabled]="vm.saving()" (click)="vm.iniciar()">
+        Comenzar evaluación
+      </button>
+    } @else if (!vm.editable()) {
+      <p role="status">Esta evaluación ya no admite cambios.</p>
+    }
+    @if (detalle.aplicacion_id) {
+      <section class="progress" aria-label="Progreso de respuestas">
+        <label for="evaluation-progress"
+          >{{ vm.respondidas() }} de {{ detalle.preguntas.length }} preguntas respondidas</label
+        >
+        <progress id="evaluation-progress" max="100" [value]="vm.porcentaje()">
+          {{ vm.porcentaje() }}%
+        </progress>
+        @if (vm.dirty()) {
+          <small>Hay cambios sin guardar.</small>
+        }
+      </section>
+      <form (submit)="$event.preventDefault(); vm.finalizar()">
+        @for (pregunta of detalle.preguntas; track pregunta.id) {
+          <app-evaluacion-pregunta
+            [pregunta]="pregunta"
+            [valor]="vm.valores()[pregunta.id] ?? null"
+            [disabled]="!vm.editable() || vm.saving()"
+            [pendiente]="vm.pendientes().includes(pregunta.id)"
+            (valorChange)="vm.set(pregunta.id, $event)"
+          />
+        }
+        <p role="status" aria-live="polite">{{ vm.mensaje() }}</p>
+        @if (vm.editable()) {
+          <div class="actions">
+            <button
+              class="button button-outline"
+              type="button"
+              [disabled]="vm.saving()"
+              (click)="vm.guardar()"
+            >
+              Guardar progreso
+            </button>
+            <button class="button" type="submit" [disabled]="vm.saving()">
+              {{ vm.saving() ? 'Guardando…' : 'Finalizar evaluación' }}
+            </button>
+          </div>
+          <p class="note">
+            Puedes guardar respuestas parciales y continuar más adelante. Para finalizar, completa
+            las preguntas obligatorias.
+          </p>
+        }
+      </form>
+    }
+  }
+</main>

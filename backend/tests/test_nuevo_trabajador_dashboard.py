@@ -47,7 +47,7 @@ class NuevoTrabajadorDashboardTests(TestCase):
     def test_sin_asignar(self):
         self.assertEqual(self.evaluacion(), dict(
             estado='SIN_ASIGNAR', asignacion_id=None, instrumento_id=None, nombre=None,
-            version=None, fecha_asignacion=None, fecha_limite=None,
+            version=None, fecha_asignacion=None, fecha_limite=None, puede_iniciar=False,
         ))
         self.assertFalse(AsignacionInstrumento.objects.exists())
 
@@ -59,7 +59,7 @@ class NuevoTrabajadorDashboardTests(TestCase):
                 data = self.evaluacion()
                 self.assertEqual(set(data), {
                     'estado', 'asignacion_id', 'instrumento_id', 'nombre', 'version',
-                    'fecha_asignacion', 'fecha_limite',
+                    'fecha_asignacion', 'fecha_limite', 'puede_iniciar',
                 })
                 self.assertEqual(data['estado'], estado)
                 self.assertEqual(UUID(data['asignacion_id']), asignacion.pk)

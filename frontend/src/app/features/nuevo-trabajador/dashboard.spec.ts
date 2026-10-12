@@ -37,6 +37,7 @@ function resumen(estado: EvaluacionInicial['estado']): DashboardResumen {
   return {
     evaluacion_inicial: {
       estado,
+      puede_iniciar: false,
       asignacion_id: estado === 'SIN_ASIGNAR' ? null : 'e6b90f86-a65f-447a-8984-dd956d326002',
       instrumento_id: estado === 'SIN_ASIGNAR' ? null : 'e6b90f86-a65f-447a-8984-dd956d326003',
       nombre: estado === 'SIN_ASIGNAR' ? null : 'Evaluación institucional de prueba',
@@ -111,7 +112,12 @@ describe('Dashboard propio del nuevo trabajador', () => {
       if (estado === 'PENDIENTE') {
         expect(button.textContent).toContain('Comenzar evaluación');
         expect(button.disabled).toBe(true);
-        expect(fixture.nativeElement.textContent).toContain('Disponible próximamente');
+        expect(fixture.nativeElement.textContent).toContain(
+          'La evaluación inicial todavía está siendo configurada.',
+        );
+      } else if (estado === 'EN_PROGRESO') {
+        expect(button.textContent).toContain('Continuar evaluación');
+        expect(button.disabled).toBe(false);
       } else {
         expect(button).toBeNull();
       }

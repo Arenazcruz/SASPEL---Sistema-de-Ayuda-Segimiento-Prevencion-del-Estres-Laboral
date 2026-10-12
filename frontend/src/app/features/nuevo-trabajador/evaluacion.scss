@@ -1,0 +1,74 @@
+:host {
+  display: block;
+  padding-bottom: 48px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 24px;
+  border-bottom: 1px solid var(--line);
+}
+main {
+  max-width: 880px;
+  padding-top: 36px;
+}
+h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  overflow-wrap: anywhere;
+}
+h2 {
+  font-size: 21px;
+}
+p {
+  line-height: 1.7;
+}
+.instructions {
+  padding: 24px;
+  border-radius: 12px;
+  background: #edf2e9;
+  margin-bottom: 28px;
+}
+.instructions p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.progress {
+  margin-block: 24px;
+  display: grid;
+  gap: 10px;
+}
+progress {
+  width: 100%;
+  accent-color: var(--green);
+  height: 12px;
+}
+.actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.note,
+small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.error {
+  border-left: 3px solid #963b2f;
+  padding: 12px 16px;
+  background: #fff2ed;
+  color: #963b2f;
+}
+@media (max-width: 650px) {
+  .wrap {
+    width: calc(100% - 32px);
+  }
+  header {
+    flex-wrap: wrap;
+  }
+  .actions .button {
+    width: 100%;
+  }
+}

@@ -61,6 +61,16 @@ export const routes: Routes = [
         title: 'Superadmin · SASPEL',
       },
       {
+        path: 'nuevo-trabajador/evaluacion/:asignacionId',
+        data: { role: 'NUEVO_TRABAJADOR' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/nuevo-trabajador/evaluacion').then(
+            (m) => m.EvaluacionInicialComponent,
+          ),
+        title: 'Evaluación inicial · SASPEL',
+      },
+      {
         path: 'nuevo-trabajador',
         data: { role: 'NUEVO_TRABAJADOR' },
         canActivate: [roleGuard],

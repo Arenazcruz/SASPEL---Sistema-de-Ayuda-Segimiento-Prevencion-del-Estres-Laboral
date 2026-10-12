@@ -89,10 +89,28 @@
             </dl>
           }
           @if (evaluacion.estado === 'PENDIENTE') {
-            <button class="button" type="button" disabled aria-describedby="coming-soon">
-              Comenzar evaluación
+            <button
+              class="button"
+              type="button"
+              [disabled]="!evaluacion.puede_iniciar || vm.starting()"
+              [attr.aria-describedby]="!evaluacion.puede_iniciar ? 'configuration-status' : null"
+              (click)="vm.comenzar()"
+            >
+              {{ vm.starting() ? 'Iniciando…' : 'Comenzar evaluación' }}
             </button>
-            <p class="availability" id="coming-soon">Disponible próximamente</p>
+            @if (!evaluacion.puede_iniciar) {
+              <p class="availability" id="configuration-status">
+                La evaluación inicial todavía está siendo configurada.
+              </p>
+            }
+          }
+          @if (evaluacion.estado === 'EN_PROGRESO') {
+            <button class="button" type="button" (click)="vm.continuar()">
+              Continuar evaluación
+            </button>
+          }
+          @if (vm.startError()) {
+            <p role="alert">{{ vm.startError() }}</p>
           }
         }
       </div>

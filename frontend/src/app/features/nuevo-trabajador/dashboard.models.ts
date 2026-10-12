@@ -6,6 +6,7 @@ export interface EvaluacionInicial {
   version: string | null;
   fecha_asignacion: string | null;
   fecha_limite: string | null;
+  puede_iniciar: boolean;
 }
 
 export interface DashboardResumen {

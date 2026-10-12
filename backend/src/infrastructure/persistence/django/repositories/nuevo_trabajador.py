@@ -1,5 +1,7 @@
 from src.application.dto.nuevo_trabajador import EvaluacionInicialDTO
 from src.infrastructure.persistence.django.models import AsignacionInstrumento
+from src.application.services.evaluacion_configurada import contenido_disponible
+from src.infrastructure.persistence.django.repositories.responder_evaluacion import preguntas_disponibles
 
 
 class DjangoNuevoTrabajadorRepository:
@@ -20,4 +22,6 @@ class DjangoNuevoTrabajadorRepository:
             instrumento_id=asignacion.instrumento_id, nombre=asignacion.instrumento.nombre,
             version=asignacion.instrumento.version,
             fecha_asignacion=asignacion.fecha_asignacion, fecha_limite=asignacion.fecha_limite,
+            puede_iniciar=(asignacion.estado == 'PENDIENTE' and asignacion.instrumento.activo
+                           and contenido_disponible(preguntas_disponibles(asignacion.instrumento_id))),
         )

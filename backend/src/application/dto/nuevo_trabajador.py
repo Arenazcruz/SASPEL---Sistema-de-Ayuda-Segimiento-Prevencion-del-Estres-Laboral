@@ -13,6 +13,7 @@ class EvaluacionInicialDTO:
     version: str | None = None
     fecha_asignacion: datetime | None = None
     fecha_limite: datetime | None = None
+    puede_iniciar: bool = False
 
 
 @dataclass(frozen=True)
