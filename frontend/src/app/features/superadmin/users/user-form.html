@@ -202,7 +202,11 @@
       <h2>Información institucional</h2>
       <div class="sa-form-grid">
         <label
-          >Área<select formControlName="area_id">
+          >Área<select
+            formControlName="area_id"
+            [attr.aria-invalid]="vm.invalid('area_id')"
+            aria-describedby="area-error"
+          >
             <option [ngValue]="null">Sin área</option>
             @if (vm.person()?.area; as current) {
               @if (!current.activo) {
@@ -214,28 +218,52 @@
             @for (item of vm.areas(); track item.id) {
               <option [ngValue]="item.id">{{ item.nombre }}</option>
             }
-          </select></label
-        >
+          </select>
+          @if (vm.invalid('area_id')) {
+            <small id="area-error" class="sa-field-error">{{ vm.fieldError('area_id') }}</small>
+          }
+        </label>
         <label
-          >Cargo<select formControlName="cargo_id">
-            <option [ngValue]="null">Sin cargo</option>
-            @if (vm.person()?.cargo; as current) {
-              @if (!current.activo) {
-                <option [ngValue]="current.id" disabled>
-                  {{ current.nombre }} (actual, inactivo)
-                </option>
-              }
-            }
+          >Cargo<select
+            formControlName="cargo_id"
+            [attr.aria-invalid]="vm.invalid('cargo_id')"
+            aria-describedby="cargo-help cargo-error"
+          >
+            <option [ngValue]="null">
+              {{ vm.form.controls.area_id.value ? 'Sin cargo' : 'Selecciona un área primero' }}
+            </option>
             @for (item of vm.cargos(); track item.id) {
               <option [ngValue]="item.id">{{ item.nombre }}</option>
             }
-          </select></label
-        >
+          </select>
+          <small id="cargo-help" class="sa-help"
+            >Solo se muestran cargos del área seleccionada.</small
+          >
+          @if (vm.invalid('cargo_id')) {
+            <small id="cargo-error" class="sa-field-error">{{ vm.fieldError('cargo_id') }}</small>
+          }
+        </label>
       </div>
+      @if (vm.cargosLoading()) {
+        <p role="status">Cargando cargos del área…</p>
+      }
+      @if (vm.cargosError()) {
+        <p class="sa-error" role="alert">
+          {{ vm.cargosError() }}
+          <button type="button" (click)="vm.retryCargos()">Reintentar cargos</button>
+        </p>
+      }
+      @if (vm.cargoNotice()) {
+        <p class="sa-info" role="status">{{ vm.cargoNotice() }}</p>
+      }
       <p class="sa-help">Puedes administrar las opciones desde Institución → Áreas y Cargos.</p>
     </section>
     <div class="sa-actions">
-      <button class="button" type="submit" [disabled]="vm.saving()">
+      <button
+        class="button"
+        type="submit"
+        [disabled]="vm.saving() || vm.cargosLoading() || !!vm.cargosError()"
+      >
         {{ vm.saving() ? 'Guardando…' : vm.id ? 'Guardar cambios' : 'Crear usuario' }}</button
       ><a
         class="button button-outline"

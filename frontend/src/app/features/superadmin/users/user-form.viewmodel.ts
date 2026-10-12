@@ -7,7 +7,7 @@ import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, distinctUntilChanged, finalize, map, of, Subject, switchMap } from 'rxjs';
 import { CREATION_ROLES, Institution, Person } from '../superadmin.models';
 import { apiError, SuperadminService } from '../superadmin.service';
 import { passwordsMatch, passwordStrength } from './password-validation';
@@ -30,6 +30,11 @@ export class UserFormViewModel {
   readonly person = signal<Person | null>(null);
   readonly areas = signal<Institution[]>([]);
   readonly cargos = signal<Institution[]>([]);
+  readonly cargosLoading = signal(false);
+  readonly cargosError = signal('');
+  readonly cargoNotice = signal('');
+  private readonly cargoRequests = new Subject<{ area: string | null; current: string | null }>();
+  private cargoToRestore: string | null = null;
   readonly loading = signal(true);
   readonly ready = signal(false);
   readonly saving = signal(false);
@@ -60,6 +65,43 @@ export class UserFormViewModel {
    * de catálogos y persona.
    */
   constructor() {
+    this.form.controls.cargo_id.disable({ emitEvent: false });
+    this.cargoRequests
+      .pipe(
+        switchMap(({ area, current }) => {
+          this.form.controls.cargo_id.reset(null, { emitEvent: false });
+          this.form.controls.cargo_id.disable({ emitEvent: false });
+          this.cargos.set([]);
+          this.cargosError.set('');
+          this.cargoNotice.set('');
+          this.cargosLoading.set(!!area);
+          if (!area) return of(null);
+          return this.api.institution('cargos', true, area).pipe(
+            map((cargos) => ({ cargos, current })),
+            catchError((error) => {
+              this.cargosError.set(apiError(error));
+              return of(null);
+            }),
+            finalize(() => this.cargosLoading.set(false)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        if (!result) return;
+        this.cargos.set(result.cargos);
+        this.form.controls.cargo_id.enable({ emitEvent: false });
+        if (result.current && result.cargos.some((cargo) => cargo.id === result.current)) {
+          this.form.controls.cargo_id.setValue(result.current, { emitEvent: false });
+        } else if (result.current) {
+          this.cargoNotice.set(
+            'El cargo anterior ya no está disponible para esta área. Selecciona otro cargo si corresponde.',
+          );
+        }
+      });
+    this.form.controls.area_id.valueChanges
+      .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((area) => this.loadCargos(area));
     if (this.id) {
       this.form.controls.fecha_nacimiento.removeValidators(Validators.required);
       this.form.controls.fecha_nacimiento.updateValueAndValidity();
@@ -71,23 +113,19 @@ export class UserFormViewModel {
     this.load();
   }
   /**
-   * Carga áreas/cargos activos y luego la ficha si existe ID. Conserva IDs históricos
-   * inactivos sin reemplazarlos y habilita ready solo al completar datos; fallos se muestran
-   * para reintentar.
+   * Carga áreas y la ficha si existe ID. Los cargos se consultan únicamente para el área
+   * seleccionada; en edición conserva el cargo solo si sigue siendo una opción válida.
    */
   load() {
     this.loading.set(true);
     this.error.set('');
     this.ready.set(false);
-    forkJoin({
-      areas: this.api.institution('areas', true),
-      cargos: this.api.institution('cargos', true),
-    })
+    this.api
+      .institution('areas', true)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (data) => {
-          this.areas.set(data.areas);
-          this.cargos.set(data.cargos);
+        next: (areas) => {
+          this.areas.set(areas);
           if (this.id)
             this.api
               .user(this.id)
@@ -101,14 +139,17 @@ export class UserFormViewModel {
                   if (person.fecha_nacimiento) {
                     this.form.controls.fecha_nacimiento.addValidators(Validators.required);
                   }
-                  this.form.patchValue({
-                    ...person,
-                    role: person.role || '',
-                    fecha_nacimiento: person.fecha_nacimiento || '',
-                    area_id: person.area?.id ?? null,
-                    cargo_id: person.cargo?.id ?? null,
-                  });
-                  // Un vínculo histórico inactivo se conserva hasta que la persona elija reemplazarlo.
+                  this.form.patchValue(
+                    {
+                      ...person,
+                      role: person.role || '',
+                      fecha_nacimiento: person.fecha_nacimiento || '',
+                      area_id: person.area?.id ?? null,
+                      cargo_id: null,
+                    },
+                    { emitEvent: false },
+                  );
+                  this.loadCargos(person.area?.id ?? null, person.cargo?.id ?? null);
                   this.ready.set(true);
                 },
                 error: (e) => this.error.set(apiError(e)),
@@ -123,6 +164,13 @@ export class UserFormViewModel {
           this.error.set(apiError(e));
         },
       });
+  }
+  loadCargos(area = this.form.controls.area_id.value, current: string | null = null) {
+    this.cargoToRestore = current;
+    this.cargoRequests.next({ area, current });
+  }
+  retryCargos() {
+    this.loadCargos(this.form.controls.area_id.value, this.cargoToRestore);
   }
   invalid(name: string) {
     const field = this.form.get(name);
@@ -167,7 +215,7 @@ export class UserFormViewModel {
    * Al guardar vacía claves y vuelve al listado conservando filtros; errores quedan en el modal.
    */
   submit() {
-    if (this.saving() || !this.ready()) return;
+    if (this.saving() || !this.ready() || this.cargosLoading() || this.cargosError()) return;
     const raw = this.form.getRawValue();
     this.form.patchValue({
       first_name: normalizeName(raw.first_name),

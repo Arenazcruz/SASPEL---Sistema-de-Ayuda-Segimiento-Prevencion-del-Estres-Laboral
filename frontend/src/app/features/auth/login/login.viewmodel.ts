@@ -9,6 +9,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { sessionDestination } from '../../../core/auth/auth.models';
 
 @Injectable()
 export class LoginViewModel {
@@ -47,7 +48,7 @@ export class LoginViewModel {
       .subscribe({
         next: (user) => {
           this.form.controls.password.reset();
-          void this.router.navigateByUrl(user.dashboard_path);
+          void this.router.navigateByUrl(sessionDestination(user));
         },
         error: (error: HttpErrorResponse) => {
           if (error.status === 403)

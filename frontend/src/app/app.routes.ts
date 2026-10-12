@@ -8,6 +8,7 @@ import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { ROLE_DASHBOARDS } from './core/auth/auth.models';
 import { superadminChildGuard } from './features/superadmin/superadmin.routes';
+import { primerAccesoGuard } from './core/auth/primer-acceso.guard';
 
 export const routes: Routes = [
   {
@@ -23,8 +24,29 @@ export const routes: Routes = [
     title: 'Iniciar sesión · SASPEL',
   },
   {
+    path: 'primer-acceso',
+    canActivate: [authGuard],
+    canActivateChild: [primerAccesoGuard],
+    children: [
+      {
+        path: 'password',
+        loadComponent: () =>
+          import('./features/primer-acceso/password').then((m) => m.PrimerAccesoPassword),
+        title: 'Cambiar contraseña · SASPEL',
+      },
+      {
+        path: 'politicas',
+        loadComponent: () =>
+          import('./features/primer-acceso/politicas').then((m) => m.PrimerAccesoPoliticas),
+        title: 'Políticas institucionales · SASPEL',
+      },
+      { path: '**', redirectTo: 'password' },
+    ],
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
+    canActivateChild: [primerAccesoGuard],
     runGuardsAndResolvers: 'always',
     children: [
       {

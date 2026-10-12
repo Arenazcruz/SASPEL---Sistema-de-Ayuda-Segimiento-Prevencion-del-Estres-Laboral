@@ -75,9 +75,12 @@ export class SuperadminService {
    * GET {kind}/, areas o cargos; activeOnly añade active=true. Devuelve observable del
    * catálogo completo o activo.
    */
-  institution(kind: InstitutionKind, activeOnly = false) {
+  institution(kind: InstitutionKind, activeOnly = false, area?: string) {
+    let params = new HttpParams();
+    if (activeOnly) params = params.set('active', 'true');
+    if (area) params = params.set('area', area);
     return this.http.get<Institution[]>(`${this.base}/${kind}/`, {
-      params: activeOnly ? { active: 'true' } : {},
+      params,
     });
   }
   /**

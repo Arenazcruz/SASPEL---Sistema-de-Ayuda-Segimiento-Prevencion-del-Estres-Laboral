@@ -15,7 +15,8 @@ from src.application.dto.superadmin import DashboardSummary, InstitutionDTO, Use
 from src.application.services.auth_identity import ROLE_DASHBOARDS
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
 from src.domain.services.institutional_email import institutional_email
-from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.domain.services.primer_acceso import requiere_password_temporal
+from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional, PerfilUsuario
 
 User = get_user_model()
 
@@ -142,15 +143,27 @@ class DjangoAdministrationRepository:
 
     @staticmethod
     def check_references(changes, profile=None):
-        """Comprueba que nuevas áreas/cargos existan y estén activos. Un vínculo histórico sin
-        cambios puede seguir inactivo; None permite desvincular. Lanza AdministrationError por
-        campo sin escribir.
+        """Valida la combinación resultante de un alta o PATCH, sin alterar datos históricos
+        cuando no se envían referencias. None permite desvincular ambos campos.
         """
+        if not {'area_id', 'cargo_id'} & changes.keys():
+            return
         for field, model in (('area_id', AreaInstitucional), ('cargo_id', CargoInstitucional)):
             value = changes.get(field)
             if value is not None and (profile is None or value != getattr(profile, field)):
-                if not model.objects.filter(pk=value, activo=True).exists():
+                if not model.objects.filter(pk=value, activo=True, deleted=False).exists():
                     raise AdministrationError('Selecciona una opción activa y existente.', field)
+        area_id = changes.get('area_id', getattr(profile, 'area_id', None))
+        cargo_id = changes.get('cargo_id', getattr(profile, 'cargo_id', None))
+        if cargo_id is None:
+            return
+        if area_id is None:
+            raise AdministrationError('Selecciona un área antes de elegir el cargo.', 'cargo_id')
+        if not AreaCargo.objects.filter(
+            area_id=area_id, cargo_id=cargo_id, deleted=False,
+            area__activo=True, area__deleted=False, cargo__activo=True, cargo__deleted=False,
+        ).exists():
+            raise AdministrationError('El cargo no está habilitado para el área seleccionada.', 'cargo_id')
 
     @staticmethod
     def set_password(user, password):
@@ -173,6 +186,7 @@ class DjangoAdministrationRepository:
         self.check_references(data)
         user = User(username=email, email=email,
                     first_name=command.first_name, last_name=command.last_name,
+                    debe_cambiar_password=requiere_password_temporal(command.role),
                     is_superuser=command.role == 'SUPERADMIN', is_staff=command.role == 'SUPERADMIN')
         self.set_password(user, command.password)
         user.full_clean()
@@ -292,13 +306,21 @@ class DjangoAdministrationRepository:
         except model.DoesNotExist:
             raise PersonNotFound('No se encontró el registro institucional.') from None
 
-    def list_institution(self, kind, active=None):
+    def list_institution(self, kind, active=None, area=None):
         """Consulta áreas/cargos con filtro opcional de activo y devuelve DTO ordenados por
         nombre e ID.
         """
         query = self.institution_model(kind).objects.all()
         if active is not None:
             query = query.filter(activo=active)
+        if active is True:
+            query = query.filter(deleted=False)
+        if kind == 'cargos' and area is not None:
+            query = query.filter(
+                activo=True, deleted=False,
+                relaciones_area__area_id=area, relaciones_area__deleted=False,
+                relaciones_area__area__activo=True, relaciones_area__area__deleted=False,
+            ).distinct()
         return [self.institution_dto(item) for item in query.order_by('nombre', 'pk')]
 
     def get_institution(self, kind, item_id):

@@ -177,11 +177,11 @@ class ManageInstitution(UseCase):
     """Gestiona áreas y cargos para las pantallas institucionales mediante
     AdministrationRepository. Desactivar conserva los vínculos históricos.
     """
-    def list(self, kind: str, active: bool | None = None):
+    def list(self, kind: str, active: bool | None = None, area: UUID | None = None):
         """Recibe kind (areas o cargos) y active; None incluye ambos estados. Devuelve DTO
         ordenados por el repositorio, sin escrituras.
         """
-        return self.repository.list_institution(kind, active)
+        return self.repository.list_institution(kind, active, area)
 
     def get(self, kind: str, item_id: UUID):
         """Recibe kind e ID; devuelve InstitutionDTO o propaga PersonNotFound."""
