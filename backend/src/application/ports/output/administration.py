@@ -5,12 +5,13 @@ al cambiar persistencia conservar DTO, errores y garantías de atomic().
 from contextlib import AbstractContextManager
 from typing import Protocol
 from uuid import UUID
+from src.application.ports.output.evaluacion_inicial import EvaluacionInicialRepository
 from src.application.dto.superadmin import (
     CreateUserCommand, DashboardSummary, InstitutionDTO, UserDTO, UserFilters, UserPage,
 )
 
 
-class AdministrationRepository(Protocol):
+class AdministrationRepository(EvaluacionInicialRepository, Protocol):
     """Operaciones que Application necesita sin importar modelos Django."""
     # Transacción con rollback y bloqueo para proteger al último Superadmin.
     def atomic(self) -> AbstractContextManager: ...

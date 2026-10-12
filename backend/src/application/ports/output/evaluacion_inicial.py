@@ -1,0 +1,9 @@
+from contextlib import AbstractContextManager
+from typing import Protocol
+from uuid import UUID
+
+
+class EvaluacionInicialRepository(Protocol):
+    def atomic(self) -> AbstractContextManager: ...
+    def instrumento_inicial_activo(self) -> UUID | None: ...
+    def asegurar_asignacion_inicial(self, usuario_id: UUID, instrumento_id: UUID) -> None: ...

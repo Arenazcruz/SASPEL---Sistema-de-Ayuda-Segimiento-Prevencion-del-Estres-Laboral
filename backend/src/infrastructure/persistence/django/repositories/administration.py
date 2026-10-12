@@ -17,6 +17,7 @@ from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
 from src.domain.services.institutional_email import institutional_email
 from src.domain.services.primer_acceso import requiere_password_temporal
 from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.infrastructure.persistence.django.models import AsignacionInstrumento, InstrumentoPsicologico
 
 User = get_user_model()
 
@@ -200,6 +201,22 @@ class DjangoAdministrationRepository:
         profile.save()
         user.groups.set([Group.objects.get(name=command.role)])
         return self.get_user(user.pk)
+
+    def instrumento_inicial_activo(self):
+        return (InstrumentoPsicologico.objects.select_for_update()
+                .filter(activo=True, es_inicial=True, deleted=False)
+                .values_list('pk', flat=True).first())
+
+    def asegurar_asignacion_inicial(self, usuario_id, instrumento_id):
+        # Bloqueo de la cuenta dentro de atomic: serializa reintentos para esta persona.
+        User.objects.select_for_update().get(pk=usuario_id)
+        if not AsignacionInstrumento.objects.filter(
+            trabajador_id=usuario_id, instrumento_id=instrumento_id,
+        ).exists():
+            AsignacionInstrumento.objects.create(
+                trabajador_id=usuario_id, instrumento_id=instrumento_id,
+                origen='SISTEMA', estado='PENDIENTE', asignado_por=None,
+            )
 
     def update_user(self, user_id, changes):
         """Actualiza cuenta y perfil desde cambios parciales, conservando email y username.

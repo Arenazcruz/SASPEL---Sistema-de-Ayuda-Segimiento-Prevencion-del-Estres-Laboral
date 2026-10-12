@@ -78,6 +78,7 @@ class InstrumentsApiTests(TestCase):
         self.assertTrue(response.data['activo'])
         self.assertFalse(response.data['es_inicial'])
         self.assertEqual(response.data['instrucciones'], '')
+        self.assertEqual(self.client.post(f'{BASE}{self.item.pk}/deactivate/', {}, format='json').status_code, 200)
         full = self.create(codigo='  TEST-FULL  ', version='2.1', nombre=' Prueba completa ',
                            descripcion='Descripción', instrucciones='Primera línea\nSegunda línea', es_inicial=True)
         self.assertEqual(full.status_code, 201)

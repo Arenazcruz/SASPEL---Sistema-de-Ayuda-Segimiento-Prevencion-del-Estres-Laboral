@@ -15,6 +15,7 @@ from src.application.ports.input.administration import (
 )
 from src.domain.exceptions.superadmin import AdministrationError
 from src.domain.value_objects.functional_role import FunctionalRole
+from src.application.use_cases.evaluacion_inicial import AsignarEvaluacionInicial
 
 CREATION_ROLES = {role.value for role in FunctionalRole} - {'TRABAJADOR'}
 ADMINISTRATIVE_ROLES = {'PSICOLOGO', 'ADMIN', 'SUPERADMIN'}
@@ -76,7 +77,9 @@ class CreateUser(UseCase, UserRegistration):
             raise AdministrationError('El rol TRABAJADOR se obtiene mediante la evaluación inicial.', 'role')
         validate_password(command.password)
         with self.repository.atomic():
-            return self.repository.create_user(command)
+            user = self.repository.create_user(command)
+            AsignarEvaluacionInicial(self.repository).execute(user.id, command.role)
+            return user
 
 
 class UpdateUser(UseCase, UserEdition):
