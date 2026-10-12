@@ -1,0 +1,35 @@
+{
+  "instrumento": {
+    "codigo": "PSS10",
+    "nombre": "Escala de Estrés Percibido PSS-10",
+    "version": "1.0",
+    "es_inicial": true,
+    "activo": true,
+    "descripcion": "Evaluación inicial de estrés percibido con fines orientativos. No constituye diagnóstico clínico.",
+    "instrucciones": "Lee las instrucciones de la versión aprobada antes de responder. El contenido de las preguntas está pendiente de carga institucional."
+  },
+  "escala": {
+    "nombre": "Frecuencia PSS-10 (0–4)",
+    "descripcion": "Escala de frecuencia compartida por los diez ítems de la evaluación inicial.",
+    "activo": true
+  },
+  "opciones": [
+    {"orden": 1, "valor": 0, "etiqueta": "Nunca"},
+    {"orden": 2, "valor": 1, "etiqueta": "Casi nunca"},
+    {"orden": 3, "valor": 2, "etiqueta": "A veces"},
+    {"orden": 4, "valor": 3, "etiqueta": "A menudo"},
+    {"orden": 5, "valor": 4, "etiqueta": "Muy a menudo"}
+  ],
+  "rangos": [
+    {"orden": 1, "nombre": "BAJO", "puntaje_minimo": 0, "puntaje_maximo": 13, "interpretacion": "Clasificación orientativa de estrés percibido bajo. No constituye diagnóstico clínico."},
+    {"orden": 2, "nombre": "MODERADO", "puntaje_minimo": 14, "puntaje_maximo": 26, "interpretacion": "Clasificación orientativa de estrés percibido moderado. No constituye diagnóstico clínico."},
+    {"orden": 3, "nombre": "ALTO", "puntaje_minimo": 27, "puntaje_maximo": 40, "interpretacion": "Clasificación orientativa de estrés percibido alto. No constituye diagnóstico clínico."}
+  ],
+  "configuracion_preguntas": {
+    "cantidad": 10,
+    "tipo_respuesta": "ESCALA",
+    "obligatoria": true,
+    "orden_inicial": 1,
+    "ordenes_invertidos": [4, 5, 7, 8]
+  }
+}

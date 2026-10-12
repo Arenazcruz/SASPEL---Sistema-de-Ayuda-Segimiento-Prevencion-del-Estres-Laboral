@@ -53,6 +53,10 @@ class DjangoInstrumentRepository:
             field, messages = next(iter(error.message_dict.items()))
             raise AdministrationError(' '.join(messages), field) from error
         except IntegrityError as error:
+            if row.activo and row.es_inicial and InstrumentoPsicologico.objects.filter(
+                activo=True, es_inicial=True,
+            ).exclude(pk=row.pk).exists():
+                raise AdministrationError('Ya existe un instrumento inicial activo.', 'es_inicial') from error
             if InstrumentoPsicologico.objects.filter(codigo=row.codigo, version=row.version).exclude(pk=row.pk).exists():
                 raise AdministrationError('Ya existe un instrumento con este código y versión.', 'version') from error
             raise
@@ -72,5 +76,4 @@ class DjangoInstrumentRepository:
         with transaction.atomic():
             row = self.find(instrument_id, lock=True)
             row.activo = active
-            row.save(update_fields=['activo', 'actualizado_en'])
-            return self.dto(row)
+            return self.save(row, ['activo', 'actualizado_en'])
