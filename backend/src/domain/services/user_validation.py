@@ -9,7 +9,7 @@ from src.domain.exceptions.superadmin import AdministrationError
 
 def validate_name(value: str, field: str) -> str:
     value = re.sub(' +', ' ', unicodedata.normalize('NFC', value).strip())
-    if not value and field in {'apellido_materno', 'nombre_preferido'}:
+    if not value and field == 'apellido_materno':
         return ''
     for word in value.split(' '):
         if not word or not word[0].isalpha() or any(

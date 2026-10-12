@@ -37,8 +37,6 @@ class PerfilUsuario(AuditableModel):
     codigo_empleado = models.CharField(max_length=50, unique=True)
     # Completa el apellido que no se guarda en los campos principales de la cuenta.
     apellido_materno = models.CharField(max_length=150, blank=True)
-    # Nombre con el que la persona prefiere ser llamada.
-    nombre_preferido = models.CharField(max_length=150, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     # Dato opcional: femenino, masculino u otro; puede dejarse sin completar.
     sexo = models.CharField(max_length=1, choices=Sexo.choices, blank=True)

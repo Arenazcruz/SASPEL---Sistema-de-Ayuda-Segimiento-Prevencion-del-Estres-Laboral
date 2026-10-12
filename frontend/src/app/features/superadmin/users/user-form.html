@@ -156,19 +156,6 @@
           }
         </label>
         <label
-          >Nombre preferido<input
-            formControlName="nombre_preferido"
-            maxlength="150"
-            [attr.aria-invalid]="vm.invalid('nombre_preferido')"
-            aria-describedby="preferred-name-error"
-          />
-          @if (vm.invalid('nombre_preferido')) {
-            <small id="preferred-name-error" class="sa-field-error">{{
-              vm.fieldError('nombre_preferido')
-            }}</small>
-          }
-        </label>
-        <label
           >Fecha de nacimiento {{ !vm.id || vm.person()?.fecha_nacimiento ? '*' : '' }}
           <input
             type="date"

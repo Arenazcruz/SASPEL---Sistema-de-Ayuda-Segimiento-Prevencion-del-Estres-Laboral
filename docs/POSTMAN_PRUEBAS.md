@@ -317,7 +317,6 @@ POST {{base_url}}/api/superadmin/users/
   "last_name": "Prueba",
   "apellido_materno": "Temporal",
   "codigo_empleado": "{{test_employee_code}}",
-  "nombre_preferido": "",
   "fecha_nacimiento": "1990-05-15",
   "sexo": "",
   "telefono": "",
@@ -348,7 +347,7 @@ Cuenta, perfil y grupo se crean en una sola transacción.
 
 Nombres y apellidos admiten solo letras (incluidas tildes y ñ) y espacios;
 se normalizan los espacios repetidos. `first_name` y `last_name` son obligatorios;
-`apellido_materno` y `nombre_preferido` pueden estar vacíos. `codigo_empleado`
+`apellido_materno` puede estar vacío. `codigo_empleado`
 admite letras y números, con guiones entre grupos (por ejemplo, `EMP-123`), sin espacios.
 `telefono` puede estar vacío; si se proporciona, debe contener entre 8 y 15 dígitos,
 sin prefijo `+`, espacios ni otros símbolos. `fecha_nacimiento` es obligatoria al crear
@@ -373,7 +372,6 @@ Ejemplo de PATCH:
 {
   "first_name": "Persona editada",
   "apellido_materno": "Temporal",
-  "nombre_preferido": "Prueba",
   "telefono": "59170000000",
   "area_id": {{area_id}},
   "cargo_id": {{cargo_id}}

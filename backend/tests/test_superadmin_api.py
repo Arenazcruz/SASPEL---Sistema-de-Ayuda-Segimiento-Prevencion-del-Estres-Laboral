@@ -81,6 +81,13 @@ class SuperadminApiTests(TestCase):
                 email = 'ana.prueba' + (str(index + 1) if index else '') + '@saspel.com'
                 response = self.create(role=role, codigo_empleado=f'EMP-{index}')
                 self.assertEqual(response.status_code, 201, response.data)
+                self.assertEqual(set(response.data), {
+                    'id', 'email', 'first_name', 'last_name', 'nombre_completo', 'role',
+                    'is_active', 'fecha_registro', 'last_login', 'codigo_empleado',
+                    'apellido_materno', 'fecha_nacimiento', 'sexo', 'telefono', 'area',
+                    'cargo', 'tamizaje_resuelto', 'habilitado_asignaciones', 'tiene_perfil',
+                })
+                self.assertEqual(response.data['nombre_completo'], 'Ana Prueba López')
                 user = User.objects.get(pk=response.data['id'])
                 self.assertEqual(user.email, email)
                 self.assertEqual(user.username, email)
@@ -251,6 +258,10 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(user.username, previous.username)
         self.assertEqual(user.password, previous.password)
         self.assertEqual(user.perfil_usuario.telefono, '59170000123')
+        detail = self.client.get(f'/api/superadmin/users/{user_id}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data, response.data)
+        self.assertEqual(detail.data['nombre_completo'], 'Editada Prueba López')
         self.assertEqual(self.login(user.email).status_code, 200)
         for field in ('email', 'username'):
             self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/',
@@ -357,15 +368,15 @@ class SuperadminApiTests(TestCase):
 
     def test_personal_data_rejects_invalid_types_with_field_errors(self):
         response = self.create(first_name='Ana123', last_name='Pérez!', apellido_materno='123',
-                               nombre_preferido='<Ana>', codigo_empleado='EMP 01', telefono='abcdefghi')
+                               codigo_empleado='EMP 01', telefono='abcdefghi')
         self.assertEqual(response.status_code, 400)
-        for field in ('first_name', 'last_name', 'apellido_materno', 'nombre_preferido', 'codigo_empleado', 'telefono'):
+        for field in ('first_name', 'last_name', 'apellido_materno', 'codigo_empleado', 'telefono'):
             self.assertIn(field, response.data)
         self.assertEqual(User.objects.count(), 1)
 
     def test_names_accents_spaces_and_alphanumeric_code_are_accepted(self):
         response = self.create(first_name='  Jesu\u0301s   Gabriel  ', last_name='Muñoz',
-                               apellido_materno='', nombre_preferido='', codigo_empleado='AB12-34',
+                               apellido_materno='', codigo_empleado='AB12-34',
                                telefono='0012345678')
         self.assertEqual(response.status_code, 201, response.data)
         self.assertEqual(response.data['first_name'], 'Jesús Gabriel')

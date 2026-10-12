@@ -20,7 +20,7 @@ CREATION_ROLES = {role.value for role in FunctionalRole} - {'TRABAJADOR'}
 ADMINISTRATIVE_ROLES = {'PSICOLOGO', 'ADMIN', 'SUPERADMIN'}
 EDITABLE_FIELDS = {
     'first_name', 'last_name', 'apellido_materno', 'codigo_empleado',
-    'nombre_preferido', 'fecha_nacimiento', 'sexo', 'telefono', 'area_id', 'cargo_id',
+    'fecha_nacimiento', 'sexo', 'telefono', 'area_id', 'cargo_id',
     'habilitado_asignaciones',
 }
 

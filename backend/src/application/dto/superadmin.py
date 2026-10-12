@@ -19,7 +19,6 @@ class CreateUserCommand:
     apellido_materno: str
     codigo_empleado: str
     role: str
-    nombre_preferido: str = ''
     fecha_nacimiento: date | None = None
     sexo: str = ''
     telefono: str = ''
@@ -89,7 +88,6 @@ class UserDTO:
     last_login: datetime | None
     codigo_empleado: str = ''
     apellido_materno: str = ''
-    nombre_preferido: str = ''
     fecha_nacimiento: date | None = None
     sexo: str = ''
     telefono: str = ''

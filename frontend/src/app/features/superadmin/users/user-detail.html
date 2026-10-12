@@ -85,10 +85,6 @@
         <dd>{{ user.apellido_materno || '—' }}</dd>
       </div>
       <div>
-        <dt>Nombre preferido</dt>
-        <dd>{{ user.nombre_preferido || '—' }}</dd>
-      </div>
-      <div>
         <dt>Fecha de nacimiento</dt>
         <dd>{{ user.fecha_nacimiento ? (user.fecha_nacimiento | date: 'dd/MM/yyyy') : '—' }}</dd>
       </div>
