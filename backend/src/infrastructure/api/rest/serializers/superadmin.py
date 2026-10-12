@@ -34,7 +34,6 @@ class UserEditSerializer(StrictSerializer):
     last_name = serializers.CharField(max_length=150)
     apellido_materno = serializers.CharField(max_length=150, allow_blank=True)
     codigo_empleado = serializers.CharField(max_length=50)
-    nombre_preferido = serializers.CharField(max_length=150, allow_blank=True, required=False)
     fecha_nacimiento = serializers.DateField(required=False)
     sexo = serializers.ChoiceField(choices=['', 'F', 'M', 'O'], required=False)
     telefono = serializers.CharField(max_length=15, allow_blank=True, required=False)
@@ -46,7 +45,7 @@ class UserEditSerializer(StrictSerializer):
         errors = {}
         validators = {
             **{field: lambda value, field=field: validate_name(value, field) for field in (
-                'first_name', 'last_name', 'apellido_materno', 'nombre_preferido',
+                'first_name', 'last_name', 'apellido_materno',
             )},
             'codigo_empleado': validate_employee_code,
             'telefono': validate_phone,

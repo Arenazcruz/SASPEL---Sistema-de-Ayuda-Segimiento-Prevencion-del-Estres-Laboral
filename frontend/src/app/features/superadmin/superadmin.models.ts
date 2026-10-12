@@ -41,7 +41,6 @@ export interface Person {
   last_login: string | null;
   codigo_empleado: string;
   apellido_materno: string;
-  nombre_preferido: string;
   fecha_nacimiento: string | null;
   sexo: string;
   telefono: string;

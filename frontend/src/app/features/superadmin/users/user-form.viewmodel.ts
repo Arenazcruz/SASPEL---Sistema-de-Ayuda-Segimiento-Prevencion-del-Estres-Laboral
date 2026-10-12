@@ -45,7 +45,6 @@ export class UserFormViewModel {
       first_name: ['', [Validators.required, Validators.maxLength(150), personName]],
       last_name: ['', [Validators.required, Validators.maxLength(150), personName]],
       apellido_materno: ['', [Validators.maxLength(150), personName]],
-      nombre_preferido: ['', [Validators.maxLength(150), personName]],
       fecha_nacimiento: ['', [Validators.required, birthDate]],
       sexo: '',
       telefono: ['', [Validators.maxLength(15), phoneNumber]],
@@ -174,7 +173,6 @@ export class UserFormViewModel {
       first_name: normalizeName(raw.first_name),
       last_name: normalizeName(raw.last_name),
       apellido_materno: normalizeName(raw.apellido_materno),
-      nombre_preferido: normalizeName(raw.nombre_preferido),
       codigo_empleado: raw.codigo_empleado.trim(),
       telefono: raw.telefono.trim(),
     });

@@ -24,6 +24,7 @@ import { SuperadminLayout } from './layout/superadmin-layout';
 import { SuperadminService } from './superadmin.service';
 import { Person } from './superadmin.models';
 import { UserForm } from './users/user-form';
+import { UserDetail } from './users/user-detail';
 import { UserList } from './users/user-list';
 import { UserPassword } from './users/user-password';
 import { superadminChildGuard } from './superadmin.routes';
@@ -40,7 +41,6 @@ const person: Person = {
   last_login: null,
   codigo_empleado: 'SA-TEST',
   apellido_materno: '',
-  nombre_preferido: '',
   fecha_nacimiento: null,
   sexo: '',
   telefono: '',
@@ -196,6 +196,20 @@ describe('Formulario de personas', () => {
     vm.submit();
     const req = http.expectOne('/api/superadmin/users/');
     expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      first_name: 'Ana',
+      last_name: 'Prueba',
+      apellido_materno: '',
+      codigo_empleado: 'SA-TEST',
+      fecha_nacimiento: '1990-05-15',
+      sexo: '',
+      telefono: '',
+      area_id: null,
+      cargo_id: null,
+      role: 'NUEVO_TRABAJADOR',
+      password: 'Clave-segura-528!',
+      password_confirmation: 'Clave-segura-528!',
+    });
     expect(req.request.body.role).toBe('NUEVO_TRABAJADOR');
     expect(req.request.body).not.toHaveProperty('tamizaje_resuelto');
     expect(req.request.body).not.toHaveProperty('email');
@@ -293,6 +307,16 @@ describe('Formulario de personas', () => {
     vm.submit();
     const req = http.expectOne('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({
+      first_name: 'Editada',
+      last_name: 'Prueba',
+      apellido_materno: '',
+      codigo_empleado: 'SA-TEST',
+      sexo: '',
+      telefono: '',
+      area_id: null,
+      cargo_id: null,
+    });
     for (const key of ['email', 'password', 'password_confirmation', 'role', 'is_active'])
       expect(req.request.body).not.toHaveProperty(key);
     expect(req.request.body).not.toHaveProperty('fecha_nacimiento');
@@ -305,6 +329,29 @@ describe('Formulario de personas', () => {
     http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(vm.form.controls.telefono.invalid).toBe(true);
     expect(vm.form.controls.fecha_nacimiento.invalid).toBe(true);
+  });
+});
+
+describe('Detalle de persona', () => {
+  it('presenta la identidad con nombres y apellidos reales', async () => {
+    const http = setup(UserDetail, person.id);
+    const fixture = TestBed.createComponent(UserDetail);
+    http.expectOne(`/api/superadmin/users/${person.id}/`).flush({
+      ...person,
+      apellido_materno: 'López',
+      nombre_completo: 'Ana Prueba López',
+    });
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('h1')?.textContent).toContain('Ana Prueba López');
+    const fields = Array.from(element.querySelectorAll('.sa-details > div')).map((field) => [
+      field.querySelector('dt')?.textContent?.trim(),
+      field.querySelector('dd')?.textContent?.trim(),
+    ]);
+    expect(fields).toContainEqual(['Nombres', 'Ana']);
+    expect(fields).toContainEqual(['Apellido paterno', 'Prueba']);
+    expect(fields).toContainEqual(['Apellido materno', 'López']);
+    http.verify();
   });
 });
 

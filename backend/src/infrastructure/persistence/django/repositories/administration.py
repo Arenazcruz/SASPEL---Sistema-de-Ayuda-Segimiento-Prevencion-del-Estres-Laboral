@@ -76,7 +76,7 @@ class DjangoAdministrationRepository:
         data = {}
         if profile:
             data = {name: getattr(profile, name) for name in (
-                'codigo_empleado', 'apellido_materno', 'nombre_preferido',
+                'codigo_empleado', 'apellido_materno',
                 'fecha_nacimiento', 'sexo', 'telefono', 'tamizaje_resuelto',
                 'habilitado_asignaciones',
             )}
