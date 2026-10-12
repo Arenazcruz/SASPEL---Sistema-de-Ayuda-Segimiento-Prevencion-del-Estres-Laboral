@@ -6,9 +6,11 @@ from django.urls import include, path
 
 from src.infrastructure.api.rest.views.health import health
 from src.infrastructure.api.rest.views.prueba import prueba
+from src.infrastructure.api.rest.views.nuevo_trabajador import DashboardNuevoTrabajadorView
 
 
 urlpatterns = [
+    path('nuevo-trabajador/dashboard/', DashboardNuevoTrabajadorView.as_view(), name='nuevo-trabajador-dashboard'),
     path('superadmin/', include('src.infrastructure.api.rest.superadmin_urls')),
     path('auth/', include('src.infrastructure.api.rest.auth_urls')),
     path('', prueba),

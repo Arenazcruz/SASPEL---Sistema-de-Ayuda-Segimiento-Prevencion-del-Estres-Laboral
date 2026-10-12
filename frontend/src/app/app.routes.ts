@@ -1,6 +1,6 @@
 /**
  * Mapa de navegación público y privado. authGuard restaura identidad antes de roleGuard;
- * Superadmin carga sus rutas hijas y los demás roles usan Dashboard. Al cambiar paneles
+ * Superadmin carga sus rutas hijas y Nuevo Trabajador su panel propio. Al cambiar paneles
  * revisar ROLE_DASHBOARDS, backend auth_identity y enlaces del sidebar.
  */
 import { Routes } from '@angular/router';
@@ -60,8 +60,16 @@ export const routes: Routes = [
           import('./features/superadmin/superadmin.routes').then((m) => m.SUPERADMIN_ROUTES),
         title: 'Superadmin · SASPEL',
       },
+      {
+        path: 'nuevo-trabajador',
+        data: { role: 'NUEVO_TRABAJADOR' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/nuevo-trabajador/dashboard').then((m) => m.NuevoTrabajadorDashboard),
+        title: 'Mi espacio · SASPEL',
+      },
       ...Object.entries(ROLE_DASHBOARDS)
-        .filter(([role]) => role !== 'SUPERADMIN')
+        .filter(([role]) => role !== 'SUPERADMIN' && role !== 'NUEVO_TRABAJADOR')
         .map(([role, path]) => ({
           path: path.split('/').at(-1)!,
           data: { role },

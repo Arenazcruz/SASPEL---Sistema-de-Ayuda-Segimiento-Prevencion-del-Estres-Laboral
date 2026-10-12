@@ -1,0 +1,136 @@
+<header class="dashboard-header wrap">
+  <app-brand />
+  <div class="session">
+    <div class="identity">
+      <strong>{{ vm.nombreCompleto() }}</strong
+      ><span>{{ vm.user()?.email }}</span>
+    </div>
+    <button class="button button-outline button-small" type="button" (click)="vm.logout()">
+      Cerrar sesión
+    </button>
+  </div>
+</header>
+<main class="wrap dashboard-main">
+  <div class="greeting">
+    <p class="eyebrow">MI ESPACIO · NUEVO TRABAJADOR</p>
+    <h1>Bienvenido/a{{ vm.primerNombre() ? ', ' + vm.primerNombre() : '' }}</h1>
+    <p>Un primer paso para conocer y cuidar tu bienestar laboral.</p>
+  </div>
+  <div class="dashboard-grid">
+    <section class="card welcome" aria-labelledby="welcome-title">
+      <p class="eyebrow">BIENVENIDA</p>
+      <h2 id="welcome-title">Tu bienestar tiene un espacio</h2>
+      <p>
+        SASPEL apoya el monitoreo, seguimiento y prevención del estrés laboral. Permite realizar
+        evaluaciones y conservar sus resultados para observar tu evolución y facilitar el
+        seguimiento profesional.
+      </p>
+      <p>
+        El acompañamiento puede incluir citas, recomendaciones y herramientas de apoyo, según las
+        funciones habilitadas en el sistema.
+      </p>
+      <p class="clinical-note">
+        SASPEL no sustituye un diagnóstico clínico ni un tratamiento profesional.
+      </p>
+    </section>
+    <section
+      class="card evaluation"
+      aria-labelledby="evaluation-title"
+      [attr.aria-busy]="vm.loading()"
+    >
+      <p class="eyebrow">TU PRIMER PASO</p>
+      <h2 id="evaluation-title">Mi evaluación inicial</h2>
+      <div aria-live="polite">
+        @if (vm.loading()) {
+          <p role="status">Consultando tu evaluación inicial…</p>
+        } @else if (vm.error()) {
+          <p role="alert">{{ vm.error() }}</p>
+          <button class="button button-outline" type="button" (click)="vm.load()">
+            Reintentar
+          </button>
+        } @else if (vm.evaluacion(); as evaluacion) {
+          @switch (evaluacion.estado) {
+            @case ('SIN_ASIGNAR') {
+              <span class="status">Sin asignar</span>
+              <p>Tu evaluación inicial todavía no fue habilitada.</p>
+            }
+            @case ('PENDIENTE') {
+              <span class="status">Pendiente</span>
+              <p class="evaluation-message">Evaluación disponible</p>
+            }
+            @case ('EN_PROGRESO') {
+              <span class="status">En progreso</span>
+              <p class="evaluation-message">Evaluación en progreso</p>
+            }
+            @case ('COMPLETADA') {
+              <span class="status completed">Completada</span>
+              <p class="evaluation-message">Evaluación inicial completada</p>
+            }
+          }
+          @if (evaluacion.nombre) {
+            <h3>{{ evaluacion.nombre }}</h3>
+            <dl>
+              <div>
+                <dt>Versión</dt>
+                <dd>{{ evaluacion.version }}</dd>
+              </div>
+              @if (evaluacion.fecha_asignacion) {
+                <div>
+                  <dt>Asignada el</dt>
+                  <dd>{{ evaluacion.fecha_asignacion | date: 'dd/MM/yyyy' }}</dd>
+                </div>
+              }
+              @if (evaluacion.fecha_limite) {
+                <div>
+                  <dt>Fecha límite</dt>
+                  <dd>{{ evaluacion.fecha_limite | date: 'dd/MM/yyyy' }}</dd>
+                </div>
+              }
+            </dl>
+          }
+          @if (evaluacion.estado === 'PENDIENTE') {
+            <button class="button" type="button" disabled aria-describedby="coming-soon">
+              Comenzar evaluación
+            </button>
+            <p class="availability" id="coming-soon">Disponible próximamente</p>
+          }
+        }
+      </div>
+    </section>
+    <section class="card process" aria-labelledby="process-title">
+      <p class="eyebrow">CÓMO FUNCIONA</p>
+      <h2 id="process-title">Conoce el proceso</h2>
+      <ol>
+        <li>
+          <span aria-hidden="true">01</span>
+          <h3>Evaluación inicial</h3>
+          <p>Un punto de partida para conocer tu situación.</p>
+        </li>
+        <li>
+          <span aria-hidden="true">02</span>
+          <h3>Seguimiento</h3>
+          <p>Observación de tu bienestar a lo largo del tiempo.</p>
+        </li>
+        <li>
+          <span aria-hidden="true">03</span>
+          <h3>Evolución</h3>
+          <p>Una mirada a los cambios entre evaluaciones.</p>
+        </li>
+        <li>
+          <span aria-hidden="true">04</span>
+          <h3>Acompañamiento profesional</h3>
+          <p>Orientación dentro del alcance institucional.</p>
+        </li>
+      </ol>
+    </section>
+    <section class="privacy" aria-labelledby="privacy-title">
+      <h2 id="privacy-title">Tu privacidad</h2>
+      <p>
+        Tu información es de uso institucional y se rige por las políticas que aceptaste durante el
+        primer acceso. La información psicológica no es pública. SASPEL utiliza los datos únicamente
+        dentro del alcance definido en esas políticas.
+      </p>
+    </section>
+  </div>
+</main>
+<footer class="wrap dashboard-footer">SASPEL · Bienestar laboral</footer>
