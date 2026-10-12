@@ -21,7 +21,7 @@ from src.infrastructure.persistence.django.repositories.administration import Dj
 from src.infrastructure.persistence.django.models import (
     AplicacionInstrumento, AsignacionInstrumento, AuditableModel, EscalaRespuesta,
     InstrumentoPsicologico, OpcionRespuesta, PerfilUsuario, PreguntaInstrumento,
-    RangoInterpretacion, ResultadoInstrumento,
+    RangoInterpretacion, RespuestaPregunta, ResultadoInstrumento,
 )
 
 User = get_user_model()
@@ -35,12 +35,21 @@ def seed():
 
 
 class InitialInstrumentSeedTests(TestCase):
-    def test_configuracion_persistida_sin_preguntas_y_segunda_ejecucion_identica(self):
+    def test_configuracion_con_diez_preguntas_y_segunda_ejecucion_identica(self):
         seed()
         instrument = InstrumentoPsicologico.objects.get(codigo='PSS10', version='1.0')
-        self.assertEqual(instrument.nombre, 'Escala de Estrés Percibido PSS-10')
+        self.assertEqual(instrument.nombre, 'Evaluación inicial de estrés laboral')
         self.assertTrue(instrument.activo and instrument.es_inicial)
+        self.assertEqual(InstrumentoPsicologico.objects.filter(activo=True, es_inicial=True).count(), 1)
         scale = EscalaRespuesta.objects.get()
+        questions = instrument.preguntas.order_by('orden')
+        self.assertEqual(questions.count(), 10)
+        self.assertEqual(list(questions.values_list('orden', flat=True)), list(range(1, 11)))
+        self.assertEqual(list(questions.filter(invertida=True).values_list('orden', flat=True)), [4, 5, 7, 8])
+        self.assertEqual(questions.filter(escala=scale, tipo_respuesta='ESCALA', obligatoria=True,
+                                        activo=True, deleted=False).count(), 10)
+        config = json.loads(CONFIG_PATH.read_text(encoding='utf-8'))
+        self.assertEqual(list(questions.values_list('texto', flat=True)), [q['texto'] for q in config['preguntas']])
         self.assertEqual(list(scale.opciones.order_by('valor').values_list('valor', 'etiqueta')), [
             (0, 'Nunca'), (1, 'Casi nunca'), (2, 'A veces'), (3, 'A menudo'), (4, 'Muy a menudo'),
         ])
@@ -50,12 +59,12 @@ class InitialInstrumentSeedTests(TestCase):
         for item in instrument.rangos.all():
             self.assertIn('orientativa', item.interpretacion)
             self.assertIn('No constituye diagnóstico clínico', item.interpretacion)
-        models = (InstrumentoPsicologico, EscalaRespuesta, OpcionRespuesta, RangoInterpretacion)
+        models = (InstrumentoPsicologico, EscalaRespuesta, OpcionRespuesta, PreguntaInstrumento, RangoInterpretacion)
         before = [list(model.objects.order_by('pk').values()) for model in models]
         seed()
         self.assertEqual(before, [list(model.objects.order_by('pk').values()) for model in models])
-        self.assertFalse(PreguntaInstrumento.objects.exists())
         self.assertFalse(AsignacionInstrumento.objects.exists())
+        self.assertFalse(ResultadoInstrumento.objects.exists())
         for model in models:
             for row in model.objects.all():
                 self.assertIsInstance(row, AuditableModel)
@@ -71,6 +80,48 @@ class InitialInstrumentSeedTests(TestCase):
         seed()
         self.assertEqual(EscalaRespuesta.objects.get().pk, scale.pk)
         self.assertEqual(scale.opciones.count(), 5)
+
+    def test_actualiza_instrumento_anterior_conservando_uuid(self):
+        config = json.loads(CONFIG_PATH.read_text(encoding='utf-8'))
+        instrument = InstrumentoPsicologico.objects.create(**(config['instrumento'] | {
+            'nombre': 'Escala de Estrés Percibido PSS-10',
+            'instrucciones': 'Lee las instrucciones de la versión aprobada antes de responder. '
+                             'El contenido de las preguntas está pendiente de carga institucional.',
+        }))
+        seed()
+        self.assertEqual(InstrumentoPsicologico.objects.get().pk, instrument.pk)
+        instrument.refresh_from_db()
+        self.assertEqual(instrument.nombre, config['instrumento']['nombre'])
+        self.assertEqual(instrument.instrucciones, config['instrumento']['instrucciones'])
+        self.assertEqual(instrument.preguntas.count(), 10)
+
+    def test_reactiva_pregunta_coincidente_sin_duplicarla(self):
+        seed()
+        question = PreguntaInstrumento.objects.get(orden=4)
+        PreguntaInstrumento.objects.filter(pk=question.pk).update(activo=False, deleted=True)
+        seed()
+        question.refresh_from_db()
+        self.assertTrue(question.activo)
+        self.assertFalse(question.deleted)
+        self.assertTrue(question.invertida)
+        self.assertEqual(PreguntaInstrumento.objects.count(), 10)
+
+    def test_pregunta_ajena_o_adicional_revierte_toda_la_carga(self):
+        config = json.loads(CONFIG_PATH.read_text(encoding='utf-8'))
+        instrument = InstrumentoPsicologico.objects.create(**config['instrumento'])
+        question = PreguntaInstrumento.objects.create(
+            instrumento=instrument, orden=10, texto='Contenido institucional distinto', tipo_respuesta='TEXTO',
+        )
+        for order in (10, 11):
+            question.orden = order
+            question.save()
+            before = list(PreguntaInstrumento.objects.values())
+            with self.subTest(order=order), self.assertRaises(CommandError):
+                seed()
+            self.assertEqual(before, list(PreguntaInstrumento.objects.values()))
+            self.assertFalse(EscalaRespuesta.objects.exists())
+            self.assertFalse(OpcionRespuesta.objects.exists())
+            self.assertFalse(RangoInterpretacion.objects.exists())
 
     def test_otro_inicial_activo_bloquea_seed_sin_modificaciones(self):
         current = InstrumentoPsicologico.objects.create(codigo='OTHER', nombre='Prueba', es_inicial=True)
@@ -155,7 +206,7 @@ class InitialInstrumentFlowTests(TestCase):
         data = self.dashboard(user)
         self.assertEqual(data['estado'], 'PENDIENTE')
         self.assertEqual(UUID(data['asignacion_id']), assignment.pk)
-        self.assertEqual(data['nombre'], 'Escala de Estrés Percibido PSS-10')
+        self.assertEqual(data['nombre'], 'Evaluación inicial de estrés laboral')
         self.assertEqual(data['version'], '1.0')
         self.assertFalse(AplicacionInstrumento.objects.exists())
         self.assertFalse(ResultadoInstrumento.objects.exists())
@@ -244,26 +295,61 @@ class InitialInstrumentFlowTests(TestCase):
         self.assertTrue(current.es_inicial)
         self.assertFalse(current.activo)
 
-    def test_superadmin_puede_cargar_diez_items_sinteticos_con_inversion_configurable(self):
+    def test_evaluacion_sembrada_inicia_guarda_continua_y_completa_diez_respuestas(self):
+        seed()
         seed()
         instrument = InstrumentoPsicologico.objects.get(codigo='PSS10')
         scale = EscalaRespuesta.objects.get()
-        config = json.loads(CONFIG_PATH.read_text(encoding='utf-8'))['configuracion_preguntas']
-        self.assertEqual(config['ordenes_invertidos'], [4, 5, 7, 8])
-        for order in range(config['orden_inicial'], config['cantidad'] + 1):
-            response = self.client.post(f'{INSTRUMENTS}{instrument.pk}/questions/', {
-                'texto': f'Ítem sintético exclusivo de test {order}', 'orden': order,
-                'tipo_respuesta': config['tipo_respuesta'], 'escala_id': str(scale.pk),
-                'invertida': order in config['ordenes_invertidos'], 'obligatoria': config['obligatoria'],
-            }, format='json')
-            self.assertEqual(response.status_code, 201, response.data)
-        self.assertEqual(instrument.preguntas.count(), 10)
-        self.assertEqual(list(instrument.preguntas.filter(invertida=True).order_by('orden').values_list('orden', flat=True)), [4, 5, 7, 8])
-        self.assertEqual(instrument.preguntas.filter(escala=scale, obligatoria=True, tipo_respuesta='ESCALA').count(), 10)
-        self.assertEqual(scale.opciones.count(), 5)
-        before = list(instrument.preguntas.order_by('pk').values())
+        response = self.create()
+        self.assertEqual(response.status_code, 201, response.data)
+        user = User.objects.get(pk=response.data['id'])
+        dashboard = self.dashboard(user)
+        self.assertEqual(dashboard['estado'], 'PENDIENTE')
+        self.assertTrue(dashboard['puede_iniciar'])
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(AccessToken.for_user(user)))
+        url = f"/api/nuevo-trabajador/evaluaciones/{dashboard['asignacion_id']}/"
+        response = client.post(url + 'iniciar/', {}, format='json')
+        self.assertEqual(response.status_code, 200, response.data)
+        detail = response.json()
+        questions = list(instrument.preguntas.order_by('orden'))
+        options = list(scale.opciones.order_by('valor'))
+        self.assertEqual([q['texto'] for q in detail['preguntas']], [q.texto for q in questions])
+        for question in detail['preguntas']:
+            self.assertEqual([o['id'] for o in question['opciones']], [str(o.pk) for o in options])
+        answers = [{'pregunta_id': str(q.pk), 'opcion_id': str(options[index % 5].pk)}
+                   for index, q in enumerate(questions)]
+        response = client.post(url + 'respuestas/', {'respuestas': answers[:5]}, format='json')
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(list(RespuestaPregunta.objects.order_by('pregunta__orden').values_list('opcion__valor', flat=True)),
+                         [0, 1, 2, 3, 4])
+        self.assertEqual(client.get(DASHBOARD).data['evaluacion_inicial']['estado'], 'EN_PROGRESO')
+        resumed = APIClient()
+        resumed.credentials(HTTP_AUTHORIZATION='Bearer ' + str(AccessToken.for_user(user)))
+        detail = resumed.get(url).json()
+        self.assertEqual(len(detail['respuestas']), 5)
+        self.assertEqual(resumed.post(url + 'iniciar/', {}, format='json').json()['aplicacion_id'], detail['aplicacion_id'])
+        incomplete = resumed.post(url + 'finalizar/', {'respuestas': []}, format='json')
+        self.assertEqual(incomplete.status_code, 400)
+        self.assertEqual(incomplete.json()['preguntas_pendientes'], [str(q.pk) for q in questions[5:]])
+        profile_before = list(PerfilUsuario.objects.filter(usuario=user).values())
+        response = resumed.post(url + 'finalizar/', {'respuestas': answers[5:]}, format='json')
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.json()['estado_aplicacion'], 'FINALIZADA')
+        self.assertEqual(len(response.json()['respuestas']), 10)
+        dashboard = resumed.get(DASHBOARD).json()['evaluacion_inicial']
+        self.assertEqual(dashboard['estado'], 'COMPLETADA')
+        self.assertFalse(dashboard['puede_iniciar'])
+        self.assertFalse(ResultadoInstrumento.objects.exists())
+        self.assertEqual(list(user.groups.values_list('name', flat=True)), ['NUEVO_TRABAJADOR'])
+        self.assertEqual(profile_before, list(PerfilUsuario.objects.filter(usuario=user).values()))
+        before = list(RespuestaPregunta.objects.order_by('pk').values())
+        for action in ('iniciar', 'respuestas', 'finalizar'):
+            payload = {} if action == 'iniciar' else {'respuestas': answers}
+            self.assertEqual(resumed.post(url + action + '/', payload, format='json').status_code, 400)
         seed()
-        self.assertEqual(before, list(instrument.preguntas.order_by('pk').values()))
+        self.assertEqual(before, list(RespuestaPregunta.objects.order_by('pk').values()))
+        self.assertEqual(AplicacionInstrumento.objects.count(), 1)
 
 
 class InitialAssignmentConcurrencyTests(TransactionTestCase):
