@@ -12,9 +12,10 @@ import { primerAccesoGuard } from '../../core/auth/primer-acceso.guard';
 import { roleGuard } from '../../core/auth/role.guard';
 import { AuthUser } from '../../core/auth/auth.models';
 import { AuthService } from '../../core/auth/auth.service';
+import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { NuevoTrabajadorDashboard } from './dashboard';
 import { EvaluacionInicialComponent } from './evaluacion';
-import { EvaluacionDetalle, PreguntaEvaluacion } from './evaluacion.models';
+import { EvaluacionDetalle, PreguntaEvaluacion, ResultadoEvaluacion } from './evaluacion.models';
 
 const id = '35560ef6-7b44-47d5-aed6-b9e2395a0301';
 const optionId = '35560ef6-7b44-47d5-aed6-b9e2395a0401';
@@ -70,6 +71,23 @@ function respondido(): EvaluacionDetalle {
   }));
   return data;
 }
+const worker: AuthUser = { ...user, role: 'TRABAJADOR', dashboard_path: '/dashboard/trabajador' };
+function resultado(estado: 'ASIGNADO' | 'PENDIENTE' = 'PENDIENTE'): ResultadoEvaluacion {
+  return {
+    aplicacion_id: detalle().aplicacion_id!,
+    instrumento_id: detalle().instrumento_id,
+    nombre: detalle().nombre,
+    version: detalle().version,
+    fecha_calculo: '2026-10-12T12:00:00Z',
+    puntaje_total: '20.0000',
+    rango: 'MODERADO',
+    interpretacion: 'Interpretación configurada.',
+    tamizaje_resuelto: true,
+    nuevo_rol: 'TRABAJADOR',
+    dashboard_path: worker.dashboard_path,
+    estado_asignacion_profesional: estado,
+  };
+}
 function resumen(estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA', available = true) {
   return {
     evaluacion_inicial: {
@@ -103,11 +121,13 @@ describe('Formulario dinámico de evaluación', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    TestBed.inject(TokenStorageService).save({ access: 'access', refresh: 'refresh' });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     fixture = TestBed.createComponent(EvaluacionInicialComponent);
   });
   afterEach(() => {
     http.verify();
+    sessionStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -179,8 +199,66 @@ describe('Formulario dinámico de evaluación', () => {
     const request = http.expectOne(URL + 'finalizar/');
     expect(request.request.body.respuestas[2].valor_numerico).toBe('0.0000');
     expect(request.request.body.respuestas[3].valor_booleano).toBe(false);
-    request.flush({ ...data, estado_asignacion: 'COMPLETADA', estado_aplicacion: 'FINALIZADA' });
-    expect(navigate).toHaveBeenCalledWith('/dashboard/nuevo-trabajador');
+    request.flush(resultado());
+    http.expectOne('/api/auth/me/').flush(worker);
+    expect(navigate).not.toHaveBeenCalled();
+    fixture.componentInstance.vm.continuar();
+    expect(navigate).toHaveBeenCalledWith('/dashboard/trabajador');
+  });
+
+  for (const estado of ['ASIGNADO', 'PENDIENTE'] as const) {
+    it(`muestra resultado orientativo y seguimiento ${estado}, refresca rol y evita doble clic`, async () => {
+      const auth = TestBed.inject(AuthService);
+      auth.restoreSession().subscribe();
+      http.expectOne('/api/auth/me/').flush(user);
+      http.expectOne(URL).flush(respondido());
+      const vm = fixture.componentInstance.vm;
+      vm.finalizar();
+      vm.finalizar();
+      http.expectOne(URL + 'finalizar/').flush(resultado(estado));
+      expect(auth.user()).toBeNull();
+      http.expectOne('/api/auth/me/').flush(worker);
+      await fixture.whenStable();
+      expect(auth.user()?.role).toBe('TRABAJADOR');
+      expect(TestBed.inject(TokenStorageService).access).toBe('access');
+      expect(TestBed.inject(TokenStorageService).refresh).toBe('refresh');
+      const content = fixture.nativeElement.textContent;
+      for (const text of [
+        'Evaluación inicial completada',
+        '20.0000',
+        'MODERADO',
+        'Interpretación configurada.',
+        'orientativo',
+        'SASPEL no sustituye un diagnóstico clínico',
+        estado === 'ASIGNADO' ? 'Profesional asignado' : 'Asignación profesional pendiente',
+        'Continuar a mi panel',
+      ]) {
+        expect(content).toContain(text);
+      }
+      expect(vm.editable()).toBe(false);
+      vm.finalizar();
+      http.expectNone(URL + 'finalizar/');
+      http.expectNone('/api/nuevo-trabajador/dashboard/');
+      const button = [...fixture.nativeElement.querySelectorAll('button')].find((b: any) =>
+        b.textContent.includes('Continuar a mi panel'),
+      ) as HTMLButtonElement;
+      button.click();
+      expect(navigate).toHaveBeenCalledWith('/dashboard/trabajador');
+    });
+  }
+
+  it('permite reintentar identidad sin repetir finalización ni perder tokens ante error temporal', () => {
+    http.expectOne(URL).flush(respondido());
+    const vm = fixture.componentInstance.vm;
+    vm.finalizar();
+    http.expectOne(URL + 'finalizar/').flush({ ...resultado(), rango: null, interpretacion: '' });
+    http.expectOne('/api/auth/me/').flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(vm.resultado()?.rango).toBeNull();
+    expect(TestBed.inject(TokenStorageService).access).toBe('access');
+    vm.continuar();
+    http.expectOne('/api/auth/me/').flush(worker);
+    expect(navigate).toHaveBeenCalledWith('/dashboard/trabajador');
+    http.expectNone(URL + 'finalizar/');
   });
 
   it('no permite editar ni guardar después de finalizar', async () => {
@@ -256,16 +334,14 @@ describe('Formulario dinámico de evaluación', () => {
   });
 
   it('sin configuración no permite comenzar desde enlace directo', async () => {
-    http
-      .expectOne(URL)
-      .flush({
-        ...detalle(),
-        disponible: false,
-        preguntas: [],
-        estado_asignacion: 'PENDIENTE',
-        aplicacion_id: null,
-        estado_aplicacion: null,
-      });
+    http.expectOne(URL).flush({
+      ...detalle(),
+      disponible: false,
+      preguntas: [],
+      estado_asignacion: 'PENDIENTE',
+      aplicacion_id: null,
+      estado_aplicacion: null,
+    });
     fixture.componentInstance.vm.iniciar();
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain(
@@ -286,7 +362,17 @@ describe('Navegación dashboard y evaluación', () => {
         { provide: API_URL, useValue: '/api' },
         {
           provide: AuthService,
-          useValue: { user: signal(user), restoreSession: () => of(user), logout: vi.fn() },
+          useValue: {
+            user: signal(user),
+            restoreSession() {
+              return of(this.user());
+            },
+            refreshIdentity() {
+              this.user.set(worker);
+              return of(worker);
+            },
+            logout: vi.fn(),
+          },
         },
       ],
     });
@@ -321,20 +407,23 @@ describe('Navegación dashboard y evaluación', () => {
     expect(TestBed.inject(Router).url).toBe(PATH);
   });
 
-  it('finalizar vuelve al dashboard y muestra COMPLETADA sin botón de inicio', async () => {
+  it('finalizar muestra éxito y continuar navega al trabajador; no vuelve al panel de nuevo trabajador', async () => {
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl(PATH, EvaluacionInicialComponent);
     http.expectOne(URL).flush(respondido());
     component.vm.finalizar();
-    http
-      .expectOne(URL + 'finalizar/')
-      .flush({ ...respondido(), estado_asignacion: 'COMPLETADA', estado_aplicacion: 'FINALIZADA' });
+    http.expectOne(URL + 'finalizar/').flush(resultado());
     await harness.fixture.whenStable();
-    http.expectOne('/api/nuevo-trabajador/dashboard/').flush(resumen('COMPLETADA'));
-    await harness.fixture.whenStable();
-    expect(TestBed.inject(Router).url).toBe(user.dashboard_path);
+    expect(TestBed.inject(Router).url).toBe(PATH);
     expect(harness.routeNativeElement?.textContent).toContain('Evaluación inicial completada');
-    expect(harness.routeNativeElement?.querySelector('.evaluation button')).toBeNull();
+    component.vm.continuar();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+    await harness.navigateByUrl(user.dashboard_path);
+    expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+    await harness.navigateByUrl(PATH);
+    expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+    http.expectNone('/api/nuevo-trabajador/dashboard/');
   });
 
   it('conserva los tres guards en la ruta nueva', () => {

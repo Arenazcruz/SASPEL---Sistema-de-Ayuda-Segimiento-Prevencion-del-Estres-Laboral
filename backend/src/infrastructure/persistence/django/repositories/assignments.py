@@ -92,9 +92,10 @@ class DjangoAssignmentRepository:
     def psychologist_loads(self):
         users = self.administration.users().filter(
             functional_role='PSICOLOGO', is_active=True, perfil_usuario__habilitado_asignaciones=True,
+            deleted=False, perfil_usuario__deleted=False,
         ).annotate(active_workers=Count(
             'asignaciones_como_psicologo', filter=Q(asignaciones_como_psicologo__estado='ACTIVA'),
-        )).order_by('active_workers', 'first_name', 'last_name', 'pk')
+        )).order_by('active_workers', 'email', 'pk')
         return [PsychologistLoad(self.person_dto(user), user.active_workers) for user in users]
 
     def has_active_assignment(self, worker_id):

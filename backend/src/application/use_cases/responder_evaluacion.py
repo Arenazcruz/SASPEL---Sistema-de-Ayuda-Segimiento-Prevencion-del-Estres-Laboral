@@ -1,12 +1,16 @@
 from decimal import Decimal, InvalidOperation
 
 from src.application.ports.output.responder_evaluacion import ResponderEvaluacionRepository
+from src.application.ports.output.assignments import AssignmentRepository
+from src.application.use_cases.assignments import AutoAssignWorker
 from src.domain.exceptions.evaluacion import EvaluacionError
+from src.domain.services.resultado_evaluacion import calcular_puntaje, seleccionar_rango
 
 
 class GestionarRespuestasEvaluacion:
-    def __init__(self, repository: ResponderEvaluacionRepository):
+    def __init__(self, repository: ResponderEvaluacionRepository, assignments: AssignmentRepository):
         self.repository = repository
+        self.assignments = assignments
 
     def consultar(self, usuario_id, asignacion_id):
         with self.repository.atomic(usuario_id, asignacion_id):
@@ -77,8 +81,18 @@ class GestionarRespuestasEvaluacion:
             return self.repository.consultar(usuario_id, asignacion_id)
 
     def finalizar(self, usuario_id, asignacion_id, respuestas):
-        with self.repository.atomic(usuario_id, asignacion_id):
+        # T23/administración adquieren primero este bloqueo; conservar el mismo orden.
+        with self.assignments.atomic(), self.repository.atomic(usuario_id, asignacion_id):
             detail = self.repository.consultar(usuario_id, asignacion_id)
+            role = self.repository.rol(usuario_id)
+            if role not in ('NUEVO_TRABAJADOR', 'TRABAJADOR'):
+                raise EvaluacionError('El rol actual no permite finalizar esta evaluación.')
+            if detail.estado_asignacion == 'COMPLETADA' and detail.estado_aplicacion == 'FINALIZADA':
+                result = self.repository.resultado(usuario_id, asignacion_id)
+                if result is not None:
+                    return result
+            if role != 'NUEVO_TRABAJADOR':
+                raise EvaluacionError('Solo un nuevo trabajador puede completar su evaluación inicial.')
             self.editable(detail)
             self.validar(detail, respuestas)
             self.repository.guardar(usuario_id, detail.aplicacion_id, respuestas)
@@ -88,5 +102,14 @@ class GestionarRespuestasEvaluacion:
             missing = tuple(p.id for p in detail.preguntas if p.obligatoria and p.id not in answered)
             if missing:
                 raise EvaluacionError('Responde las preguntas obligatorias antes de finalizar.', missing)
+            items, ranges = self.repository.datos_calculo(detail.aplicacion_id)
+            score = calcular_puntaje(items)
+            range_id = seleccionar_rango(score, ranges)
+            self.repository.crear_resultado(usuario_id, detail.aplicacion_id, score, range_id)
             self.repository.finalizar(usuario_id, asignacion_id, detail.aplicacion_id)
-            return self.repository.consultar(usuario_id, asignacion_id)
+            self.repository.completar_onboarding(usuario_id)
+            AutoAssignWorker(self.assignments).execute(usuario_id)
+            return self.repository.resultado(usuario_id, asignacion_id)
+
+    def resultado_inicial(self, usuario_id):
+        return self.repository.resultado_inicial(usuario_id)

@@ -43,3 +43,19 @@ class EvaluacionDetalle:
     disponible: bool
     preguntas: tuple[PreguntaEvaluacion, ...]
     respuestas: tuple[RespuestaEvaluacion, ...]
+
+
+@dataclass(frozen=True)
+class ResultadoEvaluacion:
+    aplicacion_id: UUID
+    instrumento_id: UUID
+    nombre: str
+    version: str
+    fecha_calculo: datetime
+    puntaje_total: str
+    rango: str | None
+    interpretacion: str
+    tamizaje_resuelto: bool
+    nuevo_rol: str
+    dashboard_path: str
+    estado_asignacion_profesional: str

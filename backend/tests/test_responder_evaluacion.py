@@ -188,35 +188,27 @@ class ResponderEvaluacionTests(TestCase):
         self.assertEqual(app.estado, 'INICIADA')
         self.assertIsNone(app.fecha_finalizacion)
 
-    def test_finalizar_cuatro_tipos_cero_y_false_sin_resultado_ni_cambio_de_rol(self):
+    def test_tipos_sin_motor_de_puntaje_no_finalizan_ni_cambian_rol(self):
         self.start()
         user_before = list(User.objects.filter(pk=self.user.pk).values())
         profile_before = list(PerfilUsuario.objects.values())
         response = self.send(self.answers(), 'finalizar')
-        self.assertEqual(response.status_code, 200, response.data)
-        detail = response.json()
-        self.assertEqual(detail['estado_aplicacion'], 'FINALIZADA')
-        self.assertEqual(detail['estado_asignacion'], 'COMPLETADA')
-        self.assertIsNotNone(detail['fecha_finalizacion'])
-        self.assertEqual(len(detail['respuestas']), 4)
-        self.assertEqual(self.client.get(DASHBOARD).data['evaluacion_inicial']['estado'], 'COMPLETADA')
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertEqual(AplicacionInstrumento.objects.get().estado, 'INICIADA')
+        self.assertEqual(self.client.get(DASHBOARD).data['evaluacion_inicial']['estado'], 'EN_PROGRESO')
         self.assertEqual(self.client.get(self.url).status_code, 200)
         self.assertFalse(ResultadoInstrumento.objects.exists())
         self.assertEqual(profile_before, list(PerfilUsuario.objects.values()))
         self.assertEqual(user_before, list(User.objects.filter(pk=self.user.pk).values()))
         self.assertTrue(self.user.groups.filter(name='NUEVO_TRABAJADOR').exists())
-        before = list(RespuestaPregunta.objects.order_by('pk').values())
-        for action in ('iniciar', 'respuestas', 'finalizar'):
-            payload = {} if action == 'iniciar' else {'respuestas': self.answers()}
-            self.assertEqual(self.client.post(self.url + action + '/', payload, format='json').status_code, 400)
-        self.assertEqual(before, list(RespuestaPregunta.objects.order_by('pk').values()))
+        self.assertFalse(RespuestaPregunta.objects.exists())
 
     def test_opcional_vacia_no_impide_finalizar(self):
         self.questions[1].obligatoria = False
         self.questions[1].save()
+        PreguntaInstrumento.objects.filter(pk__in=[q.pk for q in self.questions[2:]]).update(activo=False)
         self.start()
-        answers = self.answers()
-        answers.pop(1)
+        answers = self.answers()[:1]
         self.assertEqual(self.send(answers, 'finalizar').status_code, 200)
 
     def test_no_acepta_opcion_retirada_despues_del_guardado(self):

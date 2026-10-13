@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_URL } from '../../core/auth/api-url';
-import { EvaluacionDetalle, RespuestaEvaluacion } from './evaluacion.models';
+import { EvaluacionDetalle, RespuestaEvaluacion, ResultadoEvaluacion } from './evaluacion.models';
 
 @Injectable({ providedIn: 'root' })
 export class EvaluacionService {
@@ -18,6 +18,6 @@ export class EvaluacionService {
     return this.http.post<EvaluacionDetalle>(`${this.base}${id}/respuestas/`, { respuestas });
   }
   finalizar(id: string, respuestas: RespuestaEvaluacion[]) {
-    return this.http.post<EvaluacionDetalle>(`${this.base}${id}/finalizar/`, { respuestas });
+    return this.http.post<ResultadoEvaluacion>(`${this.base}${id}/finalizar/`, { respuestas });
   }
 }

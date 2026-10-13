@@ -2,22 +2,27 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, switchMap, tap } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import {
   EvaluacionDetalle,
   PreguntaEvaluacion,
   RespuestaEvaluacion,
   ValorRespuesta,
+  ResultadoEvaluacion,
 } from './evaluacion.models';
 import { EvaluacionService } from './evaluacion.service';
 
 @Injectable()
 export class EvaluacionViewModel {
   private readonly api = inject(EvaluacionService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('asignacionId')!;
   readonly detalle = signal<EvaluacionDetalle | null>(null);
+  readonly resultado = signal<ResultadoEvaluacion | null>(null);
+  readonly identidadLista = signal(false);
   readonly valores = signal<Record<string, ValorRespuesta>>({});
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -27,6 +32,7 @@ export class EvaluacionViewModel {
   readonly pendientes = signal<string[]>([]);
   readonly editable = computed(
     () =>
+      !this.resultado() &&
       this.detalle()?.estado_aplicacion === 'INICIADA' &&
       this.detalle()?.estado_asignacion === 'EN_PROGRESO' &&
       this.detalle()?.disponible,
@@ -163,13 +169,19 @@ export class EvaluacionViewModel {
     this.api
       .finalizar(this.id, this.answers())
       .pipe(
+        tap((data) => {
+          this.resultado.set(data);
+          this.dirty.set(false);
+        }),
+        switchMap(() => this.auth.refreshIdentity()),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),
       )
       .subscribe({
-        next: (data) => {
-          this.hydrate(data);
-          void this.router.navigateByUrl('/dashboard/nuevo-trabajador');
+        next: (user) => {
+          this.identidadLista.set(user?.role === 'TRABAJADOR');
+          if (!this.identidadLista())
+            this.error.set('No se pudo actualizar tu sesión. Intenta continuar nuevamente.');
         },
         error: (error) => this.fail(error),
       });
@@ -177,8 +189,36 @@ export class EvaluacionViewModel {
 
   volver(): void {
     if (this.saving()) return;
+    if (this.resultado()) {
+      this.continuar();
+      return;
+    }
     if (this.dirty() && this.editable()) this.guardar(true);
     else void this.router.navigateByUrl('/dashboard/nuevo-trabajador');
+  }
+
+  continuar(): void {
+    if (!this.resultado() || this.saving()) return;
+    if (this.identidadLista()) {
+      void this.router.navigateByUrl(this.auth.user()!.dashboard_path);
+      return;
+    }
+    this.saving.set(true);
+    this.error.set('');
+    this.auth
+      .refreshIdentity()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (user) => {
+          this.identidadLista.set(user?.role === 'TRABAJADOR');
+          if (this.identidadLista()) void this.router.navigateByUrl(user!.dashboard_path);
+          else this.error.set('No se pudo actualizar tu sesión. Intenta continuar nuevamente.');
+        },
+        error: (error) => this.fail(error),
+      });
   }
 
   private fail(error: HttpErrorResponse): void {

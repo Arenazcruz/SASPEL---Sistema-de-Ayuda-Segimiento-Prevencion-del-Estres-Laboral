@@ -2,9 +2,14 @@ from dataclasses import asdict
 
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
+from rest_framework.permissions import BasePermission, IsAuthenticated
 
 from src.application.dto.responder_evaluacion import RespuestaEvaluacion
 from src.domain.exceptions.evaluacion import EvaluacionError, EvaluacionNoEncontrada
+from src.domain.exceptions.superadmin import AdministrationError
+from src.application.services.auth_identity import MissingFunctionalRole, present_identity
+from src.infrastructure.auth.django_auth_provider import DjangoAuthProvider
+from src.infrastructure.api.rest.permissions import PrimerAccesoCompleto
 from src.infrastructure.api.rest.serializers.responder_evaluacion import GuardarEvaluacionSerializer, IniciarEvaluacionSerializer
 from src.infrastructure.api.rest.views.nuevo_trabajador import DashboardNuevoTrabajadorView
 from src.infrastructure.dependencies.responder_evaluacion import build_responder_evaluacion
@@ -14,6 +19,8 @@ class EvaluacionView(DashboardNuevoTrabajadorView):
     def handle_exception(self, exc):
         if isinstance(exc, EvaluacionNoEncontrada):
             exc = NotFound(str(exc))
+        elif isinstance(exc, AdministrationError):
+            exc = ValidationError({'detail': str(exc)})
         elif isinstance(exc, EvaluacionError):
             exc = ValidationError({'detail': str(exc), 'preguntas_pendientes': [str(pk) for pk in exc.pendientes]})
         return super().handle_exception(exc)
@@ -41,7 +48,30 @@ class GuardarEvaluacionView(EvaluacionView):
         return Response(asdict(build_responder_evaluacion().guardar(request.user.pk, asignacion_id, answers)))
 
 
+class IsTrabajadorEvaluacion(BasePermission):
+    roles = ('TRABAJADOR',)
+
+    def has_permission(self, request, view):
+        try:
+            return (not request.user.deleted
+                    and present_identity(DjangoAuthProvider._identity(request.user)).role in self.roles)
+        except MissingFunctionalRole:
+            return False
+
+
+class IsCierreEvaluacion(IsTrabajadorEvaluacion):
+    roles = ('NUEVO_TRABAJADOR', 'TRABAJADOR')
+
+
+class ResultadoInicialView(EvaluacionView):
+    permission_classes = [IsAuthenticated, IsTrabajadorEvaluacion, PrimerAccesoCompleto]
+
+    def get(self, request):
+        return Response(asdict(build_responder_evaluacion().resultado_inicial(request.user.pk)))
+
+
 class FinalizarEvaluacionView(EvaluacionView):
+    permission_classes = [IsAuthenticated, IsCierreEvaluacion, PrimerAccesoCompleto]
     http_method_names = ['post', 'options']
 
     def post(self, request, asignacion_id):

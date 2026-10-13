@@ -82,6 +82,21 @@ describe('AuthService e interceptor', () => {
     requests.expectNone('/api/auth/me/');
   });
 
+  it('una consulta anterior a la transición no restaura el rol viejo ni cierra la sesión', () => {
+    storage.save({ access: 'access', refresh: 'refresh' });
+    auth.restoreSession().subscribe();
+    const stale = requests.expectOne('/api/auth/me/');
+    auth.refreshIdentity().subscribe();
+    requests.expectOne('/api/auth/me/').flush(user);
+    stale.flush({
+      ...user,
+      role: 'NUEVO_TRABAJADOR',
+      dashboard_path: '/dashboard/nuevo-trabajador',
+    });
+    expect(auth.user()?.role).toBe('TRABAJADOR');
+    expect(storage.access).toBe('access');
+  });
+
   it('logout elimina tokens e identidad y vuelve al login', () => {
     storage.save({ access: 'access', refresh: 'refresh' });
     auth.restoreSession().subscribe();

@@ -332,21 +332,21 @@ class InitialInstrumentFlowTests(TestCase):
         incomplete = resumed.post(url + 'finalizar/', {'respuestas': []}, format='json')
         self.assertEqual(incomplete.status_code, 400)
         self.assertEqual(incomplete.json()['preguntas_pendientes'], [str(q.pk) for q in questions[5:]])
-        profile_before = list(PerfilUsuario.objects.filter(usuario=user).values())
+        profile_id = user.perfil_usuario.pk
         response = resumed.post(url + 'finalizar/', {'respuestas': answers[5:]}, format='json')
         self.assertEqual(response.status_code, 200, response.data)
-        self.assertEqual(response.json()['estado_aplicacion'], 'FINALIZADA')
-        self.assertEqual(len(response.json()['respuestas']), 10)
-        dashboard = resumed.get(DASHBOARD).json()['evaluacion_inicial']
-        self.assertEqual(dashboard['estado'], 'COMPLETADA')
-        self.assertFalse(dashboard['puede_iniciar'])
-        self.assertFalse(ResultadoInstrumento.objects.exists())
-        self.assertEqual(list(user.groups.values_list('name', flat=True)), ['NUEVO_TRABAJADOR'])
-        self.assertEqual(profile_before, list(PerfilUsuario.objects.filter(usuario=user).values()))
+        self.assertEqual(AplicacionInstrumento.objects.get().estado, 'FINALIZADA')
+        self.assertEqual(RespuestaPregunta.objects.count(), 10)
+        self.assertEqual(AsignacionInstrumento.objects.get(trabajador=user).estado, 'COMPLETADA')
+        self.assertEqual(resumed.get(DASHBOARD).status_code, 403)
+        self.assertEqual(ResultadoInstrumento.objects.count(), 1)
+        self.assertEqual(list(user.groups.values_list('name', flat=True)), ['TRABAJADOR'])
+        self.assertTrue(PerfilUsuario.objects.get(pk=profile_id).tamizaje_resuelto)
         before = list(RespuestaPregunta.objects.order_by('pk').values())
-        for action in ('iniciar', 'respuestas', 'finalizar'):
+        for action in ('iniciar', 'respuestas'):
             payload = {} if action == 'iniciar' else {'respuestas': answers}
-            self.assertEqual(resumed.post(url + action + '/', payload, format='json').status_code, 400)
+            self.assertEqual(resumed.post(url + action + '/', payload, format='json').status_code, 403)
+        self.assertEqual(resumed.post(url + 'finalizar/', {'respuestas': answers}, format='json').json(), response.json())
         seed()
         self.assertEqual(before, list(RespuestaPregunta.objects.order_by('pk').values()))
         self.assertEqual(AplicacionInstrumento.objects.count(), 1)

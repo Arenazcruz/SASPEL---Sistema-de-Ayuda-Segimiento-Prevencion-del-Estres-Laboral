@@ -63,6 +63,18 @@ class AssignWorker(AssignmentCase, WorkerAssignment):
             return self.repository.create_assignment(command.trabajador_id, command.psicologo_id)
 
 
+class AutoAssignWorker(AssignmentCase):
+    def execute(self, worker_id: UUID):
+        with self.repository.atomic():
+            if self.repository.has_active_assignment(worker_id):
+                return
+            candidates = self.repository.psychologist_loads()
+            if candidates:
+                psychologist_id = candidates[0].psicologo.id
+                self.validate_pair(worker_id, psychologist_id)
+                self.repository.create_assignment(worker_id, psychologist_id)
+
+
 class FinishAssignment(AssignmentCase, AssignmentFinishing):
     def execute(self, command: FinishAssignmentCommand):
         reason = closing_reason(command.motivo_fin)
