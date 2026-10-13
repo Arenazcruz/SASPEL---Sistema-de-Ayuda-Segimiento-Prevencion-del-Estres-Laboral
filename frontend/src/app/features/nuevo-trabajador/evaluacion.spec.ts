@@ -71,6 +71,19 @@ function respondido(): EvaluacionDetalle {
   }));
   return data;
 }
+function escalaDinamica(): EvaluacionDetalle {
+  const data = detalle();
+  const etiquetas = ['Nunca', 'Casi nunca', 'A veces', 'A menudo', 'Muy a menudo'];
+  data.preguntas = Array.from({ length: 10 }, (_, i) => ({
+    id: `escala-${i + 1}`,
+    texto: `Pregunta laboral ${i + 1}`,
+    orden: i + 1,
+    tipo_respuesta: 'ESCALA',
+    obligatoria: true,
+    opciones: etiquetas.map((etiqueta, index) => ({ id: `opcion-${index}`, etiqueta })),
+  }));
+  return data;
+}
 const worker: AuthUser = { ...user, role: 'TRABAJADOR', dashboard_path: '/dashboard/trabajador' };
 function resultado(estado: 'ASIGNADO' | 'PENDIENTE' = 'PENDIENTE'): ResultadoEvaluacion {
   return {
@@ -187,6 +200,145 @@ describe('Formulario dinámico de evaluación', () => {
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelectorAll('.missing')).toHaveLength(4);
     expect(fixture.nativeElement.textContent).toContain('Responde las preguntas obligatorias');
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('fieldset input'));
+    http.expectNone(URL + 'finalizar/');
+  });
+
+  it('ordena preguntas y calcula el progreso real sin revelar valores internos', async () => {
+    const data = escalaDinamica();
+    data.preguntas.reverse();
+    http.expectOne(URL).flush(data);
+    const vm = fixture.componentInstance.vm;
+    for (const question of data.preguntas.slice(0, 6)) vm.set(question.id, question.opciones[0].id);
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('legend')?.textContent).toContain('1. Pregunta laboral 1');
+    expect(element.textContent).toContain('6 de 10 preguntas respondidas');
+    expect(element.textContent).toContain('60 %');
+    expect(
+      [...element.querySelectorAll('fieldset:first-of-type label')]
+        .slice(0, 5)
+        .map((label) => label.textContent?.trim()),
+    ).toEqual(['Nunca', 'Casi nunca', 'A veces', 'A menudo', 'Muy a menudo']);
+    expect(element.textContent).not.toContain('opcion-0');
+    expect(vm.total()).toBe(10);
+    vm.load(); // Una recarga accidental no debe reemplazar respuestas locales.
+    http.expectNone(URL);
+  });
+
+  it('distingue guardado y finalización, bloquea cambios y conserva respuestas tras error', async () => {
+    http.expectOne(URL).flush(respondido());
+    const vm = fixture.componentInstance.vm;
+    vm.set(detalle().preguntas[1].id, 'Conservar mi respuesta');
+    const before = vm.valores();
+    vm.guardar();
+    vm.guardar();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Guardando progreso…');
+    expect(fixture.nativeElement.querySelector('button[type=submit]').textContent).toContain(
+      'Finalizar evaluación',
+    );
+    vm.set(detalle().preguntas[1].id, 'Cambio bloqueado');
+    expect(vm.valores()).toBe(before);
+    http.expectOne(URL + 'respuestas/').flush({}, { status: 503, statusText: 'Error' });
+    vm.finalizar();
+    vm.finalizar();
+    vm.guardar();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Finalizando evaluación…');
+    expect(fixture.nativeElement.querySelector('button[type=submit]').disabled).toBe(true);
+    expect(
+      [...fixture.nativeElement.querySelectorAll('fieldset')].every(
+        (field: HTMLFieldSetElement) => field.disabled,
+      ),
+    ).toBe(true);
+    http.expectNone(URL + 'respuestas/');
+    http
+      .expectOne(URL + 'finalizar/')
+      .flush(
+        { detail: 'Traceback: internal database error' },
+        { status: 500, statusText: 'Error' },
+      );
+    await fixture.whenStable();
+    expect(vm.valores()).toBe(before);
+    expect(vm.dirty()).toBe(true);
+    expect(vm.estado()).toBe('EN_PROGRESO');
+    expect(vm.operacion()).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Traceback');
+    expect(fixture.nativeElement.querySelector('form')).not.toBeNull();
+    vm.finalizar();
+    http.expectOne(URL + 'finalizar/').flush(resultado());
+    expect(vm.estado()).toBe('COMPLETADA');
+    expect(vm.operacion()).toBe('identidad');
+    http.expectOne('/api/auth/me/').flush(worker);
+    expect(vm.operacion()).toBeNull();
+    expect(vm.editable()).toBe(false);
+  });
+
+  it('muestra carga inicial, error de recuperación y permite reintentar', async () => {
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Cargando evaluación');
+    http
+      .expectOne(URL)
+      .flush({ detail: 'Traceback: secret' }, { status: 500, statusText: 'Error' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('No pudimos cargar la evaluación');
+    expect(fixture.nativeElement.textContent).not.toContain('Traceback');
+    const retry = [...fixture.nativeElement.querySelectorAll('button')].find((button: any) =>
+      button.textContent.includes('Reintentar'),
+    ) as HTMLButtonElement;
+    retry.click();
+    fixture.componentInstance.vm.load();
+    http.expectOne(URL).flush(detalle());
+    await fixture.whenStable();
+    expect(fixture.componentInstance.vm.error()).toBe('');
+    expect(fixture.nativeElement.querySelectorAll('fieldset')).toHaveLength(4);
+  });
+
+  it('inicio pendiente no se duplica y permite reintentar tras error', async () => {
+    http
+      .expectOne(URL)
+      .flush({
+        ...detalle(),
+        estado_asignacion: 'PENDIENTE',
+        estado_aplicacion: null,
+        aplicacion_id: null,
+      });
+    const vm = fixture.componentInstance.vm;
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Comenzar evaluación');
+    vm.iniciar();
+    vm.iniciar();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Iniciando evaluación…');
+    http.expectOne(URL + 'iniciar/').flush({}, { status: 500, statusText: 'Error' });
+    expect(vm.estado()).toBe('PENDIENTE');
+    expect(vm.error()).toContain('No se pudo iniciar');
+    vm.iniciar();
+    http.expectOne(URL + 'iniciar/').flush(detalle());
+    expect(vm.estado()).toBe('EN_PROGRESO');
+    expect(vm.error()).toBe('');
+  });
+
+  it('sesión no válida muestra mensaje simple y bloquea nuevas escrituras', async () => {
+    http.expectOne(URL).flush(detalle());
+    const vm = fixture.componentInstance.vm;
+    vm.set(detalle().preguntas[1].id, 'Respuesta local');
+    vm.guardar();
+    http
+      .expectOne(URL + 'respuestas/')
+      .flush(
+        { detail: 'Token is invalid or expired' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Tu sesión ya no es válida');
+    expect(fixture.nativeElement.textContent).toContain('Ir a iniciar sesión');
+    expect(vm.valores()[detalle().preguntas[1].id]).toBe('Respuesta local');
+    expect(vm.editable()).toBe(false);
+    vm.guardar();
+    vm.finalizar();
+    http.expectNone(URL + 'respuestas/');
     http.expectNone(URL + 'finalizar/');
   });
 
@@ -306,6 +458,7 @@ describe('Formulario dinámico de evaluación', () => {
       );
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelectorAll('.missing')).toHaveLength(1);
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('fieldset input'));
     expect(navigate).not.toHaveBeenCalled();
   });
 
@@ -405,6 +558,81 @@ describe('Navegación dashboard y evaluación', () => {
     http.expectOne(URL).flush(respondido());
     http.expectNone(URL + 'iniciar/');
     expect(TestBed.inject(Router).url).toBe(PATH);
+  });
+
+  it('recorre pendiente, inicio, guardado parcial, salida, continuación y confirmación', async () => {
+    const harness = await RouterTestingHarness.create();
+    const dashboard = await harness.navigateByUrl(user.dashboard_path, NuevoTrabajadorDashboard);
+    http.expectOne('/api/nuevo-trabajador/dashboard/').flush(resumen('PENDIENTE'));
+    dashboard.vm.comenzar();
+    dashboard.vm.comenzar();
+    http.expectOne(URL + 'iniciar/').flush(escalaDinamica());
+    await harness.fixture.whenStable();
+    http.expectOne(URL).flush(escalaDinamica());
+    await harness.fixture.whenStable();
+    const component = harness.routeDebugElement!.componentInstance as EvaluacionInicialComponent;
+    for (const question of component.vm.detalle()!.preguntas.slice(0, 6))
+      component.vm.set(question.id, question.opciones[0].id);
+    component.vm.volver();
+    const save = http.expectOne(URL + 'respuestas/');
+    const persisted = {
+      ...escalaDinamica(),
+      respuestas: save.request.body.respuestas.filter((a: any) => a.opcion_id !== null),
+    };
+    save.flush(persisted);
+    await harness.fixture.whenStable();
+    http.expectOne('/api/nuevo-trabajador/dashboard/').flush(resumen('EN_PROGRESO'));
+    const returned = harness.routeDebugElement!.componentInstance as NuevoTrabajadorDashboard;
+    returned.vm.continuar();
+    await harness.fixture.whenStable();
+    http.expectOne(URL).flush(persisted);
+    await harness.fixture.whenStable();
+    http.expectNone(URL + 'iniciar/');
+    const resumed = harness.routeDebugElement!.componentInstance as EvaluacionInicialComponent;
+    expect(resumed.vm.respondidas()).toBe(6);
+    expect(harness.routeNativeElement?.textContent).toContain('60 %');
+    resumed.vm.finalizar();
+    http.expectNone(URL + 'finalizar/');
+    expect(resumed.vm.pendientes()).toHaveLength(4);
+    for (const question of resumed.vm.detalle()!.preguntas.slice(6))
+      resumed.vm.set(question.id, question.opciones[2].id);
+    resumed.vm.finalizar();
+    http.expectOne(URL + 'finalizar/').flush(resultado('ASIGNADO'));
+    await harness.fixture.whenStable();
+    expect(resumed.vm.estado()).toBe('COMPLETADA');
+    expect(harness.routeNativeElement?.textContent).toContain('Evaluación inicial completada');
+    expect(harness.routeNativeElement?.textContent).toContain('Profesional asignado');
+    expect(harness.routeNativeElement?.querySelector('form')).toBeNull();
+    resumed.vm.continuar();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+  });
+
+  it('un error al comenzar desde dashboard conserva pendiente y no expone detalles internos', async () => {
+    const harness = await RouterTestingHarness.create();
+    const dashboard = await harness.navigateByUrl(user.dashboard_path, NuevoTrabajadorDashboard);
+    http.expectOne('/api/nuevo-trabajador/dashboard/').flush(resumen('PENDIENTE'));
+    dashboard.vm.comenzar();
+    http
+      .expectOne(URL + 'iniciar/')
+      .flush({ detail: 'Traceback: database failure' }, { status: 500, statusText: 'Error' });
+    await harness.fixture.whenStable();
+    expect(dashboard.vm.starting()).toBe(false);
+    expect(dashboard.vm.evaluacion()?.estado).toBe('PENDIENTE');
+    expect(harness.routeNativeElement?.textContent).toContain('No se pudo iniciar');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Traceback');
+    http.expectNone(URL);
+  });
+
+  it('recargar la ruta de evaluación con rol trabajador redirige sin cargar un formulario editable', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.refreshIdentity().subscribe();
+    const harness = await RouterTestingHarness.create(PATH);
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+    http.expectNone(URL);
+    http.expectNone('/api/nuevo-trabajador/dashboard/');
+    expect(harness.routeNativeElement?.querySelector('app-evaluacion-pregunta')).toBeNull();
   });
 
   it('finalizar muestra éxito y continuar navega al trabajador; no vuelve al panel de nuevo trabajador', async () => {

@@ -67,7 +67,7 @@ export class NuevoTrabajadorDashboardViewModel {
         next: () => this.abrir(evaluacion.asignacion_id!),
         error: (error: HttpErrorResponse) =>
           this.startError.set(
-            typeof error.error?.detail === 'string'
+            error.status === 400 && typeof error.error?.detail === 'string'
               ? error.error.detail
               : 'No se pudo iniciar la evaluación. Intenta nuevamente.',
           ),

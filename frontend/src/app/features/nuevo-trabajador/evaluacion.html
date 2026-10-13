@@ -2,13 +2,13 @@
   <app-brand /><button
     class="button button-outline"
     type="button"
-    [disabled]="vm.saving()"
+    [disabled]="vm.bloqueado()"
     (click)="vm.volver()"
   >
     Volver al dashboard
   </button>
 </header>
-<main class="wrap">
+<main class="wrap" [attr.aria-busy]="vm.bloqueado()">
   <p class="eyebrow">MI EVALUACIÓN INICIAL</p>
   @if (vm.loading()) {
     <p role="status">Cargando evaluación…</p>
@@ -16,11 +16,17 @@
   @if (vm.error()) {
     <p class="error" role="alert">{{ vm.error() }}</p>
   }
+  @if (vm.sesionInvalida()) {
+    <button class="button" type="button" (click)="vm.iniciarSesion()">Ir a iniciar sesión</button>
+  }
+  <p role="status" aria-live="polite">{{ vm.procesando() }}</p>
   @if (vm.resultado(); as resultado) {
     <section class="instructions" aria-labelledby="result-title">
       <h1 id="result-title">Evaluación inicial completada</h1>
       <p>{{ resultado.nombre }} · Versión {{ resultado.version }}</p>
-      <p>Fecha: {{ resultado.fecha_calculo | date: 'dd/MM/yyyy HH:mm' }}</p>
+      @if (resultado.fecha_calculo) {
+        <p>Fecha: {{ resultado.fecha_calculo | date: 'dd/MM/yyyy HH:mm' }}</p>
+      }
       <p>
         Puntaje obtenido: <strong>{{ resultado.puntaje_total }}</strong>
       </p>
@@ -33,35 +39,35 @@
         <p>{{ resultado.interpretacion }}</p>
       }
       <p class="note">Este resultado es orientativo. SASPEL no sustituye un diagnóstico clínico.</p>
-      <p role="status">
-        {{
-          resultado.estado_asignacion_profesional === 'ASIGNADO'
-            ? 'Profesional asignado'
-            : 'Asignación profesional pendiente'
-        }}
-      </p>
-      <button class="button" type="button" [disabled]="vm.saving()" (click)="vm.continuar()">
+      <p role="status">{{ vm.seguimiento() }}</p>
+      <button
+        class="button"
+        type="button"
+        [disabled]="vm.bloqueado() || vm.sesionInvalida()"
+        (click)="vm.continuar()"
+      >
         Continuar a mi panel
       </button>
     </section>
   } @else {
-    @if (!vm.loading() && !vm.detalle()) {
+    @if (!vm.loading() && !vm.detalle() && !vm.sesionInvalida()) {
       <button class="button" type="button" (click)="vm.load()">Reintentar</button>
     }
     @if (vm.detalle(); as detalle) {
       <h1>{{ detalle.nombre }}</h1>
       <p>Versión {{ detalle.version }}</p>
+      <p>{{ vm.total() }} preguntas</p>
       <section class="instructions" aria-labelledby="instructions-title">
         <h2 id="instructions-title">Instrucciones</h2>
         <p>{{ detalle.instrucciones || 'Lee cada pregunta y elige o escribe tu respuesta.' }}</p>
       </section>
-      @if (detalle.estado_aplicacion === 'FINALIZADA') {
+      @if (vm.completada()) {
         <p role="status">Evaluación inicial completada. Tus respuestas son de solo lectura.</p>
-      } @else if (!detalle.disponible) {
+      } @else if (!vm.configurada()) {
         <p role="status">La evaluación inicial todavía está siendo configurada.</p>
-      } @else if (detalle.estado_asignacion === 'PENDIENTE') {
-        <button class="button" type="button" [disabled]="vm.saving()" (click)="vm.iniciar()">
-          Comenzar evaluación
+      } @else if (vm.puedeIniciar()) {
+        <button class="button" type="button" [disabled]="vm.bloqueado()" (click)="vm.iniciar()">
+          {{ vm.operacion() === 'iniciando' ? 'Iniciando…' : 'Comenzar evaluación' }}
         </button>
       } @else if (!vm.editable()) {
         <p role="status">Esta evaluación ya no admite cambios.</p>
@@ -69,11 +75,12 @@
       @if (detalle.aplicacion_id) {
         <section class="progress" aria-label="Progreso de respuestas">
           <label for="evaluation-progress"
-            >{{ vm.respondidas() }} de {{ detalle.preguntas.length }} preguntas respondidas</label
+            >{{ vm.respondidas() }} de {{ vm.total() }} preguntas respondidas</label
           >
           <progress id="evaluation-progress" max="100" [value]="vm.porcentaje()">
             {{ vm.porcentaje() }}%
           </progress>
+          <span>{{ vm.porcentaje() }} %</span>
           @if (vm.dirty()) {
             <small>Hay cambios sin guardar.</small>
           }
@@ -83,7 +90,7 @@
             <app-evaluacion-pregunta
               [pregunta]="pregunta"
               [valor]="vm.valores()[pregunta.id] ?? null"
-              [disabled]="!vm.editable() || vm.saving()"
+              [disabled]="!vm.editable() || vm.bloqueado()"
               [pendiente]="vm.pendientes().includes(pregunta.id)"
               (valorChange)="vm.set(pregunta.id, $event)"
             />
@@ -94,13 +101,13 @@
               <button
                 class="button button-outline"
                 type="button"
-                [disabled]="vm.saving()"
+                [disabled]="vm.bloqueado()"
                 (click)="vm.guardar()"
               >
-                Guardar progreso
+                {{ vm.operacion() === 'guardando' ? 'Guardando…' : 'Guardar progreso' }}
               </button>
-              <button class="button" type="submit" [disabled]="vm.saving()">
-                {{ vm.saving() ? 'Guardando…' : 'Finalizar evaluación' }}
+              <button class="button" type="submit" [disabled]="vm.bloqueado()">
+                {{ vm.operacion() === 'finalizando' ? 'Finalizando…' : 'Finalizar evaluación' }}
               </button>
             </div>
             <p class="note">

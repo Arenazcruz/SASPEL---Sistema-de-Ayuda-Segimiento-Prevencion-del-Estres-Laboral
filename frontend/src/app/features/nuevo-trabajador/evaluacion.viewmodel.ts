@@ -25,23 +25,56 @@ export class EvaluacionViewModel {
   readonly identidadLista = signal(false);
   readonly valores = signal<Record<string, ValorRespuesta>>({});
   readonly loading = signal(false);
-  readonly saving = signal(false);
+  readonly operacion = signal<'iniciando' | 'guardando' | 'finalizando' | 'identidad' | null>(null);
+  readonly saving = computed(() => this.operacion() !== null);
+  readonly bloqueado = computed(() => this.loading() || this.saving());
+  readonly sesionInvalida = signal(false);
   readonly dirty = signal(false);
   readonly error = signal('');
   readonly mensaje = signal('');
   readonly pendientes = signal<string[]>([]);
+  readonly focoPendiente = signal<{ id: string } | null>(null);
+  readonly estado = computed(() =>
+    this.resultado() ? 'COMPLETADA' : this.detalle()?.estado_asignacion,
+  );
+  readonly completada = computed(() => this.estado() === 'COMPLETADA');
+  readonly total = computed(() => this.detalle()?.preguntas.length ?? 0);
+  readonly configurada = computed(() => !!this.detalle()?.disponible && this.total() > 0);
+  readonly puedeIniciar = computed(
+    () => this.estado() === 'PENDIENTE' && this.configurada() && !this.sesionInvalida(),
+  );
+  readonly seguimiento = computed(() =>
+    this.resultado()?.estado_asignacion_profesional === 'ASIGNADO'
+      ? 'Profesional asignado'
+      : 'Asignación profesional pendiente',
+  );
+  readonly procesando = computed(() => {
+    switch (this.operacion()) {
+      case 'iniciando':
+        return 'Iniciando evaluación…';
+      case 'guardando':
+        return 'Guardando progreso…';
+      case 'finalizando':
+        return 'Finalizando evaluación…';
+      case 'identidad':
+        return 'Actualizando tu sesión…';
+      default:
+        return '';
+    }
+  });
   readonly editable = computed(
     () =>
       !this.resultado() &&
+      !this.sesionInvalida() &&
       this.detalle()?.estado_aplicacion === 'INICIADA' &&
       this.detalle()?.estado_asignacion === 'EN_PROGRESO' &&
-      this.detalle()?.disponible,
+      this.configurada(),
   );
   readonly respondidas = computed(
     () => this.detalle()?.preguntas.filter((p) => this.respondida(p)).length ?? 0,
   );
   readonly porcentaje = computed(() => {
-    const total = this.detalle()?.preguntas.length ?? 0;
+    const total = this.total();
     return total ? Math.round((this.respondidas() * 100) / total) : 0;
   });
 
@@ -50,7 +83,7 @@ export class EvaluacionViewModel {
   }
 
   load(): void {
-    if (this.loading() || this.saving()) return;
+    if (this.bloqueado() || this.dirty() || this.resultado() || this.sesionInvalida()) return;
     this.loading.set(true);
     this.error.set('');
     this.api
@@ -66,7 +99,7 @@ export class EvaluacionViewModel {
   }
 
   private hydrate(data: EvaluacionDetalle): void {
-    this.detalle.set(data);
+    this.detalle.set({ ...data, preguntas: [...data.preguntas].sort((a, b) => a.orden - b.orden) });
     this.valores.set(
       Object.fromEntries(
         data.respuestas.map((r) => [
@@ -80,7 +113,7 @@ export class EvaluacionViewModel {
   }
 
   set(id: string, value: ValorRespuesta): void {
-    if (!this.editable() || this.saving()) return;
+    if (!this.editable() || this.bloqueado()) return;
     this.valores.update((values) => ({ ...values, [id]: value }));
     this.dirty.set(true);
     this.mensaje.set('');
@@ -112,19 +145,14 @@ export class EvaluacionViewModel {
   }
 
   iniciar(): void {
-    if (
-      this.saving() ||
-      !this.detalle()?.disponible ||
-      this.detalle()?.estado_asignacion !== 'PENDIENTE'
-    )
-      return;
-    this.saving.set(true);
+    if (this.bloqueado() || !this.puedeIniciar()) return;
+    this.operacion.set('iniciando');
     this.error.set('');
     this.api
       .iniciar(this.id)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.saving.set(false)),
+        finalize(() => this.operacion.set(null)),
       )
       .subscribe({
         next: (data) => this.hydrate(data),
@@ -133,15 +161,15 @@ export class EvaluacionViewModel {
   }
 
   guardar(volver = false): void {
-    if (!this.editable() || this.saving()) return;
-    this.saving.set(true);
+    if (!this.editable() || this.bloqueado()) return;
+    this.operacion.set('guardando');
     this.error.set('');
     this.mensaje.set('');
     this.api
       .guardar(this.id, this.answers())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.saving.set(false)),
+        finalize(() => this.operacion.set(null)),
       )
       .subscribe({
         next: (data) => {
@@ -154,7 +182,7 @@ export class EvaluacionViewModel {
   }
 
   finalizar(): void {
-    if (!this.editable() || this.saving()) return;
+    if (!this.editable() || this.bloqueado()) return;
     const missing = this.detalle()!
       .preguntas.filter((p) => p.obligatoria && !this.respondida(p))
       .map((p) => p.id);
@@ -163,19 +191,21 @@ export class EvaluacionViewModel {
     this.mensaje.set('');
     if (missing.length) {
       this.error.set('Responde las preguntas obligatorias indicadas antes de finalizar.');
+      this.focoPendiente.set({ id: missing[0] });
       return;
     }
-    this.saving.set(true);
+    this.operacion.set('finalizando');
     this.api
       .finalizar(this.id, this.answers())
       .pipe(
         tap((data) => {
           this.resultado.set(data);
           this.dirty.set(false);
+          this.operacion.set('identidad');
         }),
         switchMap(() => this.auth.refreshIdentity()),
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.saving.set(false)),
+        finalize(() => this.operacion.set(null)),
       )
       .subscribe({
         next: (user) => {
@@ -188,7 +218,7 @@ export class EvaluacionViewModel {
   }
 
   volver(): void {
-    if (this.saving()) return;
+    if (this.bloqueado()) return;
     if (this.resultado()) {
       this.continuar();
       return;
@@ -198,18 +228,18 @@ export class EvaluacionViewModel {
   }
 
   continuar(): void {
-    if (!this.resultado() || this.saving()) return;
-    if (this.identidadLista()) {
+    if (!this.resultado() || this.bloqueado() || this.sesionInvalida()) return;
+    if (this.identidadLista() && this.auth.user()?.role === 'TRABAJADOR') {
       void this.router.navigateByUrl(this.auth.user()!.dashboard_path);
       return;
     }
-    this.saving.set(true);
+    this.operacion.set('identidad');
     this.error.set('');
     this.auth
       .refreshIdentity()
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.saving.set(false)),
+        finalize(() => this.operacion.set(null)),
       )
       .subscribe({
         next: (user) => {
@@ -222,13 +252,35 @@ export class EvaluacionViewModel {
   }
 
   private fail(error: HttpErrorResponse): void {
+    this.sesionInvalida.set(error.status === 401);
     this.error.set(
-      typeof error.error?.detail === 'string'
-        ? error.error.detail
-        : 'No pudimos completar la solicitud. Tus cambios siguen en esta pantalla; intenta nuevamente.',
+      error.status === 401
+        ? 'Tu sesión ya no es válida. Vuelve a iniciar sesión.'
+        : error.status === 403
+          ? 'No tienes acceso a esta evaluación. Vuelve a tu panel.'
+          : error.status === 404
+            ? 'Esta evaluación no está disponible. Vuelve a tu panel.'
+            : error.status === 400 && typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : this.resultado()
+                ? 'Tu evaluación está completada. No pudimos actualizar tu sesión; pulsa Continuar a mi panel para reintentar.'
+                : !this.detalle()
+                  ? 'No pudimos cargar la evaluación. Intenta nuevamente.'
+                  : this.operacion() === 'iniciando'
+                    ? 'No se pudo iniciar la evaluación. Intenta nuevamente.'
+                    : 'No pudimos completar la solicitud. Tus cambios siguen en esta pantalla; intenta nuevamente.',
     );
     this.pendientes.set(
-      Array.isArray(error.error?.preguntas_pendientes) ? error.error.preguntas_pendientes : [],
+      Array.isArray(error.error?.preguntas_pendientes)
+        ? (this.detalle()
+            ?.preguntas.filter((p) => error.error.preguntas_pendientes.includes(p.id))
+            .map((p) => p.id) ?? [])
+        : [],
     );
+    if (this.pendientes().length) this.focoPendiente.set({ id: this.pendientes()[0] });
+  }
+
+  iniciarSesion(): void {
+    this.auth.logout();
   }
 }

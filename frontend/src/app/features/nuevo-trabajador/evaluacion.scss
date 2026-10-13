@@ -23,6 +23,11 @@ h2 {
 }
 p {
   line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.button {
+  max-width: 100%;
+  white-space: normal;
 }
 .instructions {
   padding: 24px;
@@ -34,6 +39,10 @@ p {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   margin: 0;
+}
+.instructions p + p,
+.instructions .button {
+  margin-top: 12px;
 }
 .progress {
   margin-block: 24px;
@@ -68,7 +77,11 @@ small {
   header {
     flex-wrap: wrap;
   }
-  .actions .button {
+  .actions .button,
+  .instructions .button {
     width: 100%;
+  }
+  .instructions {
+    padding: 18px;
   }
 }

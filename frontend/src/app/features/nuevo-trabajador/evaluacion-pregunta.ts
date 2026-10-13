@@ -1,11 +1,15 @@
-import { Component, input, output } from '@angular/core';
+import { Component, ElementRef, inject, input, output } from '@angular/core';
 import { PreguntaEvaluacion, ValorRespuesta } from './evaluacion.models';
 
 /** Presentación de una pregunta sin dependencias de rol, sesión ni servicios. */
 @Component({
   selector: 'app-evaluacion-pregunta',
   template: `
-    <fieldset [disabled]="disabled()" [attr.id]="'pregunta-' + pregunta().id">
+    <fieldset
+      [disabled]="disabled()"
+      [attr.id]="'pregunta-' + pregunta().id"
+      [attr.aria-describedby]="pendiente() ? 'pendiente-' + pregunta().id : null"
+    >
       <legend>
         {{ pregunta().orden }}. {{ pregunta().texto }}
         @if (pregunta().obligatoria) {
@@ -70,7 +74,9 @@ import { PreguntaEvaluacion, ValorRespuesta } from './evaluacion.models';
         </button>
       }
       @if (pendiente()) {
-        <p class="missing" role="alert">Responde esta pregunta obligatoria.</p>
+        <p class="missing" role="alert" [id]="'pendiente-' + pregunta().id">
+          Responde esta pregunta obligatoria.
+        </p>
       }
     </fieldset>
   `,
@@ -103,6 +109,7 @@ import { PreguntaEvaluacion, ValorRespuesta } from './evaluacion.models';
         align-items: center;
         padding: 12px 8px;
         cursor: pointer;
+        overflow-wrap: anywhere;
       }
       input[type='radio'] {
         accent-color: var(--green);
@@ -143,11 +150,17 @@ import { PreguntaEvaluacion, ValorRespuesta } from './evaluacion.models';
   ],
 })
 export class EvaluacionPregunta {
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly pregunta = input.required<PreguntaEvaluacion>();
   readonly valor = input<ValorRespuesta>(null);
   readonly disabled = input(false);
   readonly pendiente = input(false);
   readonly valorChange = output<ValorRespuesta>();
+  focus(): void {
+    this.element.nativeElement
+      .querySelector<HTMLElement>('input:not(:disabled), textarea:not(:disabled)')
+      ?.focus();
+  }
   texto(event: Event): void {
     this.valorChange.emit((event.target as HTMLInputElement).value || null);
   }
