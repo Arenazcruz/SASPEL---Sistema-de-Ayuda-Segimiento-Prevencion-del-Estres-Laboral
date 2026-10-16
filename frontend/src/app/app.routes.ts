@@ -126,6 +126,10 @@ export const routes: Routes = [
           import('./features/psicologo/resultados').then((m) => m.PsicologoResultados),
         title: 'Detalle del resultado · SASPEL',
       },
+      {
+        path:'psicologo/trabajadores/:trabajadorId/seguimiento',data:{role:'PSICOLOGO'},canActivate:[roleGuard],
+        loadComponent:()=>import('./features/psicologo/seguimiento/seguimiento').then(m=>m.SeguimientoComponent),title:'Seguimiento · SASPEL',
+      },
       ...['TRABAJADOR', 'PSICOLOGO'].map(role => ({
         path: role.toLowerCase()+'/citas', data: {role}, canActivate: [roleGuard],
         loadComponent: () => import('./features/citas/citas').then(m=>m.Citas), title: 'Mis citas · SASPEL',

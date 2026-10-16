@@ -20,7 +20,10 @@ from src.infrastructure.api.rest.views.citas import (CitasView, ContextoCitaView
 
 from src.infrastructure.api.rest.views.notas_cita import NotasCitaView
 
+from src.infrastructure.api.rest.views.seguimiento import SeguimientoView
+
 urlpatterns = [
+    path('psicologo/trabajadores/<uuid:trabajador_id>/seguimiento/', SeguimientoView.as_view()),
     path('citas/<uuid:cita_id>/notas/', NotasCitaView.as_view()),
     path('citas/', CitasView.as_view()),
     path('citas/contexto/', ContextoCitaView.as_view()),

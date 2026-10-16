@@ -49,3 +49,5 @@ __all__ = [
 ]
 
 from .nota_cita import NotaCita
+
+from .seguimiento import Seguimiento

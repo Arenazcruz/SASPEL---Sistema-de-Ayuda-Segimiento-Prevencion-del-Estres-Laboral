@@ -42,6 +42,7 @@ import { MisTrabajadoresViewModel } from './trabajadores.viewmodel';
                   [attr.aria-label]="'Ver resultados de ' + trabajador.nombre_completo"
                   >Ver resultados</a
                 >
+                <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'seguimiento']">Ver seguimiento</a>
               </article>
             }
           </div>
