@@ -1,3 +1,4 @@
+import {IndicadoresComponent} from '../../dashboards/indicadores';
 /**
  * Inicio de Superadmin: SuperadminDashboardViewModel carga estadísticas y recientes con
  * SuperadminService y el componente los presenta. No calcula totales localmente; revisar cards
@@ -57,13 +58,13 @@ export class SuperadminDashboardViewModel {
 
 @Component({
   selector: 'app-superadmin-dashboard',
-  imports: [DatePipe, RouterLink, RoleBadge],
+  imports: [IndicadoresComponent, DatePipe, RouterLink, RoleBadge],
   providers: [SuperadminDashboardViewModel],
   template: `
     <div class="sa-heading">
       <div>
         <p class="eyebrow">SUPERADMIN / INICIO</p>
-        <h1>Administración de SASPEL</h1>
+        <h1>Administración de SASPEL</h1><app-indicadores />
         <p>Gestiona las personas y la estructura de la institución.</p>
       </div>
       <a class="button" routerLink="personas/nuevo">Nuevo usuario</a>

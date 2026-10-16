@@ -18,7 +18,7 @@ const PANELS: Record<FunctionalRole, { title: string; label: string; description
     title: 'Panel del trabajador',
     label: 'Trabajador',
     description:
-      'Desde aquí se accederá posteriormente a evaluaciones, estado de ánimo, citas y seguimiento.',
+      'Consulta tus resultados, citas y registros de bienestar.',
   },
   PSICOLOGO: {
     title: 'Panel del psicólogo',
@@ -30,7 +30,7 @@ const PANELS: Record<FunctionalRole, { title: string; label: string; description
     title: 'Panel administrativo',
     label: 'Administrador',
     description:
-      'Las herramientas de administración institucional se incorporarán en las próximas etapas.',
+      'Consulta indicadores administrativos y gestiona los catálogos permitidos.',
   },
   SUPERADMIN: {
     title: 'Panel de superadministración',

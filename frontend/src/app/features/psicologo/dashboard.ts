@@ -1,3 +1,4 @@
+import {IndicadoresComponent} from '../dashboards/indicadores';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Brand } from '../../shared/brand/brand';
@@ -5,7 +6,7 @@ import { MisTrabajadoresViewModel } from './trabajadores.viewmodel';
 
 @Component({
   selector: 'app-psicologo-dashboard',
-  imports: [Brand, RouterLink],
+  imports: [IndicadoresComponent, Brand, RouterLink],
   providers: [MisTrabajadoresViewModel],
   template: `
     <header class="wrap page-header">
@@ -19,7 +20,7 @@ import { MisTrabajadoresViewModel } from './trabajadores.viewmodel';
     </header>
     <main class="wrap content" [attr.aria-busy]="vm.loading()">
       <p class="eyebrow">MI ESPACIO · PSICÓLOGO</p>
-      <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>Bienvenido/a, {{ vm.nombre() }}</h1><p><a class="button" routerLink="/dashboard/psicologo/citas">Mi agenda y citas</a></p>
+      <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>Bienvenido/a, {{ vm.nombre() }}</h1><app-indicadores /><p><a class="button" routerLink="/dashboard/psicologo/citas">Mi agenda y citas</a></p>
       <section class="card" aria-labelledby="workers-title">
         <h2 id="workers-title">Mis trabajadores</h2>
         @if (vm.loading()) {

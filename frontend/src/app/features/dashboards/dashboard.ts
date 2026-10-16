@@ -1,3 +1,4 @@
+import {IndicadoresComponent} from './indicadores';
 /**
  * Panel compartido de bienvenida de roles distintos de Superadmin. Muestra identidad y texto
  * de DashboardViewModel y permite cerrar sesión. Las herramientas futuras no cargan datos
@@ -10,7 +11,7 @@ import { DashboardViewModel } from './dashboard.viewmodel';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, Brand],
+  imports: [IndicadoresComponent, RouterLink, Brand],
   providers: [DashboardViewModel],
   template: `
     <header class="dashboard-header wrap">
@@ -24,7 +25,7 @@ import { DashboardViewModel } from './dashboard.viewmodel';
     </header>
     <main class="wrap dashboard-main">
       <p class="eyebrow">SASPEL / {{ vm.panel()?.label }}</p>
-      <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>{{ vm.panel()?.title }}</h1>
+      <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>{{ vm.panel()?.title }}</h1><app-indicadores />
       <section class="welcome-panel">
         <span class="panel-symbol" aria-hidden="true">✳</span>
         <p class="eyebrow">BIENVENIDO A SASPEL</p>
@@ -36,8 +37,7 @@ import { DashboardViewModel } from './dashboard.viewmodel';
         }
         @if(vm.user()?.role==='ADMIN'){<a class="button" routerLink="/dashboard/admin/catalogo-factores">Configurar factores psicosociales</a>}
         <div class="panel-note">
-          Tu sesión está activa. Este es el espacio inicial de tu cuenta; las funciones de este
-          panel estarán disponibles más adelante.
+          Los indicadores reflejan únicamente los datos disponibles para tu rol.
         </div>
       </section>
     </main>

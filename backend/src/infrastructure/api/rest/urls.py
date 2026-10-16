@@ -30,7 +30,10 @@ from src.infrastructure.api.rest.views.alertas import ReglasAlertaView, Desactiv
 
 from src.infrastructure.api.rest.views.notificaciones import NotificacionesView, LeerNotificacionView
 
+from src.infrastructure.api.rest.views.dashboard import DashboardView
+
 urlpatterns = [
+    path('dashboard/',DashboardView.as_view()),
     path('notificaciones/',NotificacionesView.as_view()),
     path('notificaciones/<uuid:notificacion_id>/leer/',LeerNotificacionView.as_view()),
     path('alertas/reglas/', ReglasAlertaView.as_view()),
