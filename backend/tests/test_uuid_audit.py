@@ -19,6 +19,7 @@ from src.infrastructure.persistence.django.models import (
     AsignacionProfesional, AuditableModel, CargoInstitucional, Cita,
     DisponibilidadPsicologo, EscalaRespuesta, InstrumentoPsicologico,
     OpcionRespuesta, PerfilUsuario, PreguntaInstrumento, RangoInterpretacion,
+    NotaCita, Seguimiento, EstadoAnimo, TipoFactorPsicosocial, FactorPsicosocial,
     RespuestaPregunta, ResultadoInstrumento, Usuario, PoliticaSistema, AceptacionPolitica, AreaCargo,
 )
 
@@ -74,13 +75,20 @@ class UUIDAuditTests(TestCase):
         )
         acceptance = AceptacionPolitica.objects.create(usuario=cls.user, politica=policy)
         area_cargo = AreaCargo.objects.create(area=area, cargo=cargo)
+        note = NotaCita.objects.create(cita=appointment, profesional=cls.psychologist, observacion='Prueba estructural')
+        tracking = Seguimiento.objects.create(trabajador=cls.user, profesional=cls.psychologist,
+            motivo='Revisión', categoria='Prueba', observacion='Registro', estado='Abierto', evolucion='Observada', plan_accion='Plan')
+        mood = EstadoAnimo.objects.create(trabajador=cls.user, estado='Sereno', intensidad='Leve')
+        factor_type = TipoFactorPsicosocial.objects.create(nombre='Factor de prueba')
+        factor = FactorPsicosocial.objects.create(trabajador=cls.user, tipo=factor_type,
+            tipo_nombre=factor_type.nombre, nivel='Leve', descripcion='Contexto de prueba')
         cls.records = [cls.user, area, cargo, profile, professional, instrument, scale, option,
-                       question, interval, assignment, application, answer, result, availability, policy, acceptance, area_cargo, appointment]
+                       question, interval, assignment, application, answer, result, availability, policy, acceptance, area_cargo, note, tracking, mood, factor_type, factor, appointment]
 
     def test_all_entities_persist_generated_uuid_primary_keys(self):
         registered = set(apps.get_app_config('api').get_models())
         self.assertEqual(registered, {type(row) for row in self.records})
-        self.assertEqual(len(registered), 19)
+        self.assertEqual(len(registered), 24)
         self.assertTrue(AuditableModel._meta.abstract)
         ids = set()
         for row in self.records:
@@ -94,7 +102,7 @@ class UUIDAuditTests(TestCase):
                 self.assertEqual(row.pk, original)
                 self.assertEqual(row.pk.version, 4)
                 ids.add(row.pk)
-        self.assertEqual(len(ids), 19)
+        self.assertEqual(len(ids), 24)
 
     def test_uuid_foreign_keys_round_trip_for_every_entity(self):
         for row in self.records:
