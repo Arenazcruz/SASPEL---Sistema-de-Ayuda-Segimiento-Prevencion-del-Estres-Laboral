@@ -133,6 +133,10 @@ export const routes: Routes = [
       ...[{path:'trabajador/animo',role:'TRABAJADOR'},{path:'psicologo/trabajadores/:trabajadorId/animo',role:'PSICOLOGO'}].map(r=>({
         path:r.path,data:{role:r.role},canActivate:[roleGuard],loadComponent:()=>import('./features/bienestar/animo').then(m=>m.AnimoComponent),title:'Estado de ánimo · SASPEL',
       })),
+      ...[{path:'trabajador/factores',role:'TRABAJADOR'},{path:'psicologo/trabajadores/:trabajadorId/factores',role:'PSICOLOGO'}].map(r=>({
+        path:r.path,data:{role:r.role},canActivate:[roleGuard],loadComponent:()=>import('./features/bienestar/factores').then(m=>m.FactoresComponent),title:'Factores psicosociales · SASPEL',
+      })),
+      {path:'admin/catalogo-factores',data:{role:'ADMIN'},canActivate:[roleGuard],loadComponent:()=>import('./features/bienestar/catalogo-factores').then(m=>m.CatalogoFactoresComponent),title:'Catálogo de factores · SASPEL'},
       ...['TRABAJADOR', 'PSICOLOGO'].map(role => ({
         path: role.toLowerCase()+'/citas', data: {role}, canActivate: [roleGuard],
         loadComponent: () => import('./features/citas/citas').then(m=>m.Citas), title: 'Mis citas · SASPEL',

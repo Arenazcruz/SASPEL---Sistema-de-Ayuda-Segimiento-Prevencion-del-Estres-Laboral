@@ -24,7 +24,13 @@ from src.infrastructure.api.rest.views.seguimiento import SeguimientoView
 
 from src.infrastructure.api.rest.views.estado_animo import AnimoPropioView, AnimoProfesionalView
 
+from src.infrastructure.api.rest.views.factores import FactoresPropiosView, FactoresProfesionalView, TiposFactorView, EditarTipoFactorView
+
 urlpatterns = [
+    path('trabajador/factores/', FactoresPropiosView.as_view()),
+    path('psicologo/trabajadores/<uuid:trabajador_id>/factores/', FactoresProfesionalView.as_view()),
+    path('catalogos/factores/', TiposFactorView.as_view()),
+    path('catalogos/factores/<uuid:tipo_id>/', EditarTipoFactorView.as_view()),
     path('trabajador/animo/', AnimoPropioView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/animo/', AnimoProfesionalView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/seguimiento/', SeguimientoView.as_view()),

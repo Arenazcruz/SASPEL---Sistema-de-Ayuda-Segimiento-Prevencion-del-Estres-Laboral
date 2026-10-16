@@ -1,0 +1,17 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()">
+<a [routerLink]="vm.trabajador()?'/dashboard/psicologo/trabajadores':'/dashboard/trabajador'">Volver</a><h1>Factores psicosociales</h1>
+@if(vm.busy()){<p role="status">Procesando…</p>}
+@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button type="button" (click)="vm.load()" [disabled]="vm.busy()">Actualizar historial y catálogo</button>}
+@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.datos();as datos){<h2>{{datos.trabajador}}</h2>
+@if(!vm.trabajador()){
+<section class="card"><h2>Registrar un factor de mi entorno laboral</h2>
+@if(vm.tipos().length){<form (ngSubmit)="vm.guardar()"><fieldset [disabled]="vm.busy()"><legend>Registro personal</legend>
+<label>Tipo de factor<select name="tipo" [(ngModel)]="vm.tipo" required><option value="">Selecciona un tipo</option>@for(t of vm.tipos();track t.id){<option [value]="t.id">{{t.nombre}}</option>}</select></label>
+@for(t of vm.tipos();track t.id){@if(t.id===vm.tipo&&t.descripcion){<p>{{t.descripcion}}</p>}}
+<label>Nivel (descríbelo con tus palabras)<input name="nivel" [(ngModel)]="vm.nivel" maxlength="100" required></label>
+<label>Descripción<textarea name="descripcion" [(ngModel)]="vm.descripcion" maxlength="3000" required></textarea></label><button class="button" type="submit">Registrar factor</button></fieldset></form>}
+@else{<p>No hay tipos de factores activos. Administración debe configurar el catálogo.</p>}
+</section>}
+<section><h2>Historial cronológico</h2>@for(r of datos.registros;track r.id){<article class="card"><h3>{{r.fecha|date:'dd/MM/yyyy HH:mm'}} · {{r.tipo}}</h3><p>Nivel: {{r.nivel}}</p><p>{{r.descripcion}}</p></article>}@empty{<p>Sin factores registrados.</p>}</section>}
+</main>

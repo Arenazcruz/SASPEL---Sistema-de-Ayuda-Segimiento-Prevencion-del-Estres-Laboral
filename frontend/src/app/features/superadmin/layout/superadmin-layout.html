@@ -51,7 +51,7 @@
         Institución <span>{{ institutionOpen() ? '−' : '+' }}</span>
       </button>
       @if (institutionOpen()) {
-        <div id="institution-menu" class="submenu">
+        <div id="institution-menu" class="submenu"><a [routerLink]="base + '/institucion/factores'" routerLinkActive="active">Factores psicosociales</a>
           <a
             [routerLink]="base + '/institucion/areas'"
             routerLinkActive="active"

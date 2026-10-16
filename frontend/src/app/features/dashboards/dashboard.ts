@@ -32,8 +32,9 @@ import { DashboardViewModel } from './dashboard.viewmodel';
         <p>{{ vm.panel()?.description }}</p>
         <span class="role-label">{{ vm.panel()?.label }}</span>
         @if (vm.user()?.role === 'TRABAJADOR') {
-          <p><a class="button" routerLink="/dashboard/trabajador/resultados">Mis resultados</a></p><p><a class="button" routerLink="/dashboard/trabajador/citas">Mis citas</a><a class="button button-outline" routerLink="/dashboard/trabajador/animo">Mi estado de ánimo</a></p>
+          <p><a class="button" routerLink="/dashboard/trabajador/resultados">Mis resultados</a></p><p><a class="button" routerLink="/dashboard/trabajador/citas">Mis citas</a><a class="button button-outline" routerLink="/dashboard/trabajador/animo">Mi estado de ánimo</a><a class="button button-outline" routerLink="/dashboard/trabajador/factores">Mis factores psicosociales</a></p>
         }
+        @if(vm.user()?.role==='ADMIN'){<a class="button" routerLink="/dashboard/admin/catalogo-factores">Configurar factores psicosociales</a>}
         <div class="panel-note">
           Tu sesión está activa. Este es el espacio inicial de tu cuenta; las funciones de este
           panel estarán disponibles más adelante.

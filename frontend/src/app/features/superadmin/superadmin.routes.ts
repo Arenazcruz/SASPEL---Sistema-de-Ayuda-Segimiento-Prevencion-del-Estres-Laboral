@@ -18,6 +18,7 @@ export const superadminChildGuard: CanActivateChildFn = () => {
 };
 const list = () => import('./users/user-list').then((m) => m.UserList);
 export const SUPERADMIN_ROUTES: Routes = [
+  {path:'institucion/factores',loadComponent:()=>import('../bienestar/catalogo-factores').then(m=>m.CatalogoFactoresComponent)},
   ...[
     ['preguntas', 'questions'],
     ['escalas', 'scales'],
