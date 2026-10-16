@@ -32,7 +32,10 @@ from src.infrastructure.api.rest.views.notificaciones import NotificacionesView,
 
 from src.infrastructure.api.rest.views.dashboard import DashboardView
 
+from src.infrastructure.api.rest.views.reportes import ReportesView
+
 urlpatterns = [
+    path('reportes/<str:tipo>/',ReportesView.as_view()),
     path('dashboard/',DashboardView.as_view()),
     path('notificaciones/',NotificacionesView.as_view()),
     path('notificaciones/<uuid:notificacion_id>/leer/',LeerNotificacionView.as_view()),
