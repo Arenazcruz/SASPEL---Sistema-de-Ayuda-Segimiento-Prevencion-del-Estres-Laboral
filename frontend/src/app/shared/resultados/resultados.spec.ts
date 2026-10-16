@@ -89,6 +89,8 @@ describe('Resultados e historial T29', () => {
   it('el dashboard del trabajador conserva identidad y ofrece Mis resultados', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(worker.dashboard_path, Dashboard);
+    http.expectOne('/api/dashboard/').flush({rol:'TRABAJADOR',actualizado:'2026-10-16',indicadores:[]});
+
     const link = [...harness.routeNativeElement!.querySelectorAll('a')].find((a) =>
       a.textContent?.includes('Mis resultados'),
     )!;
@@ -177,6 +179,8 @@ describe('Resultados e historial T29', () => {
     identity.set(psychologist);
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(psychologist.dashboard_path, PsicologoDashboard);
+    http.expectOne('/api/dashboard/').flush({rol:'PSICOLOGO',actualizado:'2026-10-16',indicadores:[]});
+
     expect(harness.routeNativeElement?.textContent).toContain('Consultando asignaciones');
     http.expectOne(WORKERS_API).flush(workers);
     await harness.fixture.whenStable();
@@ -222,6 +226,7 @@ describe('Resultados e historial T29', () => {
     identity.set(psychologist);
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(psychologist.dashboard_path, PsicologoDashboard);
+    http.expectOne('/api/dashboard/').flush({rol:'PSICOLOGO',actualizado:'2026-10-16',indicadores:[]});
     http.expectOne(WORKERS_API).flush({ cantidad: 0, trabajadores: [] });
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.textContent).toContain(
@@ -299,6 +304,7 @@ describe('Resultados e historial T29', () => {
       await harness.navigateByUrl(path);
       expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
     }
+    http.expectOne('/api/dashboard/').flush({rol:'TRABAJADOR',actualizado:'2026-10-16',indicadores:[]});
     http.expectNone((request) => request.url.startsWith('/api/psicologo/'));
   });
 
@@ -310,6 +316,7 @@ describe('Resultados e historial T29', () => {
       for (const request of http.match(WORKERS_API)) request.flush(workers);
       expect(TestBed.inject(Router).url).toBe(psychologist.dashboard_path);
     }
+    http.expectOne('/api/dashboard/').flush({rol:'PSICOLOGO',actualizado:'2026-10-16',indicadores:[]});
     http.expectNone((request) => request.url.startsWith(OWN_API));
   });
 });

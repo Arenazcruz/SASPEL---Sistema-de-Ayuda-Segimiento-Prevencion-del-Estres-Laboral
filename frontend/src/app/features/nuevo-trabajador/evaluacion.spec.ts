@@ -606,6 +606,7 @@ describe('Navegación dashboard y evaluación', () => {
     resumed.vm.continuar();
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
+    http.expectOne('/api/dashboard/').flush({rol:'TRABAJADOR',actualizado:'2026-10-16',indicadores:[]});
   });
 
   it('un error al comenzar desde dashboard conserva pendiente y no expone detalles internos', async () => {
@@ -633,6 +634,7 @@ describe('Navegación dashboard y evaluación', () => {
     http.expectNone(URL);
     http.expectNone('/api/nuevo-trabajador/dashboard/');
     expect(harness.routeNativeElement?.querySelector('app-evaluacion-pregunta')).toBeNull();
+    http.expectOne('/api/dashboard/').flush({rol:'TRABAJADOR',actualizado:'2026-10-16',indicadores:[]});
   });
 
   it('finalizar muestra éxito y continuar navega al trabajador; no vuelve al panel de nuevo trabajador', async () => {
@@ -652,6 +654,7 @@ describe('Navegación dashboard y evaluación', () => {
     await harness.navigateByUrl(PATH);
     expect(TestBed.inject(Router).url).toBe(worker.dashboard_path);
     http.expectNone('/api/nuevo-trabajador/dashboard/');
+    http.expectOne('/api/dashboard/').flush({rol:'TRABAJADOR',actualizado:'2026-10-16',indicadores:[]});
   });
 
   it('conserva los tres guards en la ruta nueva', () => {

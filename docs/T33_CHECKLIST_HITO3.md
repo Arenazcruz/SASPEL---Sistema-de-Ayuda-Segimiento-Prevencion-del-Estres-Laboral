@@ -2,7 +2,7 @@
 
 Revisión final del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/2026. Fuente de alcance: Cronograma de SASPELCronograma3.xlsx. Código conjunto validado en cb2758c; esta entrega añade únicamente el checklist. No declara terminadas las tareas posteriores al corte ni sustituye la presentación final T43.
 
-## Resultado del corte
+## Resultado del corte inicial al 19/10/2026
 
 37 tareas objetivo: 25 ya completas antes de esta ejecución; 12 incompletas revisadas. Se cerraron T14, T16, T29, T31, T32, T34, T35, T36 y T37; T33 queda lista para cierre al integrar/publicar este checklist. Resultado tras esa integración: 35 Completado, 2 En curso. Actualización del 16/10/2026: el responsable del desarrollo aprobó expresamente el modelo T13, cuyo criterio no exige terceros. Con su cierre, el corte quedó en 36 Completado, 1 En curso. Posteriormente, el responsable autorizó el criterio de reconstrucción lógica de T08, acreditado en [T16](T16_PAQUETE_HITO2.md#t08--línea-base-lógica-y-límites-de-la-evidencia). Con T08 Completado, el corte queda en **37 Completado de 37**, ninguna En curso ni Pendiente.
 
@@ -57,7 +57,7 @@ La prueba omitida es UnifiedUsersBrowserTests, optativa y dependiente de Angular
 
 No hay bloqueador técnico global identificado dentro de los escenarios ejecutados. T08 queda Completado conforme al criterio documental autorizado. El pendiente de aprobación de T13 quedó resuelto por la declaración explícita del responsable del desarrollo, registrada en el modelo conceptual; no se atribuye aprobación a terceros. El catálogo de factores queda deliberadamente vacío hasta que Administración configure los tipos reales de la institución; la función de configuración está implementada y probada con datos temporales, sin inventar tipos de negocio.
 
-## Backlog restante H3, priorizado sin adelantar implementación
+## Backlog registrado al corte inicial del 19/10/2026
 
 | Orden | Tarea | Fecha Fin | Prioridad del Excel | Dependencias y siguiente resultado exigido |
 | --- | --- | --- | --- | --- |
@@ -86,3 +86,34 @@ El orden respeta dependencias y fechas. Las prioridades altas de T42/T43 no perm
 | T16 | cb2758c |
 
 Cada commit fue publicado en su feature y posteriormente en develop. El cierre de T33 requiere publicar este documento en develop y después cambiar únicamente su Estado en el Excel local. Los únicos archivos locales no versionados esperados son el cronograma y su archivo temporal de bloqueo de Excel.
+
+## T42 · Validación integrada del Hito 3 hasta 24/10/2026
+
+Verificación del 16/10/2026 tras integrar T38–T41 en develop. Este apartado actualiza el backlog histórico anterior y amplía el corte de 37 a 43 tareas. El cronograma es local y no se versiona. No se declara una aceptación o presentación externa.
+
+| Tarea | Criterio literal | Evidencia integrada |
+| --- | --- | --- |
+| T38 | Alertas se generan por condiciones de negocio definidas y quedan trazables. | e53c154: regla selecciona RangoInterpretacion existente y nivel de atención; evento de resultado finalizado genera una alerta única por regla/resultado; acciones con autor, fecha y estado. Sin umbrales médicos ni semillas. |
+| T39 | Eventos relevantes generan notificaciones consultables y marcables como leídas. | 86902ba y 7c08829: citas, asignaciones, instrumentos, resultados, alertas y asignación pendiente. Destinatario individual, lectura idempotente, resumen sin contenido clínico y revocación del acceso profesional. |
+| T40 | Cada rol ve indicadores operativos derivados de datos reales del sistema. | 67733c1: indicadores para Trabajador, Psicólogo, Admin y Superadmin; Nuevo Trabajador conserva onboarding. Conteos autorizados en backend y estados de carga, vacío y error. |
+| T41 | Listados y exportables definidos por negocio funcionan con filtros principales. | c5285a9: usuarios, instrumentos, citas y seguimiento (RF-44). Fechas, estado y área/instrumento según reporte; páginas de 50 filas y CSV con igual autorización/filtros, hasta 10000 filas. El criterio no fija formato: CSV es el único formato implementado. |
+| T42 | Escenarios críticos pasan y defectos de severidad alta quedan cerrados. | Suite completa y recorrido HTTP integrado descritos a continuación, sin defectos de severidad alta identificados en los escenarios ejecutados. |
+
+Dependencias verificadas en el Excel: T38 requiere T27/T35/T36; T39 requiere T31/T38; T40 requiere T29/T31/T35; T41 requiere T29/T35; T42 requiere T35/T38/T41. Todas están Completadas e integradas antes del cierre de T42.
+
+### Escenarios y resultados
+
+- Backend: `python backend/manage.py test tests --noinput --verbosity 1` con el Python del entorno local. **392 descubiertas, 391 aprobadas y 1 omitida**, 32,396 s. Incluye login/primer acceso/roles, evaluación inicial, resultados e historial, asignación, citas, notas, seguimiento, ánimo y factores, reglas/acciones de alertas, notificaciones, dashboards, reportes y accesos cruzados negativos.
+- `tests.test_integracion_hito3` usa HTTP, JWT y PostgreSQL temporal: configuración administrativa de regla sobre un rango de prueba existente → login Nuevo Trabajador → evaluación/respuestas → resultado → cambio de rol → asignación profesional → alerta y notificación → cita confirmada/completada → nota y seguimiento → ánimo y factor → dashboards/reportes/CSV → revocación. Solo se controla el reloj para finalizar la cita; no se simulan servicios de negocio ni persistencia.
+- Frontend: `npm test -- --watch=false`, **200/200 aprobadas en 20 archivos**, 5,78 s. La primera corrida falló por nuevas peticiones /api/dashboard/ sin respuesta en fixtures antiguos de navegación; se añadieron respuestas explícitas a esos escenarios, conservando todas las aserciones y la comprobación de peticiones pendientes. No se deshabilitaron pruebas.
+- Angular: `npm run build` aprobado después de la suite frontend. No equivale a una prueba E2E de navegador.
+- Django: `check`, `migrate --check` y `makemigrations --check --dry-run` aprobados, sin migraciones pendientes ni cambios detectados.
+- UUID/auditoría: la prueba registra y verifica las **28 entidades** actuales, incluidas ReglaAlerta, Alerta, AccionAlerta y Notificacion; conserva las claves UUID, relaciones y campos de AuditableModel.
+
+La prueba omitida sigue siendo `UnifiedUsersBrowserTests`, optativa y habilitada solo con `SASPEL_BROWSER_TEST=1`; requiere Angular y Playwright. Se registra como omitida, no aprobada. La validación E2E integral T55 queda fuera de este corte.
+
+### Conservación de datos y límites
+
+Migraciones 0011_alertas_reglas y 0012_notificaciones_internas aplicadas sin restaurar ni resetear SASPEL2. Añaden cuatro tablas, todas vacías al verificar. Se compararon conteos y huellas SHA-256 de las filas de las 33 tablas anteriores: datos de negocio sin cambios. En auth_permission, django_content_type y django_migrations se añadieron únicamente metadatos de estas migraciones; excluyendo esas altas, las huellas de todos sus registros anteriores coinciden. El backup mantiene SHA-256 `a96349eb27d5c33823cdb51922f54ce5c566566647e788e3144bfca8b2a787a1`.
+
+No se habilitan reglas clínicas por defecto ni se llenan pantallas con registros ficticios. La institución debe configurar rangos y reglas según su proceso. Los reportes administrativos de citas y seguimiento son agregados y no exponen notas, observaciones, evolución, factores, ánimo o resultados individuales. El profesional pierde acceso a alertas, notificaciones vinculadas, reportes y registros sensibles tras perder la asignación vigente.

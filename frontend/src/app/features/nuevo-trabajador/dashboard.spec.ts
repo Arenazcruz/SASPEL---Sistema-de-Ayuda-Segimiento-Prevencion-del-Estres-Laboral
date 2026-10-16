@@ -190,6 +190,7 @@ describe('Dashboard propio del nuevo trabajador', () => {
       auth.restoreSession.mockReturnValue(of(identity));
       const harness = await RouterTestingHarness.create();
       await harness.navigateByUrl(user.dashboard_path, Dashboard);
+    http.expectOne('/api/dashboard/').flush({rol:role,indicadores:[]});
       expect(TestBed.inject(Router).url).toBe(identity.dashboard_path);
       http.expectNone(URL);
     });
