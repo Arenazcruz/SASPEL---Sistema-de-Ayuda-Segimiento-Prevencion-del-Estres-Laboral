@@ -12,4 +12,4 @@ class PersistenceConfig(AppConfig):
     verbose_name = 'Persistencia SASPEL'
 
     def ready(self):
-        from . import alerta_events  # noqa: F401
+        from . import alerta_events, notificacion_events  # noqa: F401

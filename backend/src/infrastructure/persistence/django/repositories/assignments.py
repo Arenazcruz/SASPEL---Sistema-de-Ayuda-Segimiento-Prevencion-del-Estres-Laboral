@@ -111,3 +111,8 @@ class DjangoAssignmentRepository:
         row.estado, row.motivo_fin, row.fecha_fin = state, reason, timezone.now()
         row.save(update_fields=['estado', 'motivo_fin', 'fecha_fin', 'actualizado_en'])
         return self.assignment_dtos([row])[0]
+
+    def notify_pending(self, worker_id):
+        from src.infrastructure.persistence.django.notificacion_events import emitir
+        recipients=self.administration.users().filter(is_active=True,deleted=False,functional_role__in=['ADMIN','SUPERADMIN']).values_list('pk',flat=True)
+        emitir('ASIGNACION_PENDIENTE',worker_id,'SIN_PROFESIONAL','Hay una asignación profesional pendiente',recipients)

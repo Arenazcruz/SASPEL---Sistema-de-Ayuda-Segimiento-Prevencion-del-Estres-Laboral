@@ -28,7 +28,11 @@ from src.infrastructure.api.rest.views.factores import FactoresPropiosView, Fact
 
 from src.infrastructure.api.rest.views.alertas import ReglasAlertaView, DesactivarReglaView, AlertasView, AccionAlertaView
 
+from src.infrastructure.api.rest.views.notificaciones import NotificacionesView, LeerNotificacionView
+
 urlpatterns = [
+    path('notificaciones/',NotificacionesView.as_view()),
+    path('notificaciones/<uuid:notificacion_id>/leer/',LeerNotificacionView.as_view()),
     path('alertas/reglas/', ReglasAlertaView.as_view()),
     path('alertas/reglas/<uuid:regla_id>/desactivar/', DesactivarReglaView.as_view()),
     path('alertas/', AlertasView.as_view()),

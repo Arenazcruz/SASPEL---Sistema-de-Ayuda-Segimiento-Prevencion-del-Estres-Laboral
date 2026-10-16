@@ -50,6 +50,9 @@ export const routes: Routes = [
     runGuardsAndResolvers: 'always',
     children: [
       {
+        path:'notificaciones',loadComponent:()=>import('./features/notificaciones/notificaciones').then(m=>m.NotificacionesComponent),title:'Notificaciones · SASPEL',
+      },
+      {
         path: 'superadmin',
         data: { role: 'SUPERADMIN' },
         canActivate: [roleGuard],

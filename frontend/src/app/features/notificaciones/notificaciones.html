@@ -1,0 +1,14 @@
+<main class="wrap content"><a routerLink="/dashboard">Volver a mi panel</a><h1>Centro de notificaciones</h1>
+<label><input type="checkbox" [(ngModel)]="vm.pendientes" (change)="vm.load()"> Solo no leídas</label>
+<button class="button" (click)="vm.load()" [disabled]="vm.loading()">Actualizar</button>
+@if(vm.loading()){<p role="status">Consultando…</p>}
+@if(vm.error()){<p role="alert">{{vm.error()}}</p>}
+@if(vm.datos();as rows){@for(row of rows;track row.id){<article class="card"><h2>{{row.titulo}}</h2><p>{{row.creado_en|date:'short'}}</p>
+@if(row.leida_en){<p>Leída</p>}@else{<button class="button" [disabled]="vm.busy()" (click)="vm.leer(row)">Marcar como leída</button>}
+</article>}@empty{<p>No hay notificaciones para este filtro.</p>}}
+@if(vm.auth.user()?.role==='PSICOLOGO'){<section><h2>Alertas de trabajadores asignados</h2><button class="button" (click)="vm.loadAlertas()">Actualizar alertas</button>
+@if(vm.alertError()){<p role="alert">{{vm.alertError()}}</p>}
+@if(vm.alertas();as rows){@for(row of rows;track row.id){<article class="card"><h3>{{row.trabajador}}</h3><p>{{row.regla}} · Atención {{row.nivel}} · {{row.estado}}</p><p>{{row.fecha|date:'short'}}</p><a [routerLink]="['/dashboard/psicologo/resultados',row.resultado_id]">Consultar resultado de origen</a>
+@for(action of row.acciones;track action.id){<p>{{action.creado_en|date:'short'}} · {{action.estado}}: {{action.observacion}}</p>}
+@if(row.estado!=='CERRADA'){<label>Acción realizada<textarea #nota maxlength="5000"></textarea></label><button class="button" [disabled]="vm.busy()" (click)="vm.actuar(row,'EN_ATENCION',nota.value)">Registrar atención</button><button class="button button-outline" [disabled]="vm.busy()" (click)="vm.actuar(row,'CERRADA',nota.value)">Cerrar alerta</button>}</article>}@empty{<p>No hay alertas autorizadas.</p>}}</section>}
+</main>

@@ -57,3 +57,5 @@ from .estado_animo import EstadoAnimo
 from .factor_psicosocial import TipoFactorPsicosocial, FactorPsicosocial
 
 from .alerta import ReglaAlerta, Alerta, AccionAlerta
+
+from .notificacion import Notificacion

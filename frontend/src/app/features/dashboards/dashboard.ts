@@ -24,7 +24,7 @@ import { DashboardViewModel } from './dashboard.viewmodel';
     </header>
     <main class="wrap dashboard-main">
       <p class="eyebrow">SASPEL / {{ vm.panel()?.label }}</p>
-      <h1>{{ vm.panel()?.title }}</h1>
+      <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>{{ vm.panel()?.title }}</h1>
       <section class="welcome-panel">
         <span class="panel-symbol" aria-hidden="true">✳</span>
         <p class="eyebrow">BIENVENIDO A SASPEL</p>
