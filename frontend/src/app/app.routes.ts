@@ -78,8 +78,56 @@ export const routes: Routes = [
           import('./features/nuevo-trabajador/dashboard').then((m) => m.NuevoTrabajadorDashboard),
         title: 'Mi espacio · SASPEL',
       },
+      {
+        path: 'trabajador/resultados',
+        data: { role: 'TRABAJADOR' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/trabajador/resultados').then((m) => m.TrabajadorResultados),
+        title: 'Mis resultados · SASPEL',
+      },
+      {
+        path: 'trabajador/resultados/:resultadoId',
+        data: { role: 'TRABAJADOR' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/trabajador/resultados').then((m) => m.TrabajadorResultados),
+        title: 'Detalle del resultado · SASPEL',
+      },
+      {
+        path: 'psicologo',
+        data: { role: 'PSICOLOGO' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/psicologo/dashboard').then((m) => m.PsicologoDashboard),
+        title: 'Mi espacio profesional · SASPEL',
+      },
+      {
+        path: 'psicologo/trabajadores',
+        data: { role: 'PSICOLOGO' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/psicologo/trabajadores').then((m) => m.PsicologoTrabajadores),
+        title: 'Mis trabajadores · SASPEL',
+      },
+      {
+        path: 'psicologo/trabajadores/:trabajadorId/resultados',
+        data: { role: 'PSICOLOGO' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/psicologo/resultados').then((m) => m.PsicologoResultados),
+        title: 'Resultados del trabajador · SASPEL',
+      },
+      {
+        path: 'psicologo/resultados/:resultadoId',
+        data: { role: 'PSICOLOGO' },
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('./features/psicologo/resultados').then((m) => m.PsicologoResultados),
+        title: 'Detalle del resultado · SASPEL',
+      },
       ...Object.entries(ROLE_DASHBOARDS)
-        .filter(([role]) => role !== 'SUPERADMIN' && role !== 'NUEVO_TRABAJADOR')
+        .filter(([role]) => !['SUPERADMIN', 'NUEVO_TRABAJADOR', 'PSICOLOGO'].includes(role))
         .map(([role, path]) => ({
           path: path.split('/').at(-1)!,
           data: { role },

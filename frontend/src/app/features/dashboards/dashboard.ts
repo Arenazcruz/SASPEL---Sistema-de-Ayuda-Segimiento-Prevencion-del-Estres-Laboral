@@ -31,6 +31,9 @@ import { DashboardViewModel } from './dashboard.viewmodel';
         <h2>Hola, {{ vm.displayName() }}.</h2>
         <p>{{ vm.panel()?.description }}</p>
         <span class="role-label">{{ vm.panel()?.label }}</span>
+        @if (vm.user()?.role === 'TRABAJADOR') {
+          <p><a class="button" routerLink="/dashboard/trabajador/resultados">Mis resultados</a></p>
+        }
         <div class="panel-note">
           Tu sesión está activa. Este es el espacio inicial de tu cuenta; las funciones de este
           panel estarán disponibles más adelante.

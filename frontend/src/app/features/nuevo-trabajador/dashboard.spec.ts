@@ -178,7 +178,7 @@ describe('Dashboard propio del nuevo trabajador', () => {
     expect(child.data?.['role']).toBe('NUEVO_TRABAJADOR');
   });
 
-  for (const role of ['TRABAJADOR', 'PSICOLOGO', 'ADMIN'] as const) {
+  for (const role of ['TRABAJADOR', 'ADMIN'] as const) {
     it(`conserva el dashboard genérico de ${role} e impide acceder al nuevo`, async () => {
       const identity: AuthUser = {
         ...user,

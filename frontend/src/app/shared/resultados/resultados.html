@@ -1,0 +1,32 @@
+<header class="wrap page-header">
+  <app-brand />
+  <a class="button button-outline" [routerLink]="vm.config.volver">Volver a mi panel</a>
+</header>
+<main class="wrap content" [attr.aria-busy]="vm.loading()">
+  <p class="eyebrow">SASPEL · RESULTADOS</p>
+  <h1>{{ vm.esDetalle() ? 'Detalle del resultado' : vm.config.titulo }}</h1>
+  @if (vm.loading()) {
+    <p role="status">Cargando resultados…</p>
+  } @else if (vm.error()) {
+    <p class="error" role="alert">{{ vm.error() }}</p>
+    <button class="button button-outline" type="button" (click)="vm.load()">Reintentar</button>
+  } @else if (vm.resultado(); as resultado) {
+    <article class="card"><app-resultado-resumen [resultado]="resultado" /></article>
+  } @else if (!vm.resultados().length) {
+    <p class="card" role="status">{{ vm.config.vacio }}</p>
+  } @else {
+    <div class="results">
+      @for (resultado of vm.resultados(); track resultado.id) {
+        <article class="card">
+          <app-resultado-resumen [resultado]="resultado" />
+          <a
+            class="button button-outline"
+            [routerLink]="[vm.config.detalleBase, resultado.id]"
+            [attr.aria-label]="'Ver resultado de ' + resultado.instrumento"
+            >Ver resultado</a
+          >
+        </article>
+      }
+    </div>
+  }
+</main>
