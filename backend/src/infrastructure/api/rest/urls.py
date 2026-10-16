@@ -22,7 +22,11 @@ from src.infrastructure.api.rest.views.notas_cita import NotasCitaView
 
 from src.infrastructure.api.rest.views.seguimiento import SeguimientoView
 
+from src.infrastructure.api.rest.views.estado_animo import AnimoPropioView, AnimoProfesionalView
+
 urlpatterns = [
+    path('trabajador/animo/', AnimoPropioView.as_view()),
+    path('psicologo/trabajadores/<uuid:trabajador_id>/animo/', AnimoProfesionalView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/seguimiento/', SeguimientoView.as_view()),
     path('citas/<uuid:cita_id>/notas/', NotasCitaView.as_view()),
     path('citas/', CitasView.as_view()),

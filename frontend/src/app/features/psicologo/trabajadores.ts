@@ -43,6 +43,7 @@ import { MisTrabajadoresViewModel } from './trabajadores.viewmodel';
                   >Ver resultados</a
                 >
                 <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'seguimiento']">Ver seguimiento</a>
+                <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'animo']">Ver ánimo</a>
               </article>
             }
           </div>

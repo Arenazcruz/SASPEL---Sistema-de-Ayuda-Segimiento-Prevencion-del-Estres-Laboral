@@ -130,6 +130,9 @@ export const routes: Routes = [
         path:'psicologo/trabajadores/:trabajadorId/seguimiento',data:{role:'PSICOLOGO'},canActivate:[roleGuard],
         loadComponent:()=>import('./features/psicologo/seguimiento/seguimiento').then(m=>m.SeguimientoComponent),title:'Seguimiento · SASPEL',
       },
+      ...[{path:'trabajador/animo',role:'TRABAJADOR'},{path:'psicologo/trabajadores/:trabajadorId/animo',role:'PSICOLOGO'}].map(r=>({
+        path:r.path,data:{role:r.role},canActivate:[roleGuard],loadComponent:()=>import('./features/bienestar/animo').then(m=>m.AnimoComponent),title:'Estado de ánimo · SASPEL',
+      })),
       ...['TRABAJADOR', 'PSICOLOGO'].map(role => ({
         path: role.toLowerCase()+'/citas', data: {role}, canActivate: [roleGuard],
         loadComponent: () => import('./features/citas/citas').then(m=>m.Citas), title: 'Mis citas · SASPEL',
