@@ -16,7 +16,7 @@ class DjangoReportesRepository(DjangoResultadosRepository):
             return {'areas':list(areas.order_by('nombre').values('id','nombre')),'instrumentos':list(instruments.order_by('nombre','version').values('id','nombre','version'))}
         estado=filtros.get('estado');area=filtros.get('area');fecha='creado_en'
         if tipo=='usuarios':
-            rows=self.administration.users().filter(deleted=False,perfil_usuario__deleted=False)
+            rows=self.administration.users().filter(deleted=False).exclude(perfil_usuario__deleted=True)
             if profesional: rows=rows.filter(pk__in=workers)
             if area: rows=rows.filter(perfil_usuario__area_id=area)
             if estado:
@@ -58,5 +58,5 @@ class DjangoReportesRepository(DjangoResultadosRepository):
         total=rows.count();page=filtros.get('pagina',1)
         if exportar and total>10000: raise AdministrationError('Reduce el intervalo o los filtros para exportar hasta 10000 filas.')
         start=0 if exportar else (page-1)*50;end=total if exportar else start+50
-        values=list(rows.values_list(*fields)[start:end])
+        values=list(rows.values_list(*fields)[start:end]) if start < total else []
         return {'tipo':tipo,'columnas':columns,'filas':values,'total':total,'pagina':page,'por_pagina':50,'agregado':not profesional and tipo in ('citas','seguimiento')}

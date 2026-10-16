@@ -13,4 +13,7 @@ class UUIDJWTAuthentication(JWTAuthentication):
             UUID(str(validated_token[api_settings.USER_ID_CLAIM]))
         except (KeyError, ValueError, TypeError, AttributeError) as error:
             raise InvalidToken('La sesión ya no es válida.') from error
-        return super().get_user(validated_token)
+        user = super().get_user(validated_token)
+        if user.deleted:
+            raise InvalidToken('La sesión ya no es válida.')
+        return user

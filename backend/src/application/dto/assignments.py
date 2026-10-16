@@ -60,6 +60,7 @@ class PsychologistLoad:
     """Cantidad de vínculos ACTIVA, incluso si el trabajador perdió acceso a su cuenta."""
     psicologo: AssignmentPerson
     trabajadores_activos: int
+    ultima_asignacion: datetime | None = None
 
 
 @dataclass(frozen=True)

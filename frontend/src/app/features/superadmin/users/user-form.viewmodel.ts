@@ -9,7 +9,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, distinctUntilChanged, finalize, map, of, Subject, switchMap } from 'rxjs';
 import { CREATION_ROLES, Institution, Person } from '../superadmin.models';
-import { apiError, SuperadminService } from '../superadmin.service';
+import { apiError, validationErrorMessage, SuperadminService } from '../superadmin.service';
 import { passwordsMatch, passwordStrength } from './password-validation';
 import {
   birthDate,
@@ -269,7 +269,7 @@ export class UserFormViewModel {
             for (const [name, messages] of Object.entries(e.error)) {
               const control = this.form.get(name);
               if (!control) continue;
-              const message = Array.isArray(messages) ? messages.join(' ') : String(messages);
+              const message = validationErrorMessage(messages);
               control.setErrors({ ...control.errors, server: message });
               control.markAsTouched();
               fields = true;

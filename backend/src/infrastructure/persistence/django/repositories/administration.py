@@ -41,6 +41,8 @@ class DjangoAdministrationRepository:
             detail = getattr(error, 'message_dict', None)
             field = next(iter(detail)) if detail else 'detail'
             messages = detail[field] if detail else error.messages
+            if field == '__all__':
+                raise AdministrationError('Los datos no cumplen las restricciones de la operación. Revisa duplicados y referencias.') from None
             raise AdministrationError(' '.join(messages), field) from None
         except IntegrityError:
             raise AdministrationError('Los datos ya existen o una referencia dejó de estar disponible.') from None
@@ -99,7 +101,7 @@ class DjangoAdministrationRepository:
         PersonNotFound.
         """
         try:
-            return self.users().get(pk=user_id)
+            return self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True).get(pk=user_id)
         except User.DoesNotExist:
             raise PersonNotFound('No se encontró la persona.') from None
 
@@ -112,7 +114,7 @@ class DjangoAdministrationRepository:
         actividad, área y cargo. Devuelve UserPage de 20 registros, recientes primero, con ID
         como desempate. Cambiar aquí tamaño/orden y revisar navegación del listado Angular.
         """
-        query = self.users()
+        query = self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True)
         if filters.search:
             query = query.filter(
                 Q(email__icontains=filters.search) | Q(first_name__icontains=filters.search)
@@ -130,6 +132,8 @@ class DjangoAdministrationRepository:
             query = query.filter(perfil_usuario__cargo_id=filters.cargo)
         count, size = query.count(), 20
         start = (filters.page - 1) * size
+        if start >= count:
+            return UserPage(count, filters.page, size, [])
         return UserPage(count, filters.page, size, [self.user_dto(u) for u in query.order_by('-date_joined', '-pk')[start:start + size]])
 
     @staticmethod
@@ -280,7 +284,7 @@ class DjangoAdministrationRepository:
         """Cuenta cuentas activas miembros del grupo SUPERADMIN para proteger el último acceso
         administrativo.
         """
-        return User.objects.filter(is_active=True, groups__name='SUPERADMIN').count()
+        return User.objects.filter(is_active=True, deleted=False, groups__name='SUPERADMIN').count()
 
     def reset_password(self, user_id, password):
         """Valida y guarda el hash de la clave por ID; devuelve None y nunca devuelve la
@@ -295,7 +299,7 @@ class DjangoAdministrationRepository:
         más recientes. Incluye cuentas sin perfil; utiliza la misma prioridad que login y
         listado.
         """
-        query = self.users()
+        query = self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True)
         counts = query.aggregate(
             users_total=Count('pk'), active_users=Count('pk', filter=Q(is_active=True)),
             inactive_users=Count('pk', filter=Q(is_active=False)),
@@ -319,7 +323,7 @@ class DjangoAdministrationRepository:
         """
         model = self.institution_model(kind)
         try:
-            return model.objects.get(pk=item_id)
+            return model.objects.get(pk=item_id, deleted=False)
         except model.DoesNotExist:
             raise PersonNotFound('No se encontró el registro institucional.') from None
 
@@ -327,7 +331,7 @@ class DjangoAdministrationRepository:
         """Consulta áreas/cargos con filtro opcional de activo y devuelve DTO ordenados por
         nombre e ID.
         """
-        query = self.institution_model(kind).objects.all()
+        query = self.institution_model(kind).objects.filter(deleted=False)
         if active is not None:
             query = query.filter(activo=active)
         if active is True:

@@ -19,7 +19,15 @@ class DjangoResultadosRepository:
         return self.administration.users().filter(is_active=True, deleted=False, perfil_usuario__deleted=False)
 
     def rol_activo(self, usuario_id):
-        return self.usuarios().filter(pk=usuario_id).values_list('functional_role', flat=True).first()
+        # Bootstrap administrativo válido sin perfil; perfiles borrados no autorizan.
+        user = self.administration.users().filter(pk=usuario_id, is_active=True, deleted=False).exclude(
+            perfil_usuario__deleted=True,
+        ).first()
+        if user is None:
+            return None
+        if user.functional_role in ('ADMIN', 'SUPERADMIN') or getattr(user, 'perfil_usuario', None) is not None:
+            return user.functional_role
+        return None
 
     def vinculos(self, psicologo_id):
         workers = self.usuarios().filter(functional_role__in=WORKER_ROLES).values('pk')

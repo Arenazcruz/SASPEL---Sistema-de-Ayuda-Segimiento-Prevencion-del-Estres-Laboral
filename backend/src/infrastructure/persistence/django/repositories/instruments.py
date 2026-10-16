@@ -18,7 +18,7 @@ class DjangoInstrumentRepository:
 
     @staticmethod
     def find(instrument_id, lock=False):
-        rows = InstrumentoPsicologico.objects.all()
+        rows = InstrumentoPsicologico.objects.filter(deleted=False)
         if lock:
             rows = rows.select_for_update()
         try:
@@ -27,7 +27,7 @@ class DjangoInstrumentRepository:
             raise PersonNotFound('El instrumento no existe.') from None
 
     def list(self, filters):
-        rows = InstrumentoPsicologico.objects.all()
+        rows = InstrumentoPsicologico.objects.filter(deleted=False)
         if filters.search:
             rows = rows.filter(Q(codigo__icontains=filters.search) | Q(nombre__icontains=filters.search)
                                | Q(version__icontains=filters.search))
@@ -37,6 +37,8 @@ class DjangoInstrumentRepository:
                 rows = rows.filter(**{field: value})
         count = rows.count()
         start = (filters.page - 1) * PAGE_SIZE
+        if start >= count:
+            return InstrumentPage(count, filters.page, PAGE_SIZE, [])
         rows = rows.order_by('codigo', 'version', 'pk')[start:start + PAGE_SIZE]
         return InstrumentPage(count, filters.page, PAGE_SIZE, [self.dto(row) for row in rows])
 

@@ -1,7 +1,7 @@
 """Adaptador T23 sobre las tablas existentes. No borra vínculos ni altera roles/tamizaje."""
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.utils import timezone
 from src.application.dto.assignments import (
     AssignmentDTO, AssignmentPage, AssignmentPerson, PsychologistLoad, WorkerPage,
@@ -54,13 +54,13 @@ class DjangoAssignmentRepository:
 
     def get_assignment(self, assignment_id):
         try:
-            row = AsignacionProfesional.objects.select_for_update().get(pk=assignment_id)
+            row = AsignacionProfesional.objects.select_for_update().get(pk=assignment_id, deleted=False)
         except AsignacionProfesional.DoesNotExist:
             raise PersonNotFound('La asignación no existe.') from None
         return self.assignment_dtos([row])[0]
 
     def list_assignments(self, filters):
-        rows = AsignacionProfesional.objects.all()
+        rows = AsignacionProfesional.objects.filter(deleted=False)
         for key in ('estado', 'trabajador_id', 'psicologo_id'):
             if value := getattr(filters, key):
                 rows = rows.filter(**{key: value})
@@ -69,6 +69,8 @@ class DjangoAssignmentRepository:
             rows = rows.filter(Q(trabajador_id__in=people) | Q(psicologo_id__in=people))
         count = rows.count()
         start = (filters.page - 1) * PAGE_SIZE
+        if start >= count:
+            return AssignmentPage(count, filters.page, PAGE_SIZE, [])
         rows = rows.order_by('-fecha_asignacion', '-pk')[start:start + PAGE_SIZE]
         return AssignmentPage(count, filters.page, PAGE_SIZE, self.assignment_dtos(rows))
 
@@ -82,10 +84,12 @@ class DjangoAssignmentRepository:
 
     def unassigned_workers(self, search, page):
         active_workers = AsignacionProfesional.objects.filter(estado='ACTIVA').values('trabajador_id')
-        users = self.administration.users().filter(is_active=True, functional_role__in=WORKER_ROLES)
+        users = self.administration.users().filter(is_active=True, deleted=False, functional_role__in=WORKER_ROLES).exclude(perfil_usuario__deleted=True)
         users = self.search_people(users.exclude(pk__in=active_workers), search)
         count = users.count()
         start = (page - 1) * PAGE_SIZE
+        if start >= count:
+            return WorkerPage(count, page, PAGE_SIZE, [])
         users = users.order_by('first_name', 'last_name', 'pk')[start:start + PAGE_SIZE]
         return WorkerPage(count, page, PAGE_SIZE, [self.person_dto(user) for user in users])
 
@@ -93,10 +97,10 @@ class DjangoAssignmentRepository:
         users = self.administration.users().filter(
             functional_role='PSICOLOGO', is_active=True, perfil_usuario__habilitado_asignaciones=True,
             deleted=False, perfil_usuario__deleted=False,
-        ).annotate(active_workers=Count(
+        ).annotate(last_assignment=Max('asignaciones_como_psicologo__fecha_asignacion'), active_workers=Count(
             'asignaciones_como_psicologo', filter=Q(asignaciones_como_psicologo__estado='ACTIVA'),
         )).order_by('active_workers', 'email', 'pk')
-        return [PsychologistLoad(self.person_dto(user), user.active_workers) for user in users]
+        return [PsychologistLoad(self.person_dto(user), user.active_workers, user.last_assignment) for user in users]
 
     def has_active_assignment(self, worker_id):
         return AsignacionProfesional.objects.filter(trabajador_id=worker_id, estado='ACTIVA').exists()

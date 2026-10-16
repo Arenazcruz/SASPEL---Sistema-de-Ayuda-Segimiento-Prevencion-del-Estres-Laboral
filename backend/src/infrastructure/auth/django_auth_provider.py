@@ -33,7 +33,7 @@ class DjangoAuthProvider:
             make_password(password)
             raise InvalidCredentials()
         User = get_user_model()
-        candidates = list(User.objects.filter(email__iexact=email.strip())[:2])
+        candidates = list(User.objects.filter(email__iexact=email.strip(), deleted=False)[:2])
         # Django permite correos repetidos. Si hay ambigüedad no elegimos una
         # cuenta arbitrariamente ni revelamos cuántas existen.
         if len(candidates) != 1:
@@ -60,7 +60,7 @@ class DjangoAuthProvider:
         """Busca ID de cuenta y devuelve identidad con grupos actuales. Lanza InvalidCredentials
         si falta e InactiveAccount si está desactivada; no modifica datos.
         """
-        user = get_user_model().objects.filter(pk=user_id).first()
+        user = get_user_model().objects.filter(pk=user_id, deleted=False).first()
         if user is None:
             raise InvalidCredentials()
         if not user.is_active:

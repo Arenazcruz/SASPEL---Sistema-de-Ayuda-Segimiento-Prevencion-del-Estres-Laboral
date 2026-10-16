@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { Politica, PrimerAccesoService } from './primer-acceso.service';
+import { apiError } from '../superadmin/superadmin.service';
 
 @Injectable()
 export class PrimerAccesoPoliticasViewModel {
@@ -94,16 +95,14 @@ export class PrimerAccesoPoliticasViewModel {
           } else void this.router.navigateByUrl(estado.siguiente_ruta);
         },
         error: (error: HttpErrorResponse) => {
-          if (error.error?.politicas) {
+          if (error.status === 400 && error.error?.politicas) {
             this.ready.set(false);
             this.selected.set(new Set());
             this.error.set(
               'Las políticas cambiaron. Vuelve a cargarlas para revisar las versiones vigentes.',
             );
           } else
-            this.error.set(
-              error.error?.detail || 'No se pudo registrar la aceptación. Inténtalo de nuevo.',
-            );
+            this.error.set(apiError(error));
         },
       });
   }

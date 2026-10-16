@@ -7,6 +7,15 @@ WORKER_ROLES = frozenset({'TRABAJADOR', 'NUEVO_TRABAJADOR'})
 ASSIGNMENT_STATES = ('ACTIVA', 'FINALIZADA', 'REASIGNADA')
 
 
+def prioridad_asignacion(carga, ultima_asignacion, email, identificador):
+    """RN-ASG-03/04: menor carga y mayor tiempo sin recibir una asignación.
+
+    Quien nunca recibió una se considera primero; correo/UUID solo estabilizan
+    empates exactos, sin sustituir la antigüedad.
+    """
+    return (carga, ultima_asignacion is not None, ultima_asignacion, email, str(identificador))
+
+
 def validate_worker(role: str | None, active: bool):
     if role not in WORKER_ROLES or not active:
         raise AdministrationError('Selecciona un trabajador activo.', 'trabajador_id')

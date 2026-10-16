@@ -18,7 +18,7 @@ class JWTTokenProvider:
         InvalidToken. No guarda una sesión adicional; el login debe resolver el rol antes de
         invocarlo.
         """
-        user = get_user_model().objects.filter(pk=user_id, is_active=True).first()
+        user = get_user_model().objects.filter(pk=user_id, is_active=True, deleted=False).first()
         if user is None:
             raise InvalidToken('No se pudo iniciar la sesión.')
         refresh = RefreshToken.for_user(user)
@@ -34,7 +34,7 @@ class JWTTokenProvider:
             refresh = RefreshToken(raw_token)
             user_id = UUID(str(refresh[api_settings.USER_ID_CLAIM]))
             # Una cuenta borrada o desactivada tampoco puede renovar su sesión.
-            if not get_user_model().objects.filter(pk=user_id, is_active=True).exists():
+            if not get_user_model().objects.filter(pk=user_id, is_active=True, deleted=False).exists():
                 raise InvalidToken('La sesión ya no es válida.')
             return {'access': str(refresh.access_token)}
         except (TokenError, KeyError, ValueError, TypeError, OverflowError) as error:

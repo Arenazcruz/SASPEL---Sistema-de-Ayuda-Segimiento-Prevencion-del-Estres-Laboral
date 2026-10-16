@@ -7,6 +7,7 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { passwordsMatch, passwordStrength } from '../superadmin/users/password-validation';
 import { PrimerAccesoService } from './primer-acceso.service';
+import { apiError, validationErrorMessage } from '../superadmin/superadmin.service';
 
 @Injectable()
 export class PrimerAccesoPasswordViewModel {
@@ -57,14 +58,12 @@ export class PrimerAccesoPasswordViewModel {
         error: (error: HttpErrorResponse) => {
           for (const field of ['password', 'password_confirmation'] as const) {
             const messages = error.error?.[field];
-            if (messages)
+            if (error.status === 400 && messages)
               this.form.controls[field].setErrors({
-                server: Array.isArray(messages) ? messages.join(' ') : String(messages),
+                server: validationErrorMessage(messages),
               });
           }
-          this.error.set(
-            error.error?.detail || 'No se pudo guardar. Revisa los campos e inténtalo de nuevo.',
-          );
+          this.error.set(apiError(error));
         },
       });
   }

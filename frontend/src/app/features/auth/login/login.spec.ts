@@ -36,6 +36,13 @@ describe('LoginComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Ingresa un correo electrónico válido.');
   });
 
+  it('un error de acceso malformado nunca se presenta como objeto', () => {
+    login.mockReturnValue(throwError(()=>new HttpErrorResponse({status:403,error:{detail:{code:'internal'}}})));
+    const vm=TestBed.createComponent(LoginComponent).componentInstance.vm;
+    vm.form.setValue({email:'test@saspel.com',password:'Clave-852!'});vm.submit();
+    expect(vm.error()).toBe('Tu cuenta no está habilitada para ingresar.');
+  });
+
   it('permite mostrar y ocultar la contraseña', async () => {
     const fixture = TestBed.createComponent(LoginComponent);
     await fixture.whenStable();

@@ -110,10 +110,28 @@ export class SuperadminService {
  */
 export function apiError(error: HttpErrorResponse): string {
   if (error.status === 0) return 'No pudimos conectar con SASPEL. Inténtalo nuevamente.';
+  if (error.status === 401) return 'Tu sesión ya no es válida. Vuelve a iniciar sesión.';
   if (error.status === 403) return 'No tienes acceso a esta función. Revisa tu sesión.';
   if (error.status === 404) return 'El registro solicitado no existe.';
   if (error.status >= 500) return 'No se pudo completar la operación. Inténtalo nuevamente.';
   const body = error.error;
-  if (body && typeof body === 'object') return Object.values(body).flat().join(' ');
+  if (body && typeof body === 'object') {
+    const messages = validationMessages(body);
+    if (messages.length) return [...new Set(messages)].join(' ');
+  }
   return 'No se pudo completar la operación.';
+}
+
+export function validationErrorMessage(value: unknown): string {
+  return validationMessages(value).join(' ') || 'Revisa el valor de este campo.';
+}
+
+function validationMessages(value: unknown, depth = 0): string[] {
+  if (depth > 6) return [];
+  if (typeof value === 'string') return value.trim() ? [value] : [];
+  if (Array.isArray(value)) return value.flatMap(item => validationMessages(item, depth + 1));
+  if (value && typeof value === 'object') return Object.entries(value)
+    .filter(([key]) => !['code', 'token_class', 'token_type', 'siguiente_ruta', 'preguntas_pendientes'].includes(key))
+    .flatMap(([, item]) => validationMessages(item, depth + 1));
+  return [];
 }

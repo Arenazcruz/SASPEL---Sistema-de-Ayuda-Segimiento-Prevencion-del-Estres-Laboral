@@ -17,12 +17,18 @@ from src.application.ports.output.assignments import AssignmentRepository
 from src.domain.exceptions.superadmin import AdministrationError
 from src.domain.services.professional_assignment import (
     ASSIGNMENT_STATES, closing_reason, validate_active_assignment, validate_psychologist, validate_worker,
+    prioridad_asignacion,
 )
 
 
 class AssignmentCase:
     def __init__(self, repository: AssignmentRepository):
         self.repository = repository
+
+    def cargas_ordenadas(self):
+        return sorted(self.repository.psychologist_loads(), key=lambda row: prioridad_asignacion(
+            row.trabajadores_activos, row.ultima_asignacion, row.psicologo.email, row.psicologo.id,
+        ))
 
     def validate_pair(self, worker_id: UUID, psychologist_id: UUID):
         if worker_id == psychologist_id:
@@ -51,7 +57,7 @@ class ListUnassignedWorkers(AssignmentCase, UnassignedWorkerListing):
 
 class ListPsychologistLoads(AssignmentCase, PsychologistLoadListing):
     def execute(self):
-        return self.repository.psychologist_loads()
+        return self.cargas_ordenadas()
 
 
 class AssignWorker(AssignmentCase, WorkerAssignment):
@@ -68,7 +74,7 @@ class AutoAssignWorker(AssignmentCase):
         with self.repository.atomic():
             if self.repository.has_active_assignment(worker_id):
                 return
-            candidates = self.repository.psychologist_loads()
+            candidates = self.cargas_ordenadas()
             if candidates:
                 psychologist_id = candidates[0].psicologo.id
                 self.validate_pair(worker_id, psychologist_id)

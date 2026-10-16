@@ -9,7 +9,7 @@ class DjangoDashboardRepository(DjangoNotificacionesRepository):
         add('notificaciones','Notificaciones no leídas',self.visibles(actor).filter(leida_en__isnull=True).count())
         citas=Cita.objects.filter(deleted=False)
         if rol in ('ADMIN','SUPERADMIN'):
-            users=self.usuarios()
+            users=self.administration.users().filter(is_active=True,deleted=False).exclude(perfil_usuario__deleted=True)
             add('usuarios','Usuarios activos',users.count())
             add('trabajadores','Trabajadores activos',users.filter(functional_role__in=['TRABAJADOR','NUEVO_TRABAJADOR']).count())
             add('profesionales','Psicólogos activos',users.filter(functional_role='PSICOLOGO').count())

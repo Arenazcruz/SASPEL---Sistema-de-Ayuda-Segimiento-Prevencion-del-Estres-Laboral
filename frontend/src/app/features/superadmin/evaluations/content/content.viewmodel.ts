@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { apiError } from '../../superadmin.service';
+import { apiError, validationErrorMessage } from '../../superadmin.service';
 import { Instrument } from '../instruments/instruments.models';
 import {
   CONTENT_CONFIG,
@@ -265,7 +265,7 @@ export class InstrumentContentViewModel {
               this.form
                 .get(name)
                 ?.setErrors({
-                  server: Array.isArray(messages) ? messages.join(' ') : String(messages),
+                  server: validationErrorMessage(messages),
                 });
             }
           }

@@ -207,7 +207,8 @@ class ResultadosHistorialTests(TestCase):
             User.objects.filter(pk=actor.pk).update(is_active=False)
             self.assertEqual(self.client.get(url).status_code, 401)
             User.objects.filter(pk=actor.pk).update(is_active=True, deleted=True)
-            self.assertEqual(self.client.get(url).status_code, 403)
+            # El borrado lógico ahora invalida JWT antes de evaluar permisos del recurso.
+            self.assertEqual(self.client.get(url).status_code, 401)
             User.objects.filter(pk=actor.pk).update(deleted=False)
 
     def test_jwt_roles_primer_acceso_y_solo_lectura(self):

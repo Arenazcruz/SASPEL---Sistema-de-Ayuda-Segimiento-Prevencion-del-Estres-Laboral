@@ -79,6 +79,24 @@ describe('Primer acceso: formularios y navegación', () => {
     vi.restoreAllMocks();
   });
 
+  it('no expone detalles internos al cambiar contraseña ni aceptar políticas', () => {
+    const password = TestBed.createComponent(PrimerAccesoPassword).componentInstance.vm;
+    password.form.setValue({password:'Nueva-clave-852!',password_confirmation:'Nueva-clave-852!'});
+    password.submit();
+    http.expectOne('/api/auth/primer-acceso/password/').flush(
+      {detail:'SQL secreto',password:['Traceback secreto']}, {status:500,statusText:'Server error'},
+    );
+    expect(password.error()).not.toContain('secreto');
+    expect(password.fieldError('password')).not.toContain('secreto');
+    expect(password.saving()).toBe(false);
+    const policy = TestBed.createComponent(PrimerAccesoPoliticas).componentInstance.vm;
+    http.expectOne('/api/auth/primer-acceso/politicas/').flush(policies);
+    policies.forEach(p=>policy.select(p.id,true));policy.submit();
+    http.expectOne('/api/auth/primer-acceso/aceptar/').flush({detail:'SQL secreto'}, {status:500,statusText:'Server error'});
+    expect(policy.error()).not.toContain('secreto');expect(policy.saving()).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('login navega al cambio obligatorio indicado por el backend', () => {
     const vm = TestBed.createComponent(LoginComponent).componentInstance.vm;
     vm.form.setValue({ email: user.email, password: 'Temporal-852!' });

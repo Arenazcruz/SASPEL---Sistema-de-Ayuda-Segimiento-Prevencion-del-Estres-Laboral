@@ -16,6 +16,15 @@ describe('Factores psicosociales',()=>{
  it('catálogo vacío informa y no presenta formulario',()=>{const f=open([]);expect(f.nativeElement.querySelector('form')).toBeNull();expect(f.nativeElement.textContent).toContain('No hay tipos de factores activos');});
  it('registra propio con tipo configurado y no duplica envíos',()=>{const f=open(),vm=f.componentInstance.vm;vm.tipo='t';vm.nivel='Leve';vm.descripcion='Contexto';vm.guardar();vm.guardar();const r=http.expectOne(url);expect(r.request.body).toEqual({tipo_id:'t',nivel:'Leve',descripcion:'Contexto'});r.flush({id:'r',tipo:'Tipo institucional',fecha:'2026-10-16T12:00:00Z',nivel:'Leve',descripcion:'Contexto'});f.detectChanges();expect(f.nativeElement.textContent).toContain('Contexto');expect(vm.tipo).toBe('');});
  it('tipo desactivado conserva datos del formulario ante error',()=>{const f=open(),vm=f.componentInstance.vm;vm.tipo='t';vm.nivel='Leve';vm.descripcion='Contexto';vm.guardar();http.expectOne(url).flush({detail:'Tipo ya no disponible'}, {status:400,statusText:'Invalid'});expect(vm.descripcion).toBe('Contexto');expect(vm.error()).toBe('Tipo ya no disponible');});
+ it('oculta detalles internos al guardar un factor o un catálogo',()=>{
+  const f=open(),vm=f.componentInstance.vm;vm.tipo='t';vm.nivel='Leve';vm.descripcion='Contexto';vm.guardar();
+  http.expectOne(url).flush({detail:'SQL secreto'}, {status:500,statusText:'Server error'});
+  expect(vm.error()).not.toContain('secreto');expect(vm.descripcion).toBe('Contexto');
+  const c=TestBed.createComponent(CatalogoFactoresComponent);c.detectChanges();http.expectOne(cat).flush([]);
+  c.componentInstance.vm.nombre='Tipo';c.componentInstance.vm.guardar();
+  http.expectOne(cat).flush({detail:'SQL secreto'}, {status:500,statusText:'Server error'});
+  expect(c.componentInstance.vm.error()).not.toContain('secreto');expect(c.componentInstance.vm.nombre).toBe('Tipo');
+ });
  it('consulta profesional no carga catálogo ni permite escribir',()=>{params.next(convertToParamMap({trabajadorId:'w'}));const f=TestBed.createComponent(FactoresComponent);f.detectChanges();http.expectOne('/api/psicologo/trabajadores/w/factores/').flush({trabajador:'Ana',registros:[]});http.expectNone(cat);f.detectChanges();expect(f.nativeElement.querySelector('form')).toBeNull();f.componentInstance.vm.guardar();http.expectNone(url);});
  it('administración crea y desactiva tipos sin consultar registros privados',()=>{const f=TestBed.createComponent(CatalogoFactoresComponent);f.detectChanges();http.expectOne(cat).flush([]);const vm=f.componentInstance.vm;vm.nombre='Tipo institucional';vm.guardar();http.expectOne(cat).flush(tipo);expect(vm.tipos().length).toBe(1);vm.editar(tipo);vm.activo=false;vm.guardar();const r=http.expectOne(cat+'t/');expect(r.request.method).toBe('PUT');expect(r.request.body.activo).toBe(false);r.flush({...tipo,activo:false});expect(vm.tipos()[0].activo).toBe(false);http.expectNone(url);});
 });

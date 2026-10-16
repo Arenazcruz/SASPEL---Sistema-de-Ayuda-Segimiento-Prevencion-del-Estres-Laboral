@@ -52,7 +52,7 @@ export class LoginViewModel {
         },
         error: (error: HttpErrorResponse) => {
           if (error.status === 403)
-            this.error.set(error.error?.detail ?? 'Tu cuenta no está habilitada para ingresar.');
+            this.error.set(typeof error.error?.detail === 'string' ? error.error.detail : 'Tu cuenta no está habilitada para ingresar.');
           else if (error.status === 0)
             this.error.set('No pudimos conectar con SASPEL. Inténtalo nuevamente.');
           else if (error.status === 401) this.error.set('Credenciales no válidas.');

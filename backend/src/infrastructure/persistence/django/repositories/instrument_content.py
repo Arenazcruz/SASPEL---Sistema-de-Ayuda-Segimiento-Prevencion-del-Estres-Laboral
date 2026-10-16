@@ -30,7 +30,7 @@ class DjangoContentRepository:
         model = CATALOGS[kind][3]
         if model is not None:
             rows = model.objects.select_for_update() if lock else model.objects.all()
-            if not rows.filter(pk=parent_id).first():
+            if not rows.filter(pk=parent_id, deleted=False).first():
                 raise PersonNotFound('El instrumento o la escala no existe.')
 
     @contextmanager
@@ -44,6 +44,8 @@ class DjangoContentRepository:
                 field, messages = next(iter(error.message_dict.items()))
             else:
                 field, messages = 'detail', error.messages
+            if field == '__all__':
+                raise AdministrationError('Revisa los datos: nombres, órdenes o valores duplicados, o límites incompatibles.') from None
             raise AdministrationError(' '.join(messages), field) from error
         except IntegrityError as error:
             raise AdministrationError('Ya existe un registro con ese nombre, orden o valor. Revisa los datos.') from error
@@ -51,7 +53,7 @@ class DjangoContentRepository:
     @staticmethod
     def rows(kind, parent_id):
         model, _, field, _, _ = CATALOGS[kind]
-        rows = model.objects.all()
+        rows = model.objects.filter(deleted=False)
         return rows.filter(**{field: parent_id}) if field else rows
 
     @staticmethod
@@ -60,6 +62,7 @@ class DjangoContentRepository:
         return dto(**{field: getattr(row, field) for field in dto.__dataclass_fields__})
 
     def find(self, kind, parent_id, item_id, lock=False):
+        self.parent(kind, parent_id, lock=lock)
         rows = self.rows(kind, parent_id)
         if lock:
             rows = rows.select_for_update()
@@ -80,6 +83,8 @@ class DjangoContentRepository:
             rows = rows.filter(activo=filters.activo)
         count = rows.count()
         start = (filters.page - 1) * PAGE_SIZE
+        if start >= count:
+            return ContentPage(count, filters.page, PAGE_SIZE, [])
         rows = rows.order_by('nombre' if kind == 'scales' else 'orden', 'pk')[start:start + PAGE_SIZE]
         return ContentPage(count, filters.page, PAGE_SIZE, [self.dto(kind, row) for row in rows])
 
@@ -109,7 +114,9 @@ class DjangoContentRepository:
         if neighbor is None:
             return self.dto(kind, row)
         # Intercambio en dos pasos: respeta la unicidad inmediata de PostgreSQL.
-        used = set(rows.values_list('orden', flat=True))
+        # La unicidad también reserva órdenes de registros borrados lógicamente.
+        model, _, parent_field, _, _ = CATALOGS[kind]
+        used = set(model.objects.filter(**{parent_field: parent_id}).values_list('orden', flat=True))
         free = next((n for n in range(32768) if n not in used), None)
         if free is None:
             raise AdministrationError('No hay un orden libre para completar el movimiento.', 'orden')

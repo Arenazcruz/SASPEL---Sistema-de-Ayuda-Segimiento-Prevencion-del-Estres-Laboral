@@ -18,4 +18,20 @@ describe('Citas',()=>{
  it('notas privadas: carga autorizada, error conserva texto y cierre no exige motivo',()=>{user.set({role:'PSICOLOGO',dashboard_path:'/dashboard/psicologo'});const f=abrir(),vm=f.componentInstance.vm;vm.cargarNotas('c');http.expectOne('/api/citas/c/notas/').flush([{id:'n',observacion:'Privada'}]);expect(vm.notas()['c'][0].observacion).toBe('Privada');vm.textos['c']='Nueva nota';vm.guardarNota('c');http.expectOne('/api/citas/c/notas/').flush({}, {status:403,statusText:'Forbidden'});expect(vm.textos['c']).toBe('Nueva nota');vm.accion({id:'c'} as any,'completar');http.expectOne('/api/citas/c/completar/').flush({detail:'Aún no finaliza'}, {status:400,statusText:'Invalid'});expect(vm.error()).toBe('Aún no finaliza');});
  it('trabajador no solicita notas',()=>{const f=abrir();f.componentInstance.vm.cargarNotas('c');http.expectNone('/api/citas/c/notas/');expect(f.nativeElement.textContent).not.toContain('Notas profesionales');});
  it('errores de lectura no muestran información anterior',()=>{const f=TestBed.createComponent(Citas);f.detectChanges();http.expectOne('/api/citas/').flush({}, {status:403,statusText:'Forbidden'});http.match('/api/citas/contexto/');expect(f.componentInstance.vm.citas()).toEqual([]);expect(f.componentInstance.vm.ready()).toBe(false);});
+ it('mantiene bloqueadas las acciones durante la recarga posterior al guardado',()=>{
+  user.set({role:'PSICOLOGO',dashboard_path:'/dashboard/psicologo'});
+  const f=abrir(),vm=f.componentInstance.vm;
+  vm.desde='08:00';vm.hasta='12:00';vm.guardarBloque();
+  http.expectOne('/api/psicologo/disponibilidad/').flush([]);
+  expect(vm.busy()).toBe(true);
+  vm.accion({id:'c'} as any,'confirmar');http.expectNone('/api/citas/c/confirmar/');
+  http.expectOne('/api/citas/').flush([]);http.expectOne('/api/psicologo/disponibilidad/').flush([]);
+  expect(vm.busy()).toBe(false);
+ });
+ it('no expone detalles internos de errores 500 y conserva el formulario',()=>{
+  const f=abrir(),vm=f.componentInstance.vm;
+  vm.inicio='2099-01-01T10:00';vm.fin='2099-01-01T11:00';vm.motivo='Consulta';vm.solicitar();
+  http.expectOne('/api/citas/').flush({detail:'Traceback SQL secreto'}, {status:500,statusText:'Server error'});
+  expect(vm.error()).not.toContain('secreto');expect(vm.motivo).toBe('Consulta');expect(vm.busy()).toBe(false);
+ });
 });
