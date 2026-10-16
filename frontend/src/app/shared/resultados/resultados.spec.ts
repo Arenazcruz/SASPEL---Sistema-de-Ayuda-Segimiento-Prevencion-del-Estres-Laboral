@@ -184,7 +184,7 @@ describe('Resultados e historial T29', () => {
     expect(text).toContain('Luis Pérez');
     expect(text).toContain('luis@saspel.com');
     expect(text).toContain('1 asignaciones profesionales activas');
-    const link = harness.routeNativeElement?.querySelector('a');
+    const link = harness.routeNativeElement?.querySelector('a[href="/dashboard/psicologo/trabajadores"]');
     expect(link?.getAttribute('href')).toBe(workersPath);
   });
 

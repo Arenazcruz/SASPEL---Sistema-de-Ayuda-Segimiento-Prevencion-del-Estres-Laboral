@@ -16,7 +16,14 @@ from src.infrastructure.api.rest.views.responder_evaluacion import (
 )
 
 
+from src.infrastructure.api.rest.views.citas import (CitasView, ContextoCitaView, AccionCitaView, DisponibilidadView, DesactivarDisponibilidadView)
+
 urlpatterns = [
+    path('citas/', CitasView.as_view()),
+    path('citas/contexto/', ContextoCitaView.as_view()),
+    path('citas/<uuid:cita_id>/<str:accion>/', AccionCitaView.as_view()),
+    path('psicologo/disponibilidad/', DisponibilidadView.as_view()),
+    path('psicologo/disponibilidad/<uuid:bloque_id>/desactivar/', DesactivarDisponibilidadView.as_view()),
     path('trabajador/resultados/', ResultadosPropiosView.as_view()),
     path('trabajador/resultados/<uuid:resultado_id>/', DetalleResultadoPropioView.as_view()),
     path('psicologo/trabajadores/', MisTrabajadoresView.as_view()),

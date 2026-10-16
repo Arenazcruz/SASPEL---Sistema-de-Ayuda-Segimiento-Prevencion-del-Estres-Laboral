@@ -126,6 +126,10 @@ export const routes: Routes = [
           import('./features/psicologo/resultados').then((m) => m.PsicologoResultados),
         title: 'Detalle del resultado · SASPEL',
       },
+      ...['TRABAJADOR', 'PSICOLOGO'].map(role => ({
+        path: role.toLowerCase()+'/citas', data: {role}, canActivate: [roleGuard],
+        loadComponent: () => import('./features/citas/citas').then(m=>m.Citas), title: 'Mis citas · SASPEL',
+      })),
       ...Object.entries(ROLE_DASHBOARDS)
         .filter(([role]) => !['SUPERADMIN', 'NUEVO_TRABAJADOR', 'PSICOLOGO'].includes(role))
         .map(([role, path]) => ({

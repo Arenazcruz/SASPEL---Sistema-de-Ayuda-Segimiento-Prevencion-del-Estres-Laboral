@@ -1,0 +1,30 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()">
+<a [routerLink]="vm.panel()">Volver a mi panel</a><h1>Mis citas</h1>
+<p>Los horarios se muestran en la zona horaria de tu dispositivo.</p>
+@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button type="button" (click)="vm.load()" [disabled]="vm.busy()">Actualizar</button>}
+@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.busy()){<p role="status">Procesando…</p>}
+@if(vm.ready()){
+<section class="card"><h2>{{vm.profesional()?'Mi disponibilidad semanal':'Solicitar cita'}}</h2>
+@if(!vm.profesional()){<p>Profesional: {{vm.psicologo()||'Asignación pendiente'}}</p>}
+<p>Disponibilidad semanal en hora de Bolivia:</p>
+@for(b of vm.bloques();track b.id){<p>{{vm.dias[b.dia_semana]}} {{b.hora_inicio}}–{{b.hora_fin}} @if(vm.profesional()){<button type="button" [disabled]="vm.busy()" (click)="vm.desactivar(b.id)">Desactivar horario</button>}</p>}@empty{<p>No hay horarios disponibles.</p>}
+@if(vm.profesional()){
+<form (ngSubmit)="vm.guardarBloque()"><fieldset [disabled]="vm.busy()"><legend>Agregar horario semanal (Bolivia)</legend>
+<label>Día<select name="dia" [(ngModel)]="vm.dia">@for(d of vm.dias;track d;let i=$index){<option [ngValue]="i">{{d}}</option>}</select></label>
+<label>Desde<input type="time" name="desde" [(ngModel)]="vm.desde" required></label><label>Hasta<input type="time" name="hasta" [(ngModel)]="vm.hasta" required></label><button type="submit" class="button">Guardar horario</button></fieldset></form>
+}@else if(vm.psicologo()&&vm.bloques().length){
+<form (ngSubmit)="vm.solicitar()"><fieldset [disabled]="vm.busy()"><legend>Nueva solicitud</legend>
+<label>Inicio<input type="datetime-local" name="inicio" [(ngModel)]="vm.inicio" required></label><label>Fin<input type="datetime-local" name="fin" [(ngModel)]="vm.fin" required></label>
+<label>Motivo<textarea name="motivo" [(ngModel)]="vm.motivo" maxlength="2000" required></textarea></label>
+<label>Prioridad<select name="prioridad" [(ngModel)]="vm.prioridad"><option>BAJA</option><option>MEDIA</option><option>ALTA</option></select></label><button type="submit" class="button">Solicitar cita</button></fieldset></form>}
+</section>
+<section><h2>Historial de citas</h2>
+@for(c of vm.citas();track c.id){<article><h3>{{vm.profesional()?c.trabajador:c.psicologo}}</h3><p>{{c.fecha_inicio|date:'dd/MM/yyyy HH:mm'}}–{{c.fecha_fin|date:'HH:mm'}} · {{c.estado}}</p><p>{{c.motivo}}</p>@if(c.motivo_cierre){<p>Motivo de cierre: {{c.motivo_cierre}}</p>}
+@if(c.estado==='SOLICITADA'||c.estado==='CONFIRMADA'){
+<label>Motivo para cancelar o rechazar<input [name]="'cierre-'+c.id" [(ngModel)]="vm.cierres[c.id]" maxlength="2000" [disabled]="vm.busy()"></label><div class="acciones">
+@if(vm.profesional()&&c.estado==='SOLICITADA'){<button class="button" type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'confirmar')">Aceptar</button><button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'rechazar')">Rechazar</button>}
+<button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'cancelar')">Cancelar cita</button></div>}
+</article>}@empty{<p>No tienes citas registradas.</p>}
+</section>}
+</main>
