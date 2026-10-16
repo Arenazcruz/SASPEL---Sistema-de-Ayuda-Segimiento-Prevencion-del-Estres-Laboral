@@ -4,12 +4,12 @@ Revisión final del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/20
 
 ## Resultado del corte
 
-37 tareas objetivo: 25 ya completas antes de esta ejecución; 12 incompletas revisadas. Se cerraron T14, T16, T29, T31, T32, T34, T35, T36 y T37; T33 queda lista para cierre al integrar/publicar este checklist. Resultado tras esa integración: 35 Completado, 2 En curso. Actualización del 16/10/2026: el responsable del desarrollo aprobó expresamente el modelo T13, cuyo criterio no exige terceros. Con su cierre, el corte queda en **36 Completado, 1 En curso**, ninguna Pendiente.
+37 tareas objetivo: 25 ya completas antes de esta ejecución; 12 incompletas revisadas. Se cerraron T14, T16, T29, T31, T32, T34, T35, T36 y T37; T33 queda lista para cierre al integrar/publicar este checklist. Resultado tras esa integración: 35 Completado, 2 En curso. Actualización del 16/10/2026: el responsable del desarrollo aprobó expresamente el modelo T13, cuyo criterio no exige terceros. Con su cierre, el corte quedó en 36 Completado, 1 En curso. Posteriormente, el responsable autorizó el criterio de reconstrucción lógica de T08, acreditado en [T16](T16_PAQUETE_HITO2.md#t08--línea-base-lógica-y-límites-de-la-evidencia). Con T08 Completado, el corte queda en **37 Completado de 37**, ninguna En curso ni Pendiente.
 
 | Tarea o grupo | Evidencia revisada |
 | --- | --- |
 | T01–T07 | Arranque y configuración existente; tests health, auth y arquitectura; PostgreSQL operativo. |
-| T08 | Dump autorizado inspeccionado en lectura; evidencia histórica insuficiente. En curso. |
+| T08 | Línea base lógica reconstruida con README, migraciones originales e historial Git; criterio documental autorizado satisfecho. Completado. Esquema físico anterior no verificable. |
 | T09–T12 | Inventario, alcance, roles y reglas de las hojas funcionales del cronograma. |
 | T13 | [Modelo conceptual](T13_MODELO_DOMINIO.md) terminado, revisado y aprobado por el responsable del desarrollo el 16/10/2026. Completado. |
 | T14 | [DER y diccionario](T14_DER_DICCIONARIO.md), 24 entidades y auditoría UUID comprobada. |
@@ -43,7 +43,7 @@ Revisión final del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/20
 - [x] `manage.py check`, `migrate --check` y `makemigrations --check --dry-run`: sin errores ni migraciones pendientes.
 - [x] SASPEL2 conserva todos los registros preexistentes: comparación de conteos y SHA-256 sobre hashes de filas en transacciones de solo lectura. Solo se añaden cinco tablas y los metadatos Django de las migraciones; las cinco tablas nuevas están vacías, sin semillas ficticias.
 - [x] Backup SASPEL2C.sql idéntico por SHA-256; no ejecutado, restaurado, importado ni copiado al proyecto.
-- [x] Excel conserva las 47 partes originales del paquete; solo difieren valores de Estado en Cronograma. No se cambian las otras hojas, fórmulas, fechas, estilos, filtros o estructura, ni se versiona el archivo.
+- [x] Excel conserva las 47 partes originales del paquete; solo difieren valores de Estado en Cronograma y, por autorización posterior, el criterio de T08 en G9. El cierre de T08 modifica únicamente G9 y L9. No se cambian las otras hojas, fórmulas, fechas, estilos, filtros o estructura, ni se versiona el archivo.
 - [x] main local y origin/main conservan e83502fb7b067a8cec9e05e463f6d8120155a7b2. Las features se publican e integran secuencialmente en develop, sin force push ni borrado de historia.
 
 La prueba omitida es UnifiedUsersBrowserTests, optativa y dependiente de Angular/Playwright activos. Las 192 pruebas frontend usan el entorno de componentes y HTTP simulado; no se presentan como una aprobación E2E en navegador ni como aceptación de usuarios. T55 cubre la validación E2E integral posterior.
@@ -52,10 +52,10 @@ La prueba omitida es UnifiedUsersBrowserTests, optativa y dependiente de Angular
 
 | ID | Evidencia / pendiente concreto | Impacto | Condición de cierre |
 | --- | --- | --- | --- |
-| T08 | SASPEL2C.sql tiene 28 CREATE TABLE, incluidas tablas de negocio. No acredita la etapa histórica de solo tablas técnicas Django. | Documental; no bloquea los módulos integrados. | Evidencia histórica compatible con el criterio original, o cambio explícitamente autorizado de ese criterio. No se sustituye por el esquema actual. |
+| T08 | Reconstrucción lógica documentada en T16; backup de 28 tablas solo complementario. El esquema físico anterior no es verificable. | Reserva documental resuelta; limitación histórica conservada. | Nuevo criterio autorizado satisfecho mediante README, migraciones e historial Git. No se inventa un dump histórico. |
 
 
-No hay bloqueador técnico global identificado dentro de los escenarios ejecutados. T08 conserva En curso. El pendiente de aprobación de T13 quedó resuelto por la declaración explícita del responsable del desarrollo, registrada en el modelo conceptual; no se atribuye aprobación a terceros. El catálogo de factores queda deliberadamente vacío hasta que Administración configure los tipos reales de la institución; la función de configuración está implementada y probada con datos temporales, sin inventar tipos de negocio.
+No hay bloqueador técnico global identificado dentro de los escenarios ejecutados. T08 queda Completado conforme al criterio documental autorizado. El pendiente de aprobación de T13 quedó resuelto por la declaración explícita del responsable del desarrollo, registrada en el modelo conceptual; no se atribuye aprobación a terceros. El catálogo de factores queda deliberadamente vacío hasta que Administración configure los tipos reales de la institución; la función de configuración está implementada y probada con datos temporales, sin inventar tipos de negocio.
 
 ## Backlog restante H3, priorizado sin adelantar implementación
 
