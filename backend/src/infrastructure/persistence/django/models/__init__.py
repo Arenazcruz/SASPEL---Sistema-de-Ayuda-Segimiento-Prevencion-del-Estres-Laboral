@@ -47,3 +47,5 @@ __all__ = [
     'RespuestaPregunta',
     'ResultadoInstrumento',
 ]
+
+from .nota_cita import NotaCita

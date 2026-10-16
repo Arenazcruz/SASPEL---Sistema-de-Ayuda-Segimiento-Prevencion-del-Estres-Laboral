@@ -10,6 +10,7 @@ def validar_horario(inicio: datetime, fin: datetime, ahora: datetime):
 
 def transicion_cita(estado, accion, rol, motivo):
     reglas = {
+        'completar': ('PSICOLOGO', {'CONFIRMADA'}, 'COMPLETADA'),
         'confirmar': ('PSICOLOGO', {'SOLICITADA'}, 'CONFIRMADA'),
         'rechazar': ('PSICOLOGO', {'SOLICITADA'}, 'RECHAZADA'),
         'cancelar': (None, {'SOLICITADA', 'CONFIRMADA'}, 'CANCELADA'),

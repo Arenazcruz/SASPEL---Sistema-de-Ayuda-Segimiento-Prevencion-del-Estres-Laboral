@@ -18,7 +18,10 @@ from src.infrastructure.api.rest.views.responder_evaluacion import (
 
 from src.infrastructure.api.rest.views.citas import (CitasView, ContextoCitaView, AccionCitaView, DisponibilidadView, DesactivarDisponibilidadView)
 
+from src.infrastructure.api.rest.views.notas_cita import NotasCitaView
+
 urlpatterns = [
+    path('citas/<uuid:cita_id>/notas/', NotasCitaView.as_view()),
     path('citas/', CitasView.as_view()),
     path('citas/contexto/', ContextoCitaView.as_view()),
     path('citas/<uuid:cita_id>/<str:accion>/', AccionCitaView.as_view()),

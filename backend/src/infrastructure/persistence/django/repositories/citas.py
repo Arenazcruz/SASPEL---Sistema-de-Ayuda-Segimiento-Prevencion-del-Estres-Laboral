@@ -106,3 +106,7 @@ class DjangoCitasRepository(DjangoResultadosRepository):
         row.estado, row.motivo_cierre, row.actualizado_por = estado, motivo, str(actor)
         row.save(update_fields=['estado', 'motivo_cierre', 'actualizado_por'])
         return self.dto(row)
+
+    def verificar_realizada(self, cita):
+        if cita['fecha_fin'] > timezone.now():
+            raise AdministrationError('La cita aún no ha finalizado.')

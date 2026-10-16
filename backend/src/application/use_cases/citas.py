@@ -37,6 +37,8 @@ class GestionarCitas:
             ):
                 raise ResultadoNoDisponible('La cita no está disponible.')
             estado = transicion_cita(cita['estado'], accion, rol, motivo)
+            if accion == 'completar':
+                self.repository.verificar_realizada(cita)
             if accion == 'confirmar':
                 self.repository.confirmar_horario(cita)
             return self.repository.cambiar_estado(cita_id, estado, motivo.strip(), actor)

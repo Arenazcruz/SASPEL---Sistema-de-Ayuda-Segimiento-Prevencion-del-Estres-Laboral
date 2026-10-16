@@ -25,6 +25,11 @@
 <label>Motivo para cancelar o rechazar<input [name]="'cierre-'+c.id" [(ngModel)]="vm.cierres[c.id]" maxlength="2000" [disabled]="vm.busy()"></label><div class="acciones">
 @if(vm.profesional()&&c.estado==='SOLICITADA'){<button class="button" type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'confirmar')">Aceptar</button><button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'rechazar')">Rechazar</button>}
 <button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'cancelar')">Cancelar cita</button></div>}
+@if(vm.puedeCompletar(c)){<button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'completar')">Marcar como realizada</button>}
+@if(vm.profesional()&&c.estado==='COMPLETADA'){
+<section><h4>Notas profesionales privadas</h4><button type="button" [disabled]="vm.busy()" (click)="vm.cargarNotas(c.id)">Consultar notas</button>
+@if(vm.notas()[c.id];as notas){@for(n of notas;track n.id){<p>{{n.fecha|date:'dd/MM/yyyy HH:mm'}} · {{n.profesional}}</p><p>{{n.observacion}}</p>}@empty{<p>Sin notas registradas.</p>}}
+<form (ngSubmit)="vm.guardarNota(c.id)"><fieldset [disabled]="vm.busy()"><legend>Agregar observación</legend><label>Observación<textarea [name]="'nota-'+c.id" [(ngModel)]="vm.textos[c.id]" required maxlength="10000"></textarea></label><button type="submit">Guardar nota</button></fieldset></form></section>}
 </article>}@empty{<p>No tienes citas registradas.</p>}
 </section>}
 </main>
