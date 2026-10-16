@@ -1,6 +1,6 @@
 # T33 · Validación del alcance y checklist Hito 3
 
-Revisión final del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/2026. Fuente de alcance: Cronograma de SASPELCronograma3.xlsx. Código conjunto validado en cb2758c; esta entrega añade únicamente el checklist. No declara terminadas las tareas posteriores al corte ni sustituye la presentación final T43.
+Revisión inicial del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/2026, y cierre técnico posterior del corte ≤ 24/10/2026 en los apartados T42 y T43 de este documento. Fuente de alcance: Cronograma de SASPELCronograma3.xlsx. Se conserva la evidencia inicial y se distingue de la validación del Hito 3 completo. No se afirma haber realizado una presentación ante terceros.
 
 ## Resultado del corte inicial al 19/10/2026
 
@@ -117,3 +117,43 @@ La prueba omitida sigue siendo `UnifiedUsersBrowserTests`, optativa y habilitada
 Migraciones 0011_alertas_reglas y 0012_notificaciones_internas aplicadas sin restaurar ni resetear SASPEL2. Añaden cuatro tablas, todas vacías al verificar. Se compararon conteos y huellas SHA-256 de las filas de las 33 tablas anteriores: datos de negocio sin cambios. En auth_permission, django_content_type y django_migrations se añadieron únicamente metadatos de estas migraciones; excluyendo esas altas, las huellas de todos sus registros anteriores coinciden. El backup mantiene SHA-256 `a96349eb27d5c33823cdb51922f54ce5c566566647e788e3144bfca8b2a787a1`.
 
 No se habilitan reglas clínicas por defecto ni se llenan pantallas con registros ficticios. La institución debe configurar rangos y reglas según su proceso. Los reportes administrativos de citas y seguimiento son agregados y no exponen notas, observaciones, evolución, factores, ánimo o resultados individuales. El profesional pierde acceso a alertas, notificaciones vinculadas, reportes y registros sensibles tras perder la asignación vigente.
+
+## T43 · Paquete de demostración y cierre técnico Hito 3
+
+Criterio literal de G44: «Demo estable, datos de prueba, documentación y evidencia disponibles.» Dependencia T42 satisfecha en `d353d7f`. La actividad se llama «Preparar y presentar Hito 3», pero su criterio de aceptación no exige una presentación efectuada ni aprobación docente/cliente. Se cierra por disponibilidad técnica de la demo y sus evidencias; no se inventa un acto de presentación ni una aceptación humana.
+
+Versión de demostración: etiqueta Git `hito3-demo-20261016`, publicada sobre el commit documental de T43 e integrada en develop. Código funcional validado: `c5285a9`; pruebas integradas y evidencia: `d353d7f`. Los cambios posteriores de T43 son exclusivamente documentales, por lo que conservan el código probado y el build aprobado. main permanece en `e83502fb7b067a8cec9e05e463f6d8120155a7b2`.
+
+### Preparación y datos mínimos
+
+Usar el entorno local existente. Desde la raíz, iniciar la API con `.\.venv\Scripts\python.exe backend/manage.py runserver`; en otra terminal, desde frontend, `npm start`. Abrir http://localhost:4200. La configuración local apunta a SASPEL2; no se restaura el backup. Las cuentas existentes conservan sus credenciales y datos; no se publican secretos en esta guía.
+
+Los datos mínimos de demostración reproducible están disponibles en `tests.test_integracion_hito3`, apoyado en `CierreFixture`: un nuevo trabajador, un psicólogo y un administrador; instrumento/rangos y respuestas de prueba; una regla explícita sobre un rango existente; cita, nota, seguimiento, registro de ánimo y factor. Se crean exclusivamente en la BD temporal del test y se eliminan con ella. No se añadieron datos ficticios permanentes a SASPEL2.
+
+Demostración integrada reproducible desde la raíz: `.\.venv\Scripts\python.exe backend/manage.py test tests.test_integracion_hito3 --noinput --verbosity 2`. Ejecuta el flujo HTTP completo con JWT y persistencia PostgreSQL, sin mocks de negocio. La fecha de finalización de la cita se simula mediante el reloj del test. Para la demo visual sobre SASPEL2, las pantallas muestran datos existentes o estados vacíos honestos; el escenario temporal anterior acredita el recorrido con datos controlados sin cargar fixtures en la BD real.
+
+### Recorrido y rutas
+
+| Paso | Rol y pantalla/ruta | Verificación esperada |
+| --- | --- | --- |
+| 1 | Login /login; /primer-acceso/password y /primer-acceso/politicas si corresponde | Sesión JWT y primer acceso obligatorio antes del panel. |
+| 2 | Nuevo Trabajador: /dashboard/nuevo-trabajador | Evaluación asignada, guardar respuestas, finalizar y consultar resultado; transición a Trabajador y asignación profesional o aviso administrativo pendiente. |
+| 3 | Trabajador: /dashboard/trabajador; resultados, citas, animo y factores bajo esa ruta | Indicadores reales, historial propio, solicitud de cita y registros de bienestar sin suplantación de identidad. |
+| 4 | Psicólogo: /dashboard/psicologo y /dashboard/psicologo/trabajadores | Trabajadores asignados, resultados autorizados y accesos a seguimiento, ánimo y factores. Agenda en /dashboard/psicologo/citas; completar cita realizada y registrar nota privada. |
+| 5 | Todos: /dashboard/notificaciones; Psicólogo: sección de alertas | Consultar y marcar notificaciones propias; revisar origen de alerta, registrar atención y cerrar con historial. |
+| 6 | Admin: /dashboard/admin; Superadmin: /dashboard/superadmin | Indicadores administrativos y funciones autorizadas. Sin resultados individuales ni textos clínicos en indicadores/reportes. |
+| 7 | Psicólogo/Admin/Superadmin: /dashboard/reportes | Usuarios, instrumentos, citas y seguimiento, filtros por fechas/estado/área/instrumento según tipo, paginación y CSV. Citas y seguimiento administrativos son agregados. |
+| 8 | Revocar la asignación en la prueba temporal | El profesional pierde acceso a resultados, citas, notas, seguimiento, bienestar, alertas, notificaciones asociadas y filas de reportes de ese trabajador. |
+
+Configuración de alertas (T38 es Backend): `GET/POST /api/alertas/reglas/` requiere Admin/Superadmin. POST recibe únicamente `nombre`, `rango_id` de un RangoInterpretacion real y `nivel` (BAJA/MEDIA/ALTA, prioridad operativa elegida por la institución, no diagnóstico). Para Superadmin, los rangos se consultan en la edición de contenido del instrumento o `GET /api/superadmin/instruments/{instrument_id}/ranges/`. Desactivar con `POST /api/alertas/reglas/{regla_id}/desactivar/` y cuerpo vacío; para modificar condiciones se crea otra regla, conservando la trazabilidad de las alertas previas. No existe una regla clínica activa por defecto. Las reglas se aplican a eventos nuevos de resultados finalizados, sin recalcular ni etiquetar retrospectivamente datos existentes.
+
+### Checklist final
+
+- [x] T38, T39, T40 y T41 integradas/publicadas antes de T42, con pruebas focalizadas.
+- [x] T42 integrada/publicada con 391 pruebas backend aprobadas, una opcional omitida, 200 pruebas frontend aprobadas, build de producción y comprobaciones Django sin errores.
+- [x] Demo reproducible con datos temporales, rutas, funcionalidades, límites y comandos disponibles en este documento.
+- [x] Sin bloqueadores técnicos globales ni defectos de severidad alta identificados en los escenarios ejecutados. La prueba E2E opcional omitida y la configuración institucional de reglas están expresamente delimitadas.
+- [x] SASPEL2 conserva todos los registros anteriores; cuatro tablas nuevas vacías y metadatos de migraciones añadidos. Backup intacto, sin ejecutar ni restaurar.
+- [x] Versión congelada con la etiqueta de demostración; todas las features conservadas, sin force push ni integración a main.
+
+Tras publicar T43 en develop, su Estado se cambia a Completado en el cronograma local. El corte final T01–T43 (Fecha Fin ≤ 24/10/2026) queda en **43/43 Completado**, cero En curso y cero Pendiente. Durante esta ejecución solo cambian las celdas Estado L39:L44 de T38–T43; fechas, criterios, dependencias, fórmulas, estilos, hojas y tareas posteriores se conservan. El Excel y su archivo de bloqueo siguen locales, sin versionar.
