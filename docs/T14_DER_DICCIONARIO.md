@@ -1,6 +1,6 @@
 # T14 · DER lógico y diccionario de datos
 
-Revisado el 16/10/2026 contra el modelo conceptual T13, las reglas del Excel y la implementación integrada hasta T37. La aprobación funcional de T13 sigue sin evidencia; este trabajo revisa consistencia y trazabilidad técnica y no sustituye esa aprobación. No certifica que las tablas se hayan creado después del diseño original.
+Revisado el 16/10/2026 contra el modelo conceptual T13, las reglas del Excel y la implementación integrada hasta T37. La aprobación de T13 por el responsable del desarrollo del proyecto quedó registrada el 16/10/2026 en el modelo conceptual; este documento conserva su revisión de consistencia y trazabilidad técnica. No certifica que las tablas se hayan creado después del diseño original.
 
 ## DER lógico
 

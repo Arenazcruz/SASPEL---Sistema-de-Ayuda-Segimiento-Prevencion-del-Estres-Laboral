@@ -7,7 +7,7 @@ Revisión realizada el 16/10/2026 sobre el estado integrado del proyecto. Es una
 | Componente | Entregable / fuente | Resultado de revisión |
 | --- | --- | --- |
 | Alcance | Cronograma local, hojas Alcance, ReqFuncionales, RolesPermisos y ReglasNegocio | Lógica de negocio SASPEL; cinco roles existentes; sin IA, chat ni ampliación del alcance. Corte de esta ejecución: T01–T37. |
-| Dominio | [Modelo conceptual T13](T13_MODELO_DOMINIO.md) | Entidades, objetos de valor, invariantes y puertos documentados sin dependencia del ORM. Falta evidencia de aprobación funcional requerida por T13. |
+| Dominio | [Modelo conceptual T13](T13_MODELO_DOMINIO.md) | Entidades, objetos de valor, invariantes y puertos documentados sin dependencia del ORM. Aprobación del responsable del desarrollo registrada en T13 el 16/10/2026. |
 | Modelo lógico | [DER y diccionario T14](T14_DER_DICCIONARIO.md) | 24 entidades propias, 135 atributos específicos y auditoría común; revisión contra reglas, relaciones y restricciones. |
 | Casos de uso | Hoja CasosUso del Excel y mapa incluido en T13 | Entradas, salidas y puertos principales definidos; no se confunden casos futuros con implementación disponible. |
 | Arquitectura | [Guía de código](GUIA_CODIGO.md), backend/src y frontend/src/app | Backend hexagonal y frontend MVVM por features; tests de arquitectura protegen los límites. |
@@ -30,7 +30,7 @@ Persistencia: UUID y AuditableModel se mantienen en las entidades propias. Desac
 El paquete incorpora la implementación real posterior a la fecha original del Hito 2 para que sea presentable y coherente con el código actual. No intenta retroceder el desarrollo ni reconstruir fechas de aprobación inexistentes.
 
 - T08: bloqueo documental histórico. El dump autorizado contiene 28 CREATE TABLE y tablas de negocio; no acredita la línea base de solo auth/admin/session/migrations. Se mantiene En curso. No bloquea técnicamente los casos implementados sobre SASPEL2.
-- T13: modelo preparado y revisado; no hay constancia de la aprobación funcional exigida en su criterio. Se mantiene En curso. El diseño ya permite revisar T14 y preparar este paquete sin atribuir esa aprobación.
+- T13: modelo preparado, revisado y aprobado expresamente por el responsable del desarrollo del proyecto el 16/10/2026. Su criterio no exige aprobación de terceros; la evidencia se registra en el propio modelo conceptual.
 - T14/T15: DER, diccionario y mapa de casos de uso están disponibles para revisión. Sus contratos corresponden a los módulos existentes.
 - T33: checklist del Hito 3 se emitirá después de la validación conjunta final; este paquete no declara entregado todo el alcance futuro H3/H4.
 
@@ -40,4 +40,4 @@ No se introducen nuevas decisiones clínicas. Estado/intensidad de ánimo, nivel
 
 Arquitectura y modelos/auditoría: 98/98 pruebas aprobadas en T14; cobertura UUID extendida a las 24 entidades. Las comprobaciones postintegración de UUID y arquitectura también pasaron (12/12). No hay divergencia entre modelos y migraciones. El informe T32 documenta el conjunto núcleo y sus límites; la validación global al cierre se registra en T33.
 
-La guía se actualizó para retirar afirmaciones obsoletas sobre servicios de dominio vacíos y funciones ya implementadas. No se cambian tecnologías, arquitectura ni alcance. Este paquete satisface la revisión y preparación de T16; las reservas explícitas de T08/T13 siguen abiertas en sus propias tareas.
+La guía se actualizó para retirar afirmaciones obsoletas sobre servicios de dominio vacíos y funciones ya implementadas. No se cambian tecnologías, arquitectura ni alcance. Este paquete satisface la revisión y preparación de T16; la reserva de T08 sigue abierta; la de T13 queda resuelta mediante la aprobación documentada del responsable.

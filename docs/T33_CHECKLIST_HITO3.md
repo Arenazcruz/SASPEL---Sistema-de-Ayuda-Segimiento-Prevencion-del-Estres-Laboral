@@ -4,14 +4,14 @@ Revisión final del conjunto con Fecha Fin ≤ 19/10/2026, ejecutada el 16/10/20
 
 ## Resultado del corte
 
-37 tareas objetivo: 25 ya completas antes de esta ejecución; 12 incompletas revisadas. Se cerraron T14, T16, T29, T31, T32, T34, T35, T36 y T37; T33 queda lista para cierre al integrar/publicar este checklist. Resultado previsto tras esa integración: **35 Completado, 2 En curso**, ninguna Pendiente dentro del corte.
+37 tareas objetivo: 25 ya completas antes de esta ejecución; 12 incompletas revisadas. Se cerraron T14, T16, T29, T31, T32, T34, T35, T36 y T37; T33 queda lista para cierre al integrar/publicar este checklist. Resultado tras esa integración: 35 Completado, 2 En curso. Actualización del 16/10/2026: el responsable del desarrollo aprobó expresamente el modelo T13, cuyo criterio no exige terceros. Con su cierre, el corte queda en **36 Completado, 1 En curso**, ninguna Pendiente.
 
 | Tarea o grupo | Evidencia revisada |
 | --- | --- |
 | T01–T07 | Arranque y configuración existente; tests health, auth y arquitectura; PostgreSQL operativo. |
 | T08 | Dump autorizado inspeccionado en lectura; evidencia histórica insuficiente. En curso. |
 | T09–T12 | Inventario, alcance, roles y reglas de las hojas funcionales del cronograma. |
-| T13 | [Modelo conceptual](T13_MODELO_DOMINIO.md) terminado y revisado; aprobación funcional no acreditada. En curso. |
+| T13 | [Modelo conceptual](T13_MODELO_DOMINIO.md) terminado, revisado y aprobado por el responsable del desarrollo el 16/10/2026. Completado. |
 | T14 | [DER y diccionario](T14_DER_DICCIONARIO.md), 24 entidades y auditoría UUID comprobada. |
 | T15–T16 | Mapa de casos de uso/puertos y [paquete de revisión Hito 2](T16_PAQUETE_HITO2.md). |
 | T17–T18 | Modelos y migraciones; tests de esquema inicial, instrumentos, citas y UUID. |
@@ -53,9 +53,9 @@ La prueba omitida es UnifiedUsersBrowserTests, optativa y dependiente de Angular
 | ID | Evidencia / pendiente concreto | Impacto | Condición de cierre |
 | --- | --- | --- | --- |
 | T08 | SASPEL2C.sql tiene 28 CREATE TABLE, incluidas tablas de negocio. No acredita la etapa histórica de solo tablas técnicas Django. | Documental; no bloquea los módulos integrados. | Evidencia histórica compatible con el criterio original, o cambio explícitamente autorizado de ese criterio. No se sustituye por el esquema actual. |
-| T13 | Modelo conceptual entregado y revisado, sin constancia de aprobación funcional por el responsable. | Aceptación del entregable; el diseño permite continuar la revisión técnica. | Aprobación del modelo entregado o indicación explícita de la evidencia válida. No se atribuye aprobación al usuario. |
 
-No hay bloqueador técnico global identificado dentro de los escenarios ejecutados. T08/T13 conservan En curso. El catálogo de factores queda deliberadamente vacío hasta que Administración configure los tipos reales de la institución; la función de configuración está implementada y probada con datos temporales, sin inventar tipos de negocio.
+
+No hay bloqueador técnico global identificado dentro de los escenarios ejecutados. T08 conserva En curso. El pendiente de aprobación de T13 quedó resuelto por la declaración explícita del responsable del desarrollo, registrada en el modelo conceptual; no se atribuye aprobación a terceros. El catálogo de factores queda deliberadamente vacío hasta que Administración configure los tipos reales de la institución; la función de configuración está implementada y probada con datos temporales, sin inventar tipos de negocio.
 
 ## Backlog restante H3, priorizado sin adelantar implementación
 
@@ -81,7 +81,7 @@ El orden respeta dependencias y fechas. Las prioridades altas de T42/T43 no perm
 | T35 | 8a7792f |
 | T36 | 1bffe8c |
 | T37 | fbdfc56 |
-| T13, entregable sin aprobación | 1e32168 |
+| T13, diseño original; aprobación posterior documentada en el modelo | 1e32168 |
 | T14 | 843ce60 |
 | T16 | cb2758c |
 

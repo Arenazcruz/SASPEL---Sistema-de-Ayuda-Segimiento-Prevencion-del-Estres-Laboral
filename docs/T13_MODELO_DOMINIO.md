@@ -2,7 +2,9 @@
 
 Revisión técnica: 16/10/2026. Alcance funcional: tareas hasta T37, con límite 19/10/2026. Fuente: hojas ReglasNegocio, RolesPermisos, CasosUso y Cronograma de SASPELCronograma3.xlsx. Este documento describe conceptos y contratos independientes de Django, SQL, HTTP y Angular.
 
-**Estado de aceptación:** diseño terminado y contrastado técnicamente con las reglas disponibles. No se encontró evidencia de aprobación funcional del modelo conceptual por el responsable del proyecto. T13 permanece En curso por esa parte literal del criterio; este documento constituye el entregable revisable. No se presenta esta reconstrucción del modelo como una validación histórica previa a las tablas ya existentes.
+**Estado de aceptación:** modelo conceptual aprobado por el responsable del desarrollo del proyecto SASPEL mediante declaración explícita en esta conversación el 16/10/2026. El diseño revisado permanece independiente de Django ORM. La aprobación satisface el criterio literal de T13 y permite cerrar la tarea; no se atribuye aprobación a terceros ni se presenta como una validación histórica previa a las tablas ya existentes.
+
+**Evidencia de aprobación:** Cronograma!G14 establece: «Modelo conceptual del dominio aprobado, independiente de Django ORM.» No designa docente, cliente, psicólogo ni otra autoridad externa. El responsable declaró: «Yo, como responsable del desarrollo del proyecto SASPEL, apruebo el modelo conceptual contenido en: docs/T13_MODELO_DOMINIO.md». La aprobación corresponde al modelo publicado originalmente en 1e32168; este ajuste documenta su aceptación sin alterar el diseño conceptual.
 
 ## Entidades, identidad y límites de consistencia
 
