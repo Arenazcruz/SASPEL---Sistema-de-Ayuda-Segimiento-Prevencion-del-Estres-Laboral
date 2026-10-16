@@ -55,3 +55,5 @@ from .seguimiento import Seguimiento
 from .estado_animo import EstadoAnimo
 
 from .factor_psicosocial import TipoFactorPsicosocial, FactorPsicosocial
+
+from .alerta import ReglaAlerta, Alerta, AccionAlerta

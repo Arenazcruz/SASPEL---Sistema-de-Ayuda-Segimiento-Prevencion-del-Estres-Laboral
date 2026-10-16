@@ -26,7 +26,13 @@ from src.infrastructure.api.rest.views.estado_animo import AnimoPropioView, Anim
 
 from src.infrastructure.api.rest.views.factores import FactoresPropiosView, FactoresProfesionalView, TiposFactorView, EditarTipoFactorView
 
+from src.infrastructure.api.rest.views.alertas import ReglasAlertaView, DesactivarReglaView, AlertasView, AccionAlertaView
+
 urlpatterns = [
+    path('alertas/reglas/', ReglasAlertaView.as_view()),
+    path('alertas/reglas/<uuid:regla_id>/desactivar/', DesactivarReglaView.as_view()),
+    path('alertas/', AlertasView.as_view()),
+    path('alertas/<uuid:alerta_id>/acciones/', AccionAlertaView.as_view()),
     path('trabajador/factores/', FactoresPropiosView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/factores/', FactoresProfesionalView.as_view()),
     path('catalogos/factores/', TiposFactorView.as_view()),

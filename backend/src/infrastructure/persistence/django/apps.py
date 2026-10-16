@@ -10,3 +10,6 @@ class PersistenceConfig(AppConfig):
     # Conserva el nombre que Django ya utiliza para reconocer estos datos.
     label = 'api'
     verbose_name = 'Persistencia SASPEL'
+
+    def ready(self):
+        from . import alerta_events  # noqa: F401
