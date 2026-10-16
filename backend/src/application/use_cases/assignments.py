@@ -73,6 +73,8 @@ class AutoAssignWorker(AssignmentCase):
                 psychologist_id = candidates[0].psicologo.id
                 self.validate_pair(worker_id, psychologist_id)
                 self.repository.create_assignment(worker_id, psychologist_id)
+            else:
+                self.repository.notify_pending(worker_id)
 
 
 class FinishAssignment(AssignmentCase, AssignmentFinishing):

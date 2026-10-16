@@ -38,6 +38,11 @@ class NotificacionesTests(TestCase):
         self.assertEqual(Notificacion.objects.count(),before)
         self.assertEqual(self.client.get('/api/notificaciones/').status_code,401)
     def test_pendiente_notifica_administracion_sin_datos_sensibles(self):
-        admin=person('admin','ADMIN');repo=DjangoAssignmentRepository();repo.notify_pending(self.w.pk);repo.notify_pending(self.w.pk)
+        admin=person('admin','ADMIN')
+        self.link.estado='FINALIZADA';self.link.save()
+        for user in [self.p,self.foreign]:
+            user.perfil_usuario.habilitado_asignaciones=False;user.perfil_usuario.save()
+        from src.application.use_cases.assignments import AutoAssignWorker
+        case=AutoAssignWorker(DjangoAssignmentRepository());case.execute(self.w.pk);case.execute(self.w.pk)
         self.auth(admin);rows=self.client.get('/api/notificaciones/').data
         self.assertEqual(len(rows),1);self.assertEqual(rows[0]['tipo'],'ASIGNACION_PENDIENTE');self.assertNotIn(self.w.email,str(rows))
