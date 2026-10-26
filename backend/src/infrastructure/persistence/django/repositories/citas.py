@@ -110,3 +110,19 @@ class DjangoCitasRepository(DjangoResultadosRepository):
     def verificar_realizada(self, cita):
         if cita['fecha_fin'] > timezone.now():
             raise AdministrationError('La cita aún no ha finalizado.')
+
+    def reprogramar(self, cita, actor, datos):
+        self.verificar_horario(actor, cita['trabajador_id'], datos['fecha_inicio'], datos['fecha_fin'], cita['id'])
+        # La cita original conserva sus participantes, motivo y horario. El nuevo
+        # horario reservado por el profesional queda confirmado en la misma transacción.
+        self.cambiar_estado(cita['id'], 'REPROGRAMADA', datos['motivo'].strip(), actor)
+        nueva = Cita(
+            trabajador_id=cita['trabajador_id'], psicologo_id=actor,
+            solicitada_por_id=actor, cita_origen_id=cita['id'], estado='CONFIRMADA',
+            fecha_inicio=datos['fecha_inicio'], fecha_fin=datos['fecha_fin'],
+            motivo=cita['motivo'], prioridad=cita['prioridad'],
+            creado_por=str(actor), actualizado_por=str(actor),
+        )
+        nueva.full_clean()
+        nueva.save()
+        return self.dto(self.filas().get(pk=nueva.pk))

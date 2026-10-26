@@ -15,6 +15,13 @@ export class CitasViewModel {
  readonly dias=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
  inicio='';fin='';motivo='';prioridad='MEDIA';dia=0;desde='';hasta='';cierres:Record<string,string>={};
  readonly notas=signal<Record<string,NotaCita[]>>({}); textos:Record<string,string>={};
+ nuevosInicios:Record<string,string>={}; nuevosFines:Record<string,string>={};
+ reprogramar(c:Cita){
+  if(this.busy()||!this.profesional())return;
+  const inicio=new Date(this.nuevosInicios[c.id]),fin=new Date(this.nuevosFines[c.id]),motivo=this.cierres[c.id]?.trim();
+  if(!motivo||!Number.isFinite(inicio.getTime())||!Number.isFinite(fin.getTime())||inicio<=new Date()||fin<=inicio){this.error.set('Indica el motivo y un nuevo horario futuro válido.');return;}
+  this.enviar(this.api.reprogramar(c.id,{fecha_inicio:inicio.toISOString(),fecha_fin:fin.toISOString(),motivo}),()=>{delete this.nuevosInicios[c.id];delete this.nuevosFines[c.id];delete this.cierres[c.id];});
+ }
  cargarNotas(id:string){if(this.busy()||!this.profesional())return;this.busy.set(true);this.error.set('');this.notas.update(n=>({...n,[id]:[]}));this.api.notas(id).pipe(takeUntilDestroyed(this.destroy),finalize(()=>this.busy.set(false))).subscribe({next:r=>this.notas.update(n=>({...n,[id]:r})),error:e=>this.fail(e)});}
  guardarNota(id:string){const texto=this.textos[id]?.trim();if(!texto){this.error.set('Escribe una observación.');return;}this.enviar(this.api.guardarNota(id,texto),()=>{delete this.textos[id];});}
  puedeCompletar(c:Cita){return this.profesional()&&c.estado==='CONFIRMADA'&&new Date(c.fecha_fin)<=new Date();}

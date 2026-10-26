@@ -24,7 +24,12 @@
 @if(c.estado==='SOLICITADA'||c.estado==='CONFIRMADA'){
 <label>Motivo para cancelar o rechazar<input [name]="'cierre-'+c.id" [(ngModel)]="vm.cierres[c.id]" maxlength="2000" [disabled]="vm.busy()"></label><div class="acciones">
 @if(vm.profesional()&&c.estado==='SOLICITADA'){<button class="button" type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'confirmar')">Aceptar</button><button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'rechazar')">Rechazar</button>}
-<button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'cancelar')">Cancelar cita</button></div>}
+<button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'cancelar')">Cancelar cita</button></div>
+@if(vm.profesional()){
+<form (ngSubmit)="vm.reprogramar(c)"><fieldset [disabled]="vm.busy()"><legend>Reprogramar cita</legend>
+<label>Nuevo inicio<input type="datetime-local" [name]="'inicio-'+c.id" [(ngModel)]="vm.nuevosInicios[c.id]" required></label>
+<label>Nuevo fin<input type="datetime-local" [name]="'fin-'+c.id" [(ngModel)]="vm.nuevosFines[c.id]" required></label>
+<p>Indica arriba el motivo. Se conservará el horario original y se confirmará el nuevo.</p><button type="submit">Reprogramar</button></fieldset></form>}}
 @if(vm.puedeCompletar(c)){<button type="button" [disabled]="vm.busy()" (click)="vm.accion(c,'completar')">Marcar como realizada</button>}
 @if(vm.profesional()&&c.estado==='COMPLETADA'){
 <section><h4>Notas profesionales privadas</h4><button type="button" [disabled]="vm.busy()" (click)="vm.cargarNotas(c.id)">Consultar notas</button>

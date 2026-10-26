@@ -51,3 +51,15 @@ class GestionarCitas:
             elif datos is not None:
                 self.repository.guardar_disponibilidad(actor, datos)
             return self.repository.disponibilidad(actor)
+
+    def reprogramar(self, actor, cita_id, datos):
+        with self.repository.atomic():
+            self.rol(actor, 'PSICOLOGO')
+            cita = self.repository.obtener(cita_id)
+            if not cita or cita['psicologo_id'] != actor or not self.repository.tiene_asignacion_activa(actor, cita['trabajador_id']):
+                raise ResultadoNoDisponible('La cita no está disponible.')
+            transicion_cita(cita['estado'], 'reprogramar', 'PSICOLOGO', datos['motivo'])
+            if (datos['fecha_inicio'], datos['fecha_fin']) == (cita['fecha_inicio'], cita['fecha_fin']):
+                from src.domain.exceptions.superadmin import AdministrationError
+                raise AdministrationError('Selecciona un horario diferente al original.')
+            return self.repository.reprogramar(cita, actor, datos)
