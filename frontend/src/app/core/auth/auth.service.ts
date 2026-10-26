@@ -116,10 +116,12 @@ export class AuthService {
   }
 
   /**
-   * Limpia tokens e identidad y navega a /login. No llama al backend ni invalida JWT emitidos;
-   * si se implementa revocación habrá que conectar aquí esa operación.
+   * Solicita revocación de las sesiones emitidas y limpia inmediatamente el navegador.
+   * Una respuesta tardía no puede restaurar la identidad.
    */
-  logout(): void {
+  logout(revocar = true): void {
+    const refresh = this.storage.refresh;
+    if (revocar && refresh) this.http.post(`${this.api}/auth/logout/`, {refresh}).subscribe({error: () => {}});
     this.clearSession();
     void this.router.navigateByUrl('/login');
   }
