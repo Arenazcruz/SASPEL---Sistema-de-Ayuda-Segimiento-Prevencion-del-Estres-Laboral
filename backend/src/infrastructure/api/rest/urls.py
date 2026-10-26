@@ -36,7 +36,11 @@ from src.infrastructure.api.rest.views.reportes import ReportesView
 
 from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesView, EstadoRecomendacionView
 
+from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
+
 urlpatterns = [
+    path('administracion/politicas/', PoliticasAdministracionView.as_view()),
+    path('administracion/auditoria/', AuditoriaView.as_view()),
     path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),
     path('seguimientos/<uuid:seguimiento_id>/recomendaciones/<uuid:recomendacion_id>/estado/', EstadoRecomendacionView.as_view()),
     path('reportes/<str:tipo>/',ReportesView.as_view()),

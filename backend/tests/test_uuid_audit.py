@@ -21,7 +21,7 @@ from src.infrastructure.persistence.django.models import (
     OpcionRespuesta, PerfilUsuario, PreguntaInstrumento, RangoInterpretacion,
     ReglaAlerta, Alerta, AccionAlerta, Notificacion,
     NotaCita, Seguimiento, EstadoAnimo, TipoFactorPsicosocial, FactorPsicosocial,
-    RespuestaPregunta, ResultadoInstrumento, Usuario, PoliticaSistema, AceptacionPolitica, AreaCargo,
+    RespuestaPregunta, ResultadoInstrumento, Usuario, PoliticaSistema, AceptacionPolitica, AreaCargo, Recomendacion, EventoAuditoria,
 )
 
 
@@ -87,13 +87,17 @@ class UUIDAuditTests(TestCase):
         alert = Alerta.objects.create(regla=rule,resultado=result)
         action = AccionAlerta.objects.create(alerta=alert,estado='EN_ATENCION',observacion='Prueba UUID')
         notification = Notificacion.objects.create(destinatario=cls.user,tipo='ASIGNACION',titulo='Prueba UUID',origen_id=professional.pk,evento='AUDIT-UUID')
+        recommendation = Recomendacion.objects.create(seguimiento=tracking, profesional=cls.psychologist, texto='Prueba estructural')
         cls.records = [cls.user, area, cargo, profile, professional, instrument, scale, option,
-                       question, interval, assignment, application, answer, result, availability, policy, acceptance, area_cargo, note, tracking, mood, factor_type, factor, rule, alert, action, notification, appointment]
+                       question, interval, assignment, application, answer, result, availability, policy, acceptance, area_cargo, note, tracking, mood, factor_type, factor, rule, alert, action, notification, recommendation, appointment]
 
     def test_all_entities_persist_generated_uuid_primary_keys(self):
         registered = set(apps.get_app_config('api').get_models())
-        self.assertEqual(registered, {type(row) for row in self.records})
-        self.assertEqual(len(registered), 28)
+        # El diario inmutable tiene fecha/actor propios y no admite actualización.
+        self.assertEqual(registered, {type(row) for row in self.records} | {EventoAuditoria})
+        self.assertEqual(len(registered), 30)
+        self.assertIsInstance(EventoAuditoria._meta.pk, models.UUIDField)
+        self.assertIsInstance(EventoAuditoria.objects.first().pk, UUID)
         self.assertTrue(AuditableModel._meta.abstract)
         ids = set()
         for row in self.records:
@@ -107,7 +111,7 @@ class UUIDAuditTests(TestCase):
                 self.assertEqual(row.pk, original)
                 self.assertEqual(row.pk.version, 4)
                 ids.add(row.pk)
-        self.assertEqual(len(ids), 28)
+        self.assertEqual(len(ids), 29)
 
     def test_uuid_foreign_keys_round_trip_for_every_entity(self):
         for row in self.records:
