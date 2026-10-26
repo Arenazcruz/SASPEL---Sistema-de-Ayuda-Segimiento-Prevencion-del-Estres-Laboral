@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from './administration-context';
 /**
  * Centraliza HTTP bajo /api/superadmin (API_URL configurable). Devuelve observables que los
  * ViewModels suscriben para cargar o guardar; errores se presentan con apiError. Al cambiar
@@ -11,7 +12,7 @@ import { Institution, InstitutionKind, Person, Summary, UserPage } from './super
 @Injectable({ providedIn: 'root' })
 export class SuperadminService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_URL)}/superadmin`;
+  private readonly base = `${inject(API_URL)}/${inject(ADMINISTRATION_CONTEXT).apiSegment}`;
   /**
    * GET dashboard/summary/: devuelve Observable<Summary> con totales y recientes.
    */
@@ -101,6 +102,13 @@ export class SuperadminService {
       `${this.base}/${kind}/${id}/${active ? 'activate' : 'deactivate'}/`,
       {},
     );
+  }
+
+  areaCargos(id: string) {
+    return this.http.get<{cargo_ids: string[]}>(`${this.base}/areas/${id}/cargos/`);
+  }
+  saveAreaCargos(id: string, cargo_ids: string[]) {
+    return this.http.put<{cargo_ids: string[]}>(`${this.base}/areas/${id}/cargos/`, {cargo_ids});
   }
 }
 

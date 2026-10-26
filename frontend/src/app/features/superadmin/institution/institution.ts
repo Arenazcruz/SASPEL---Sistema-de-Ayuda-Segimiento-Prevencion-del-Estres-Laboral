@@ -6,7 +6,8 @@
 import { Component, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ADMINISTRATION_CONTEXT } from '../administration-context';
 import { finalize } from 'rxjs';
 import { Institution, InstitutionKind } from '../superadmin.models';
 import { apiError, SuperadminService } from '../superadmin.service';
@@ -16,6 +17,7 @@ import { apiError, SuperadminService } from '../superadmin.service';
  * Estado del catálogo elegido por data.kind; comparte formulario y acciones de áreas y cargos.
  */
 export class InstitutionViewModel {
+  readonly panel = inject(ADMINISTRATION_CONTEXT).panel;
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
   readonly kind = inject(ActivatedRoute).snapshot.data['kind'] as InstitutionKind;
@@ -119,10 +121,10 @@ export class InstitutionViewModel {
 
 @Component({
   selector: 'app-institution',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   providers: [InstitutionViewModel],
   template: `
-    <p class="eyebrow">SUPERADMIN / INSTITUCIÓN</p>
+    <p class="eyebrow">ADMINISTRACIÓN / INSTITUCIÓN</p>
     <h1>{{ vm.title }}</h1>
     <p>Administra las opciones institucionales disponibles al registrar personas.</p>
     @if (vm.error()) {
@@ -181,6 +183,9 @@ export class InstitutionViewModel {
                 </td>
                 <td>
                   <div class="sa-row-actions">
+                    @if (vm.kind === 'areas') {
+                      <a [routerLink]="[vm.panel, 'institucion', 'areas', item.id, 'cargos']">Configurar cargos</a>
+                    }
                     <button (click)="vm.edit(item)" [disabled]="vm.busy()">Editar</button
                     ><button (click)="vm.toggle(item)" [disabled]="vm.busy()">
                       {{ item.activo ? 'Desactivar' : 'Activar' }}

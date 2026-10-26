@@ -45,6 +45,8 @@ import { MisTrabajadoresViewModel } from './trabajadores.viewmodel';
                 <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'seguimiento']">Ver seguimiento</a>
                 <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'animo']">Ver ánimo</a>
                 <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'factores']">Ver factores</a>
+                <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'instrumentos']">Asignar instrumentos</a>
+                <a class="button button-outline" [routerLink]="['/dashboard/psicologo/trabajadores', trabajador.id, 'evolucion']">Ver evolución</a>
               </article>
             }
           </div>

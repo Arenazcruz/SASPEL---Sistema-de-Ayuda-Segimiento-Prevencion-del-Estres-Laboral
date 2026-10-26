@@ -9,6 +9,7 @@ import { roleGuard } from './core/auth/role.guard';
 import { ROLE_DASHBOARDS } from './core/auth/auth.models';
 import { superadminChildGuard } from './features/superadmin/superadmin.routes';
 import { primerAccesoGuard } from './core/auth/primer-acceso.guard';
+import { ADMIN_PROVIDERS } from './features/admin/admin.routes';
 
 export const routes: Routes = [
   {
@@ -49,6 +50,16 @@ export const routes: Routes = [
     canActivateChild: [primerAccesoGuard],
     runGuardsAndResolvers: 'always',
     children: [
+      {path:'perfil',loadComponent:()=>import('./features/perfil/perfil').then(m=>m.PerfilComponent)},
+      {path:'administracion/auditoria',data:{roles:['ADMIN','SUPERADMIN'],modo:'auditoria'},canActivate:[roleGuard],loadComponent:()=>import('./features/gobierno/gobierno').then(m=>m.GobiernoComponent)},
+      {path:'administracion/politicas',data:{role:'SUPERADMIN',modo:'politicas'},canActivate:[roleGuard],loadComponent:()=>import('./features/gobierno/gobierno').then(m=>m.GobiernoComponent)},
+      {path:'trabajador/evolucion',data:{role:'TRABAJADOR'},canActivate:[roleGuard],loadComponent:()=>import('./features/evolucion/evolucion').then(m=>m.EvolucionComponent)},
+      {path:'psicologo/trabajadores/:trabajadorId/evolucion',data:{role:'PSICOLOGO'},canActivate:[roleGuard],loadComponent:()=>import('./features/evolucion/evolucion').then(m=>m.EvolucionComponent)},
+      {path:'psicologo/seguimientos/:seguimientoId/recomendaciones',data:{role:'PSICOLOGO'},canActivate:[roleGuard],loadComponent:()=>import('./features/recomendaciones/recomendaciones').then(m=>m.RecomendacionesComponent)},
+      {path:'trabajador/instrumentos',data:{role:'TRABAJADOR'},canActivate:[roleGuard],loadComponent:()=>import('./features/instrumentos/asignaciones').then(m=>m.AsignacionesInstrumentoComponent)},
+      {path:'administracion/trabajadores/:trabajadorId/instrumentos',data:{role:'SUPERADMIN'},canActivate:[roleGuard],loadComponent:()=>import('./features/instrumentos/asignaciones').then(m=>m.AsignacionesInstrumentoComponent)},
+      {path:'psicologo/trabajadores/:trabajadorId/instrumentos',data:{role:'PSICOLOGO'},canActivate:[roleGuard],loadComponent:()=>import('./features/instrumentos/asignaciones').then(m=>m.AsignacionesInstrumentoComponent)},
+      {path:'trabajador/evaluacion/:asignacionId',data:{role:'TRABAJADOR'},canActivate:[roleGuard],loadComponent:()=>import('./features/nuevo-trabajador/evaluacion').then(m=>m.EvaluacionInicialComponent)},
       {
         path:'reportes',data:{roles:['ADMIN','SUPERADMIN','PSICOLOGO']},canActivate:[roleGuard],loadComponent:()=>import('./features/reportes/reportes').then(m=>m.ReportesComponent),title:'Reportes · SASPEL',
       },
@@ -65,6 +76,12 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/superadmin/superadmin.routes').then((m) => m.SUPERADMIN_ROUTES),
         title: 'Superadmin · SASPEL',
+      },
+      {
+        path:'admin',data:{role:'ADMIN'},canActivate:[roleGuard],canActivateChild:[superadminChildGuard],
+        providers:ADMIN_PROVIDERS,
+        loadComponent:()=>import('./features/superadmin/layout/superadmin-layout').then(m=>m.SuperadminLayout),
+        loadChildren:()=>import('./features/admin/admin.routes').then(m=>m.ADMIN_ROUTES),title:'Administración institucional · SASPEL',
       },
       {
         path: 'nuevo-trabajador/evaluacion/:asignacionId',
@@ -148,7 +165,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/citas/citas').then(m=>m.Citas), title: 'Mis citas · SASPEL',
       })),
       ...Object.entries(ROLE_DASHBOARDS)
-        .filter(([role]) => !['SUPERADMIN', 'NUEVO_TRABAJADOR', 'PSICOLOGO'].includes(role))
+        .filter(([role]) => !['SUPERADMIN', 'ADMIN', 'NUEVO_TRABAJADOR', 'PSICOLOGO'].includes(role))
         .map(([role, path]) => ({
           path: path.split('/').at(-1)!,
           data: { role },

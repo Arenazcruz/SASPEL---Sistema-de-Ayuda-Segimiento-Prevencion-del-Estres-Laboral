@@ -2,6 +2,7 @@
  * Un listado de usuarios con filtros por query params y formularios/fichas en su modal.
  * Las rutas antiguas por categoría redirigen al mismo listado.
  */
+import {ADMINISTRATION_CONTEXT} from './administration-context';
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateChildFn, Router, Routes } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -12,12 +13,13 @@ import { AuthService } from '../../core/auth/auth.service';
  */
 export const superadminChildGuard: CanActivateChildFn = () => {
   const user = inject(AuthService).user();
-  return user?.role === 'SUPERADMIN'
+  return user?.role === (inject(ADMINISTRATION_CONTEXT).global?'SUPERADMIN':'ADMIN')
     ? true
     : inject(Router).parseUrl(user?.dashboard_path || '/login');
 };
 const list = () => import('./users/user-list').then((m) => m.UserList);
 export const SUPERADMIN_ROUTES: Routes = [
+  {path:'institucion/areas/:id/cargos',loadComponent:()=>import('./institution/area-cargos').then(m=>m.AreaCargos)},
   {path:'institucion/factores',loadComponent:()=>import('../bienestar/catalogo-factores').then(m=>m.CatalogoFactoresComponent)},
   ...[
     ['preguntas', 'questions'],
@@ -50,7 +52,7 @@ export const SUPERADMIN_ROUTES: Routes = [
     path: `personas/${path}`,
     pathMatch: 'full' as const,
     redirectTo: ({ queryParams }: Pick<ActivatedRouteSnapshot, 'queryParams'>) =>
-      inject(Router).createUrlTree(['/dashboard/superadmin/personas'], {
+      inject(Router).createUrlTree([inject(ADMINISTRATION_CONTEXT).panel+'/personas'], {
         queryParams: { ...queryParams, role: filterRole, page: 1 },
       }),
   })),

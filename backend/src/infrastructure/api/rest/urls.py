@@ -33,29 +33,25 @@ from src.infrastructure.api.rest.views.notificaciones import NotificacionesView,
 from src.infrastructure.api.rest.views.dashboard import DashboardView
 
 from src.infrastructure.api.rest.views.reportes import ReportesView
-
-from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesView, EstadoRecomendacionView
-
-from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
-
 from src.infrastructure.api.rest.views.perfil import PerfilPropioView
-
+from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
+from src.infrastructure.api.rest.views.evolucion import EvolucionView
+from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesView, EstadoRecomendacionView
 from src.infrastructure.api.rest.views.instrument_assignments import AsignacionesInstrumentoView, InstrumentosPropiosView, ResolverInstrumentoView, AccionInstrumentoView
 
-from src.infrastructure.api.rest.views.evolucion import EvolucionView
-
 urlpatterns = [
+    path('institucional/', include('src.infrastructure.api.rest.institutional_urls')),
+    path('perfil/', PerfilPropioView.as_view()),
+    path('administracion/politicas/', PoliticasAdministracionView.as_view()),
+    path('administracion/auditoria/', AuditoriaView.as_view()),
     path('trabajador/evolucion/', EvolucionView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/evolucion/', EvolucionView.as_view()),
+    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),
+    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/<uuid:recomendacion_id>/estado/', EstadoRecomendacionView.as_view()),
     path('trabajador/instrumentos/', InstrumentosPropiosView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/instrumentos/', AsignacionesInstrumentoView.as_view()),
     path('trabajador/evaluaciones/<uuid:asignacion_id>/', ResolverInstrumentoView.as_view()),
     path('trabajador/evaluaciones/<uuid:asignacion_id>/<str:accion>/', AccionInstrumentoView.as_view()),
-    path('perfil/', PerfilPropioView.as_view()),
-    path('administracion/politicas/', PoliticasAdministracionView.as_view()),
-    path('administracion/auditoria/', AuditoriaView.as_view()),
-    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),
-    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/<uuid:recomendacion_id>/estado/', EstadoRecomendacionView.as_view()),
     path('reportes/<str:tipo>/',ReportesView.as_view()),
     path('dashboard/',DashboardView.as_view()),
     path('notificaciones/',NotificacionesView.as_view()),

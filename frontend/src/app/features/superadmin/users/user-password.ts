@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 /**
  * Pantalla y ViewModel de restablecimiento administrativo. Carga la persona por ID, valida
  * clave/confirmación y llama SuperadminService.password; tras éxito vacía y oculta ambos
@@ -17,6 +18,8 @@ import { passwordsMatch, passwordStrength } from './password-validation';
  * Carga la persona objetivo y administra clave, confirmación, estado de envío y mensajes.
  */
 export class UserPasswordViewModel {
+  readonly context = inject(ADMINISTRATION_CONTEXT);
+  readonly panel = this.context.panel;
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
@@ -71,7 +74,7 @@ export class UserPasswordViewModel {
   imports: [ReactiveFormsModule, RouterLink],
   providers: [UserPasswordViewModel],
   template: `
-    <p class="eyebrow">SUPERADMIN / PERSONAS</p>
+    <p class="eyebrow">ADMINISTRACIÓN / PERSONAS</p>
     <h1>Restablecer contraseña</h1>
     <p>{{ vm.person()?.email }}</p>
     @if (vm.error()) {
@@ -110,7 +113,7 @@ export class UserPasswordViewModel {
           {{ vm.busy() ? 'Guardando…' : 'Restablecer contraseña' }}</button
         ><a
           class="text-link"
-          [routerLink]="vm.busy() ? null : ['/dashboard/superadmin/personas', vm.id]"
+          [routerLink]="vm.busy() ? null : [vm.panel+'/personas', vm.id]"
           queryParamsHandling="preserve"
           >Volver al detalle</a
         >

@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 /** HTTP de T23. JWT y renovación se delegan al interceptor existente de autenticación. */
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
@@ -12,7 +13,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AssignmentsService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_URL)}/superadmin/assignments`;
+  private readonly base = `${inject(API_URL)}/${inject(ADMINISTRATION_CONTEXT).apiSegment}/assignments`;
 
   list(filters: Record<string, string | number>) {
     let params = new HttpParams();
