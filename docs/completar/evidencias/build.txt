@@ -1,0 +1,44 @@
+
+> frontend@0.0.0 build
+> ng build
+
+> Building...
+√ Building...
+Initial chunk files | Names             |  Raw size | Estimated transfer size
+chunk-PZ7WUD77.js   | -                 | 186.92 kB |                54.40 kB
+chunk-A6E2AC3P.js   | -                 |  87.75 kB |                22.20 kB
+main-DFDNWY2A.js    | main              |   8.77 kB |                 2.14 kB
+styles-DBRX6ZMQ.css | styles            |   6.58 kB |                 1.68 kB
+chunk-7ZXRCZD7.js   | -                 |   3.21 kB |                 1.09 kB
+chunk-5IJEOOCU.js   | -                 |   2.40 kB |               923 bytes
+chunk-WJAZVIUS.js   | -                 |   2.08 kB |               762 bytes
+chunk-AK6BXQKC.js   | -                 |   1.22 kB |               555 bytes
+chunk-MJGT7JMB.js   | -                 | 905 bytes |               905 bytes
+chunk-E3K6XR46.js   | -                 | 705 bytes |               705 bytes
+chunk-ABUK5OWZ.js   | -                 | 415 bytes |               415 bytes
+chunk-VANHCH2A.js   | -                 | 193 bytes |               193 bytes
+chunk-JZ6EFMS6.js   | -                 | 149 bytes |               149 bytes
+
+                    | Initial total     | 301.30 kB |                86.11 kB
+
+Lazy chunk files    | Names             |  Raw size | Estimated transfer size
+chunk-LXPHFVUB.js   | -                 |  46.56 kB |                 9.38 kB
+chunk-33GICW26.js   | content           |  24.10 kB |                 6.66 kB
+chunk-EQUQZAAE.js   | evaluacion        |  19.27 kB |                 5.48 kB
+chunk-IEV4LT6B.js   | assignments       |  18.70 kB |                 5.11 kB
+chunk-5XPH5OZV.js   | user-form         |  18.59 kB |                 5.62 kB
+chunk-UMVZ2FHU.js   | citas             |  16.03 kB |                 4.29 kB
+chunk-TIAMQ5BZ.js   | instruments       |  14.28 kB |                 4.34 kB
+chunk-PMGKRS7G.js   | welcome           |  12.99 kB |                 3.50 kB
+chunk-WYBA6ZQ6.js   | dashboard         |  12.30 kB |                 3.79 kB
+chunk-INIYGAES.js   | gobierno          |  11.71 kB |                 3.46 kB
+chunk-J5YR7H4P.js   | user-list         |  10.97 kB |                 3.75 kB
+chunk-G6BOAAL4.js   | reportes          |  10.09 kB |                 3.08 kB
+chunk-X7DSWPL5.js   | login             |   9.20 kB |                 2.99 kB
+chunk-6WCXPS26.js   | superadmin-layout |   9.19 kB |                 2.55 kB
+chunk-BBISHJQR.js   | seguimiento       |   8.80 kB |                 2.74 kB
+...and 34 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [3.536 seconds] - 2026-10-26T09:14:26.330Z
+
+Output location: C:\Users\jgabr\Documents\SASPEL\frontend\dist\frontend

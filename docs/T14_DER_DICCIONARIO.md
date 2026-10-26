@@ -1,5 +1,10 @@
 # T14 · DER lógico y diccionario de datos
 
+Extensión implementada el 26/10/2026: tablas Recomendacion y EventoAuditoria,
+contador Usuario.version_sesion y conservación de relaciones históricas. Véanse
+[modelo y migraciones 0013–0015](completar/IMPLEMENTACION.md); el diseño que sigue
+conserva el contexto de su revisión original.
+
 Revisado el 16/10/2026 contra el modelo conceptual T13, las reglas del Excel y la implementación integrada hasta T37. La aprobación de T13 por el responsable del desarrollo del proyecto quedó registrada el 16/10/2026 en el modelo conceptual; este documento conserva su revisión de consistencia y trazabilidad técnica. No certifica que las tablas se hayan creado después del diseño original.
 
 ## DER lógico
