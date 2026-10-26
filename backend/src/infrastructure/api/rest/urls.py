@@ -42,7 +42,11 @@ from src.infrastructure.api.rest.views.perfil import PerfilPropioView
 
 from src.infrastructure.api.rest.views.instrument_assignments import AsignacionesInstrumentoView, InstrumentosPropiosView, ResolverInstrumentoView, AccionInstrumentoView
 
+from src.infrastructure.api.rest.views.evolucion import EvolucionView
+
 urlpatterns = [
+    path('trabajador/evolucion/', EvolucionView.as_view()),
+    path('psicologo/trabajadores/<uuid:trabajador_id>/evolucion/', EvolucionView.as_view()),
     path('trabajador/instrumentos/', InstrumentosPropiosView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/instrumentos/', AsignacionesInstrumentoView.as_view()),
     path('trabajador/evaluaciones/<uuid:asignacion_id>/', ResolverInstrumentoView.as_view()),
