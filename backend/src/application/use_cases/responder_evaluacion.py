@@ -8,9 +8,10 @@ from src.domain.services.resultado_evaluacion import calcular_puntaje, seleccion
 
 
 class GestionarRespuestasEvaluacion:
-    def __init__(self, repository: ResponderEvaluacionRepository, assignments: AssignmentRepository):
+    def __init__(self, repository: ResponderEvaluacionRepository, assignments: AssignmentRepository, inicial=True):
         self.repository = repository
         self.assignments = assignments
+        self.inicial = inicial
 
     def consultar(self, usuario_id, asignacion_id):
         with self.repository.atomic(usuario_id, asignacion_id):
@@ -91,7 +92,7 @@ class GestionarRespuestasEvaluacion:
                 result = self.repository.resultado(usuario_id, asignacion_id)
                 if result is not None:
                     return result
-            if role != 'NUEVO_TRABAJADOR':
+            if role != ('NUEVO_TRABAJADOR' if self.inicial else 'TRABAJADOR'):
                 raise EvaluacionError('Solo un nuevo trabajador puede completar su evaluación inicial.')
             self.editable(detail)
             self.validar(detail, respuestas)
@@ -107,8 +108,9 @@ class GestionarRespuestasEvaluacion:
             range_id = seleccionar_rango(score, ranges)
             self.repository.crear_resultado(usuario_id, detail.aplicacion_id, score, range_id)
             self.repository.finalizar(usuario_id, asignacion_id, detail.aplicacion_id)
-            self.repository.completar_onboarding(usuario_id)
-            AutoAssignWorker(self.assignments).execute(usuario_id)
+            if self.inicial:
+                self.repository.completar_onboarding(usuario_id)
+                AutoAssignWorker(self.assignments).execute(usuario_id)
             return self.repository.resultado(usuario_id, asignacion_id)
 
     def resultado_inicial(self, usuario_id):

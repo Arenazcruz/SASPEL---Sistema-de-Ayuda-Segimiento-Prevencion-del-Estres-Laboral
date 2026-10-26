@@ -20,6 +20,8 @@ export class EvaluacionViewModel {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('asignacionId')!;
+  readonly inicial = this.auth.user()?.role !== 'TRABAJADOR';
+  readonly regreso = this.inicial ? '/dashboard/nuevo-trabajador' : '/dashboard/trabajador/instrumentos';
   readonly detalle = signal<EvaluacionDetalle | null>(null);
   readonly resultado = signal<ResultadoEvaluacion | null>(null);
   readonly identidadLista = signal(false);
@@ -175,7 +177,7 @@ export class EvaluacionViewModel {
         next: (data) => {
           this.hydrate(data);
           this.mensaje.set('Progreso guardado. Puedes continuar más adelante.');
-          if (volver) void this.router.navigateByUrl('/dashboard/nuevo-trabajador');
+          if (volver) void this.router.navigateByUrl(this.regreso);
         },
         error: (error) => this.fail(error),
       });
@@ -224,7 +226,7 @@ export class EvaluacionViewModel {
       return;
     }
     if (this.dirty() && this.editable()) this.guardar(true);
-    else void this.router.navigateByUrl('/dashboard/nuevo-trabajador');
+    else void this.router.navigateByUrl(this.regreso);
   }
 
   continuar(): void {

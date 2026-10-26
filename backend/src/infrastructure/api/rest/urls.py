@@ -40,7 +40,13 @@ from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionVi
 
 from src.infrastructure.api.rest.views.perfil import PerfilPropioView
 
+from src.infrastructure.api.rest.views.instrument_assignments import AsignacionesInstrumentoView, InstrumentosPropiosView, ResolverInstrumentoView, AccionInstrumentoView
+
 urlpatterns = [
+    path('trabajador/instrumentos/', InstrumentosPropiosView.as_view()),
+    path('psicologo/trabajadores/<uuid:trabajador_id>/instrumentos/', AsignacionesInstrumentoView.as_view()),
+    path('trabajador/evaluaciones/<uuid:asignacion_id>/', ResolverInstrumentoView.as_view()),
+    path('trabajador/evaluaciones/<uuid:asignacion_id>/<str:accion>/', AccionInstrumentoView.as_view()),
     path('perfil/', PerfilPropioView.as_view()),
     path('administracion/politicas/', PoliticasAdministracionView.as_view()),
     path('administracion/auditoria/', AuditoriaView.as_view()),

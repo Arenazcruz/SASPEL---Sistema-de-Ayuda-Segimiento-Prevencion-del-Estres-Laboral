@@ -35,7 +35,11 @@ def alerta(sender,instance,created=False,raw=False,**kwargs):
 
 def avisar_resultado(pk):
     row=DjangoResultadosRepository.resultados().filter(pk=pk).first()
-    if row: emitir('RESULTADO',row.pk,'DISPONIBLE','Tu resultado está disponible',[row.aplicacion.asignacion.trabajador_id])
+    if row:
+        worker=row.aplicacion.asignacion.trabajador_id
+        emitir('RESULTADO',row.pk,'DISPONIBLE','Tu resultado está disponible',[worker])
+        ids=AsignacionProfesional.objects.filter(trabajador_id=worker,estado='ACTIVA',deleted=False).values_list('psicologo_id',flat=True)
+        emitir('RESULTADO',row.pk,'REVISION','Hay un resultado disponible para revisión',ids)
 
 @receiver(post_save,sender=ResultadoInstrumento,dispatch_uid='saspel_notificacion_resultado')
 def resultado(sender,instance,raw=False,**kwargs):
