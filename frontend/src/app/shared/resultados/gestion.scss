@@ -1,0 +1,41 @@
+@use './consulta';
+
+form, article, section.card { margin-block: 24px; }
+form, fieldset { min-width: 0; }
+fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  align-items: end;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+legend { padding-inline: 8px; font-weight: 600; }
+label { display: flex; flex-direction: column; gap: 8px; margin-block: 12px; }
+input, select, textarea {
+  width: 100%; min-width: 0; box-sizing: border-box;
+  padding: 12px; border: 1px solid var(--line); border-radius: 6px;
+  font: inherit; color: inherit; background: #fff;
+}
+input[type='checkbox'] { width: auto; align-self: start; }
+textarea { min-height: 120px; resize: vertical; }
+button {
+  padding: 12px 20px; min-height: 44px; border: 1px solid #164950;
+  border-radius: 6px; color: white; background: #164950;
+  font: inherit; cursor: pointer; margin: 4px 8px 4px 0;
+}
+button:disabled { opacity: .55; cursor: wait; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #5b8e62; outline-offset: 3px;
+}
+svg { width: 100%; height: auto; display: block; margin-block: 20px; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+caption { text-align: left; padding-block: 12px; font-weight: 600; }
+th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 650px) {
+  fieldset { padding: 16px; }
+  th, td { padding: 10px 4px; font-size: 14px; }
+}
