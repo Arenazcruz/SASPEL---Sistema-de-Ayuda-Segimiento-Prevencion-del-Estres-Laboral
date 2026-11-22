@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_URL } from '../../core/auth/api-url';
 import { PrimerAccesoEstado } from '../../core/auth/auth.models';
+import {TokenStorageService} from '../../core/auth/token-storage.service';
+import {tap} from 'rxjs';
 
 export interface Politica {
   id: string;
@@ -18,12 +20,16 @@ export interface Politica {
 export class PrimerAccesoService {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_URL) + '/auth/primer-acceso';
+  private readonly storage = inject(TokenStorageService);
 
   estado() {
     return this.http.get<PrimerAccesoEstado>(`${this.base}/`);
   }
   cambiarPassword(data: { password: string; password_confirmation: string }) {
-    return this.http.post<PrimerAccesoEstado>(`${this.base}/password/`, data);
+    const anterior = this.storage.access;
+    return this.http.post<PrimerAccesoEstado & {tokens:{access:string;refresh:string}}>(`${this.base}/password/`, data).pipe(tap(r=>{
+      if(r.tokens && anterior && this.storage.access===anterior)this.storage.save(r.tokens);
+    }));
   }
   pendientes() {
     return this.http.get<Politica[]>(`${this.base}/politicas/`);

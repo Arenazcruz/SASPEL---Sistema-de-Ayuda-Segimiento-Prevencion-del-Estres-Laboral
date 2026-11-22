@@ -54,7 +54,13 @@ class PrimerAccesoTests(TestCase):
         return PoliticaSistema.objects.create(**(data | changes))
 
     def change(self, **changes):
-        return self.client.post(BASE + 'password/', dict(password=NUEVA, password_confirmation=NUEVA) | changes, format='json')
+        anterior = self.client._credentials.get('HTTP_AUTHORIZATION')
+        response = self.client.post(BASE + 'password/', dict(password=NUEVA, password_confirmation=NUEVA) | changes, format='json')
+        if response.status_code == 200:
+            probe = APIClient(); probe.credentials(HTTP_AUTHORIZATION=anterior)
+            self.assertEqual(probe.get('/api/auth/me/').status_code, 401)
+            self.client.credentials(HTTP_AUTHORIZATION='Bearer '+response.data['tokens']['access'])
+        return response
 
     def accept(self, *policies):
         return self.client.post(BASE + 'aceptar/', {'politicas': [str(p.pk) for p in policies]}, format='json')

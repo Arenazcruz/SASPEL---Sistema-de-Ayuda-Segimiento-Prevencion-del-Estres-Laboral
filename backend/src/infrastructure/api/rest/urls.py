@@ -34,7 +34,18 @@ from src.infrastructure.api.rest.views.dashboard import DashboardView
 
 from src.infrastructure.api.rest.views.reportes import ReportesView
 
+from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesView, EstadoRecomendacionView
+
+from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
+
+from src.infrastructure.api.rest.views.perfil import PerfilPropioView
+
 urlpatterns = [
+    path('perfil/', PerfilPropioView.as_view()),
+    path('administracion/politicas/', PoliticasAdministracionView.as_view()),
+    path('administracion/auditoria/', AuditoriaView.as_view()),
+    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),
+    path('seguimientos/<uuid:seguimiento_id>/recomendaciones/<uuid:recomendacion_id>/estado/', EstadoRecomendacionView.as_view()),
     path('reportes/<str:tipo>/',ReportesView.as_view()),
     path('dashboard/',DashboardView.as_view()),
     path('notificaciones/',NotificacionesView.as_view()),

@@ -1,0 +1,11 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()"><a [routerLink]="auth.user()?.dashboard_path||'/login'">Volver al panel</a><h1>Mi perfil institucional</h1>
+@if(vm.busy()){<p role="status">Procesando…</p>}@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button [disabled]="vm.busy()" (click)="vm.load()">Reintentar</button>}@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.datos();as datos){<p>{{datos.email}} · {{datos.codigo_empleado}}</p><p>Área: {{datos.area||'Sin registrar'}} · Cargo: {{datos.cargo||'Sin registrar'}}</p>
+<form (ngSubmit)="vm.guardar()"><fieldset [disabled]="vm.busy()"><legend>Datos personales</legend>
+<label>Nombres<input name="nombre" [(ngModel)]="vm.form.first_name" maxlength="150" required></label>
+<label>Primer apellido<input name="apellido" [(ngModel)]="vm.form.last_name" maxlength="150" required></label>
+<label>Segundo apellido<input name="materno" [(ngModel)]="vm.form.apellido_materno" maxlength="150"></label>
+<label>Teléfono<input name="telefono" [(ngModel)]="vm.form.telefono" maxlength="15" inputmode="numeric"></label>
+<label>Fecha de nacimiento<input name="fecha" type="date" [(ngModel)]="vm.form.fecha_nacimiento"></label>
+<label>Sexo<select name="sexo" [(ngModel)]="vm.form.sexo"><option value="">Sin especificar</option><option value="F">Femenino</option><option value="M">Masculino</option><option value="O">Otro</option></select></label>
+<button type="submit">Guardar perfil</button></fieldset></form>}</main>

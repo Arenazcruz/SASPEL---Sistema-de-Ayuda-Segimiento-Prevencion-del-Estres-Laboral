@@ -19,7 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname))
     return next(request);
   const endpoint = target.pathname.slice(base.pathname.length);
-  if (endpoint === 'auth/login/' || endpoint === 'auth/refresh/') return next(request);
+  if (endpoint === 'auth/login/' || endpoint === 'auth/refresh/' || endpoint === 'auth/logout/') return next(request);
   const storage = inject(TokenStorageService);
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -48,7 +48,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
           next(request.clone({ setHeaders: { Authorization: `Bearer ${access}` } })),
         ),
         catchError((refreshError) => {
-          if (storage.refresh === sessionRefresh) auth.logout();
+          if (storage.refresh === sessionRefresh) auth.logout(false);
           return throwError(() => refreshError);
         }),
       );

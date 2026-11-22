@@ -41,7 +41,9 @@ class CambiarPasswordView(PrimerAccesoView):
         serializer = CambiarPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = CambiarPasswordCommand(request.user.pk, **serializer.validated_data)
-        return Response(asdict(build_primer_acceso().cambiar_password(command)))
+        from src.infrastructure.auth.jwt_token_provider import JWTTokenProvider
+        estado = asdict(build_primer_acceso().cambiar_password(command))
+        return Response(estado | {'tokens': JWTTokenProvider.issue(request.user.pk)})
 
 
 class PoliticasPendientesView(PrimerAccesoView):

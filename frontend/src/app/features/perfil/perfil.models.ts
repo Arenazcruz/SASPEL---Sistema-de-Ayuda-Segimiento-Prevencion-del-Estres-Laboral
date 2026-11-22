@@ -1,0 +1,1 @@
+export interface Perfil {first_name:string;last_name:string;apellido_materno:string;telefono:string;fecha_nacimiento:string|null;sexo:string;email:string;codigo_empleado:string;area:string;cargo:string}
