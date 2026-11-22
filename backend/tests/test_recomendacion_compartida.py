@@ -25,5 +25,13 @@ class CompartirTests(TestCase):
         row, = api.get(propias).data
         self.assertEqual(set(row), {'id','texto','estado','creado_en'})
         self.assertEqual(row['texto'],'Acción compartida')
+        from src.infrastructure.persistence.django.repositories.notificaciones import DjangoNotificacionesRepository
+        from src.infrastructure.persistence.django.models import Recomendacion
+        visible = Recomendacion.objects.get(compartida=True)
+        visible.save()
+        avisos = DjangoNotificacionesRepository().visibles(worker.pk).filter(tipo='RECOMENDACION')
+        self.assertEqual(avisos.count(), 1)
+        self.assertEqual(avisos.get().origen_id, visible.pk)
+        self.assertNotIn(visible.texto, avisos.get().titulo)
         entrar(other)
         self.assertEqual(api.get(propias,{'trabajador_id':worker.pk}).data,[])
