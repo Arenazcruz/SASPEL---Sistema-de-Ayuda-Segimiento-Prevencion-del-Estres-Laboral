@@ -25,3 +25,5 @@ Validación técnica local del 22/11/2026.
 | evolucion-desktop | [Abrir captura](evidencias/evolucion-desktop.png) |
 | evolucion-mobile | [Abrir captura](evidencias/evolucion-mobile.png) |
 | recomendaciones-desktop | [Abrir captura](evidencias/recomendaciones-desktop.png) |
+
+[Acta del ensayo general](ENSAYO.md) · [Cierre técnico y resultados finales](CIERRE.md).
