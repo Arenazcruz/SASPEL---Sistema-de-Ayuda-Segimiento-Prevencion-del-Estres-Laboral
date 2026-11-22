@@ -38,7 +38,7 @@ describe('Flujos de cierre funcional H4',()=>{
   route.snapshot.paramMap=convertToParamMap({trabajadorId:'w'});const vm=TestBed.createComponent(EvolucionComponent).componentInstance.vm;const url='/api/psicologo/trabajadores/w/evolucion/';http.expectOne(url).flush({series:[]});vm.load();http.expectOne(url).flush({detail:'No autorizado'},{status:403,statusText:'Forbidden'});expect(vm.datos()).toBeNull();expect(vm.error()).not.toBe('');
  });
  it('recomendación se asocia al seguimiento y admite transición',()=>{
-  route.snapshot.paramMap=convertToParamMap({seguimientoId:'s'});const vm=TestBed.createComponent(RecomendacionesComponent).componentInstance.vm;const url='/api/seguimientos/s/recomendaciones/';http.expectOne(url).flush([]);vm.texto='Acción manual';vm.guardar();const r=http.expectOne(url);expect(r.request.body).toEqual({texto:'Acción manual'});r.flush({id:'r'});http.expectOne(url).flush([{id:'r',estado:'PENDIENTE',texto:'Acción manual'}]);vm.cambiar(vm.datos()![0],'COMPLETADA');http.expectOne(url+'r/estado/').flush({id:'r'});http.expectOne(url).flush([{id:'r',estado:'COMPLETADA'}]);expect(vm.datos()![0].estado).toBe('COMPLETADA');
+  route.snapshot.paramMap=convertToParamMap({seguimientoId:'s'});const vm=TestBed.createComponent(RecomendacionesComponent).componentInstance.vm;const url='/api/seguimientos/s/recomendaciones/';http.expectOne(url).flush([]);vm.texto='Acción manual';vm.guardar();const r=http.expectOne(url);expect(r.request.body).toEqual({texto:'Acción manual',compartida:false});r.flush({id:'r'});http.expectOne(url).flush([{id:'r',estado:'PENDIENTE',texto:'Acción manual'}]);vm.cambiar(vm.datos()![0],'COMPLETADA');http.expectOne(url+'r/estado/').flush({id:'r'});http.expectOne(url).flush([{id:'r',estado:'COMPLETADA'}]);expect(vm.datos()![0].estado).toBe('COMPLETADA');
  });
  it('recomendaciones preservan texto ante un fallo y evitan envío vacío',()=>{
   route.snapshot.paramMap=convertToParamMap({seguimientoId:'s'});const vm=TestBed.createComponent(RecomendacionesComponent).componentInstance.vm;const url='/api/seguimientos/s/recomendaciones/';http.expectOne(url).flush([]);vm.guardar();expect(vm.error()).toContain('Escribe');vm.texto='Borrador';vm.guardar();http.expectOne(url).flush({detail:'Interno secreto'},{status:500,statusText:'Error'});expect(vm.texto).toBe('Borrador');expect(vm.error()).not.toContain('secreto');
@@ -56,4 +56,11 @@ describe('Flujos de cierre funcional H4',()=>{
  it('reprogramación valida y envía solo horario y motivo',()=>{
   user.set({role:'PSICOLOGO',dashboard_path:'/dashboard/psicologo'});const vm=TestBed.createComponent(Citas).componentInstance.vm;http.expectOne('/api/citas/').flush([]);http.expectOne('/api/psicologo/disponibilidad/').flush([]);const cita={id:'c'} as any;vm.reprogramar(cita);expect(vm.error()).toContain('horario');vm.nuevosInicios['c']='2099-01-01T10:00';vm.nuevosFines['c']='2099-01-01T11:00';vm.cierres['c']='Cambio';vm.reprogramar(cita);vm.reprogramar(cita);const r=http.expectOne('/api/citas/c/reprogramar/');expect(r.request.body.motivo).toBe('Cambio');expect(r.request.body.trabajador_id).toBeUndefined();r.flush({detail:'Horario ocupado'},{status:400,statusText:'Bad Request'});expect(vm.nuevosInicios['c']).toBe('2099-01-01T10:00');expect(vm.error()).toBe('Horario ocupado');
  });
-});
+ it('el trabajador consulta sus acciones compartidas sin controles profesionales',()=>{
+  const f=TestBed.createComponent(RecomendacionesComponent);
+  http.expectOne('/api/trabajador/recomendaciones/').flush([{id:'r',texto:'Acción de ejemplo',estado:'PENDIENTE'}]);
+  f.detectChanges();
+  expect(f.nativeElement.textContent).toContain('Acción de ejemplo');
+  expect(f.nativeElement.querySelector('form')).toBeNull();
+  expect(f.nativeElement.textContent).not.toContain('Completar');
+ });});
