@@ -6,6 +6,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from src.application.dto.instruments import InstrumentDTO, InstrumentPage
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
+from src.domain.services.version_instrumento import exigir_version_editable
 from src.infrastructure.persistence.django.models import InstrumentoPsicologico
 
 PAGE_SIZE = 20
@@ -70,6 +71,7 @@ class DjangoInstrumentRepository:
     def update(self, instrument_id, changes):
         with transaction.atomic():
             row = self.find(instrument_id, lock=True)
+            exigir_version_editable(row.asignaciones.filter(aplicacion__isnull=False).exists())
             for field, value in changes.items():
                 setattr(row, field, value)
             return self.save(row, [*changes, 'actualizado_en'])
