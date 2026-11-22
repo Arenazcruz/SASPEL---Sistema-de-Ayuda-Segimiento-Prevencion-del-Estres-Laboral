@@ -10,10 +10,12 @@ Más adelante se implementarán la asignación y sus cambios de estado.
 from django.conf import settings
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .instrumento_psicologico import InstrumentoPsicologico
 
 
-class AsignacionInstrumento(models.Model):
+class AsignacionInstrumento(AuditableModel):
     """Encargo de un instrumento versionado a un trabajador; admite nuevas evaluaciones del mismo
     instrumento.
     """
@@ -48,8 +50,6 @@ class AsignacionInstrumento(models.Model):
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     # Fecha límite prevista para responder, si se ha establecido alguna.
     fecha_limite = models.DateTimeField(null=True, blank=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_asignacion_instrumento'

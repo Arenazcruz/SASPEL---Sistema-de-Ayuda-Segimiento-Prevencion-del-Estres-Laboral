@@ -1,0 +1,22 @@
+.content-filters {
+  grid-template-columns: 2fr 1fr auto;
+}
+.parent-picker {
+  margin-bottom: 1rem;
+}
+.content-text {
+  max-width: 32rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.content-context {
+  margin-bottom: 1rem;
+}
+.sa-field-error {
+  display: block;
+}
+@media (max-width: 650px) {
+  .content-filters {
+    grid-template-columns: 1fr;
+  }
+}

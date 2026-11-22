@@ -5,10 +5,10 @@ application/use_cases/superadmin.py; revisar urls y serializers al cambiar solic
 
 from dataclasses import asdict
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from src.infrastructure.auth.jwt_authentication import UUIDJWTAuthentication
 from src.application.dto.superadmin import CreateUserCommand, ResetPasswordCommand, UpdateUserCommand, UserFilters
 from src.application.use_cases import superadmin as cases
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
@@ -17,6 +17,7 @@ from src.infrastructure.api.rest.serializers.superadmin import (
     UserCreateSerializer, UserEditSerializer, UserFilterSerializer,
 )
 from src.infrastructure.dependencies.superadmin import build_administration
+from src.infrastructure.api.rest.permissions import PrimerAccesoCompleto
 
 
 class IsFunctionalSuperadmin(BasePermission):
@@ -36,8 +37,8 @@ class IsFunctionalSuperadmin(BasePermission):
 
 class SuperadminView(APIView):
     """Base que comparte JWT, permiso funcional, traducción de errores y respuesta no-store."""
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsFunctionalSuperadmin]
+    authentication_classes = [UUIDJWTAuthentication]
+    permission_classes = [IsAuthenticated, PrimerAccesoCompleto, IsFunctionalSuperadmin]
 
     def handle_exception(self, exc):
         """Convierte ausencia en 404 y AdministrationError en 400 por campo; deja los demás
@@ -145,7 +146,7 @@ class InstitutionView(SuperadminView):
         if item_id:
             return Response(asdict(case.get(kind, item_id)))
         filters = self.validated(UserFilterSerializer, request.query_params.dict())
-        return Response([asdict(item) for item in case.list(kind, filters.get('active'))])
+        return Response([asdict(item) for item in case.list(kind, filters.get('active'), filters.get('area'))])
 
     def post(self, request, kind, item_id=None, action=None):
         """Crea catálogo validado con 201 o activa/desactiva por ID con 200. Rechaza POST de

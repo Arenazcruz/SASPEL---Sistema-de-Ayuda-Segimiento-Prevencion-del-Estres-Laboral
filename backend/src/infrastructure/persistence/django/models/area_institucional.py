@@ -8,16 +8,16 @@ asociados. Los perfiles consultan su nombre desde este registro.
 
 from django.db import models
 
+from .auditable import AuditableModel
 
-class AreaInstitucional(models.Model):
+
+class AreaInstitucional(AuditableModel):
     # Nombre que se mostrará al elegir el área de un trabajador.
     """Catálogo del área de trabajo; la desactivación conserva los perfiles asociados."""
     nombre = models.CharField(max_length=150, unique=True)
     descripcion = models.TextField(blank=True)
     # Permite dejar de ofrecer el área sin borrar los perfiles que la usan.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_area_institucional'

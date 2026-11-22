@@ -1,0 +1,5 @@
+<section aria-labelledby="indicadores-title" [attr.aria-busy]="vm.loading()"><h2 id="indicadores-title">Indicadores operativos</h2>
+<button class="button button-outline" (click)="vm.load()" [disabled]="vm.loading()">Actualizar indicadores</button>
+@if(vm.loading()){<p role="status">Cargando indicadores…</p>}
+@if(vm.error()){<p role="alert">{{vm.error()}}</p>}
+@if(vm.datos();as data){<p>Actualizado: {{data.actualizado|date:'short'}}</p><div class="cards">@for(card of data.indicadores;track card.clave){<article>{{card.etiqueta}}<strong>{{card.valor}}</strong></article>}</div>@if(vm.vacio()){<p>No hay actividad disponible en tu alcance actual.</p>}}</section>

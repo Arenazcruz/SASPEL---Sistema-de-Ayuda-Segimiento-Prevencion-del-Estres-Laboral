@@ -21,7 +21,7 @@ export class InstitutionViewModel {
   readonly kind = inject(ActivatedRoute).snapshot.data['kind'] as InstitutionKind;
   readonly title = this.kind === 'areas' ? 'Áreas' : 'Cargos';
   readonly items = signal<Institution[]>([]);
-  readonly editing = signal<number | null>(null);
+  readonly editing = signal<string | null>(null);
   readonly loading = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');

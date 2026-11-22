@@ -19,7 +19,7 @@ import { passwordsMatch, passwordStrength } from './password-validation';
 export class UserPasswordViewModel {
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
+  readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
   readonly person = signal<Person | null>(null);
   readonly error = signal('');
   readonly notice = signal('');
@@ -108,7 +108,10 @@ export class UserPasswordViewModel {
       <div class="sa-actions">
         <button class="button" type="submit" [disabled]="vm.busy() || !vm.person()">
           {{ vm.busy() ? 'Guardando…' : 'Restablecer contraseña' }}</button
-        ><a class="text-link" [routerLink]="['/dashboard/superadmin/personas', vm.id]"
+        ><a
+          class="text-link"
+          [routerLink]="vm.busy() ? null : ['/dashboard/superadmin/personas', vm.id]"
+          queryParamsHandling="preserve"
           >Volver al detalle</a
         >
       </div>

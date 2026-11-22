@@ -23,6 +23,7 @@ export class AuthService {
   private refreshing?: Observable<string>;
   // Impide que una respuesta tardía vuelva a abrir una sesión que ya se cerró.
   private sessionVersion = 0;
+  private identityVersion = 0;
 
   /**
    * Recibe correo/clave y devuelve Observable<AuthUser>. Limpia primero la sesión previa; al
@@ -51,29 +52,41 @@ export class AuthService {
    * consulta en curso y actualiza el estado solo si sigue siendo la misma sesión; guards
    * dependen de esta protección contra respuestas tardías.
    */
-  restoreSession(): Observable<AuthUser | null> {
+  restoreSession(preserveOnError = false): Observable<AuthUser | null> {
     if (!this.storage.access && !this.storage.refresh) {
       this.identity.set(null);
       return of(null);
     }
     if (this.restoring) return this.restoring;
     const version = this.sessionVersion;
+    const identityVersion = this.identityVersion;
+    const current = () =>
+      version === this.sessionVersion && identityVersion === this.identityVersion;
     this.restoring = this.http.get<AuthUser>(`${this.api}/auth/me/`).pipe(
       map((user) => this.validatedUser(user)),
-      map((user) => (version === this.sessionVersion ? user : null)),
+      map((user) => (current() ? user : null)),
       tap((user) => {
-        if (version === this.sessionVersion) this.identity.set(user);
+        if (current()) this.identity.set(user);
       }),
-      catchError(() => {
-        if (version === this.sessionVersion) this.clearSession();
+      catchError((error) => {
+        if (preserveOnError) return throwError(() => error);
+        if (current()) this.clearSession();
         return of(null);
       }),
       finalize(() => {
-        if (version === this.sessionVersion) this.restoring = undefined;
+        if (current()) this.restoring = undefined;
       }),
       shareReplay({ bufferSize: 1, refCount: false }),
     );
     return this.restoring;
+  }
+
+  refreshIdentity(): Observable<AuthUser | null> {
+    // La transición cambió el rol en servidor; no conservar el rol anterior en memoria.
+    this.identityVersion++;
+    this.restoring = undefined;
+    this.identity.set(null);
+    return this.restoreSession(true);
   }
 
   /**

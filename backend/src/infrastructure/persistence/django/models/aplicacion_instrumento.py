@@ -9,10 +9,12 @@ un resultado automáticamente.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .asignacion_instrumento import AsignacionInstrumento
 
 
-class AplicacionInstrumento(models.Model):
+class AplicacionInstrumento(AuditableModel):
     """Intento único de respuesta por asignación; estados y fechas no ejecutan corrección
     automática.
     """
@@ -31,8 +33,6 @@ class AplicacionInstrumento(models.Model):
     fecha_inicio = models.DateTimeField(null=True, blank=True)
     # Momento en que se terminó de responder, cuando se registre.
     fecha_finalizacion = models.DateTimeField(null=True, blank=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_aplicacion_instrumento'

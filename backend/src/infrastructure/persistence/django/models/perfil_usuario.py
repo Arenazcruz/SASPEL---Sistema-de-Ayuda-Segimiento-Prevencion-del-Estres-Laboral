@@ -12,11 +12,13 @@ el sistema utilizará estos datos para el proceso inicial y las asignaciones.
 from django.conf import settings
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .area_institucional import AreaInstitucional
 from .cargo_institucional import CargoInstitucional
 
 
-class PerfilUsuario(models.Model):
+class PerfilUsuario(AuditableModel):
     """Extiende User con datos laborales y personales; acceso activo, tamizaje y habilitación de
     asignaciones son indicadores distintos.
     """
@@ -35,8 +37,6 @@ class PerfilUsuario(models.Model):
     codigo_empleado = models.CharField(max_length=50, unique=True)
     # Completa el apellido que no se guarda en los campos principales de la cuenta.
     apellido_materno = models.CharField(max_length=150, blank=True)
-    # Nombre con el que la persona prefiere ser llamada.
-    nombre_preferido = models.CharField(max_length=150, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     # Dato opcional: femenino, masculino u otro; puede dejarse sin completar.
     sexo = models.CharField(max_length=1, choices=Sexo.choices, blank=True)
@@ -66,8 +66,6 @@ class PerfilUsuario(models.Model):
         default=True,
         help_text='Permite recibir nuevas asignaciones sin cambiar el estado del usuario.',
     )
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_perfil_usuario'

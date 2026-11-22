@@ -3,21 +3,21 @@
 Los perfiles usan este catálogo para indicar qué cargo ocupa cada persona.
 Un cargo puede desactivarse sin perder esa información. No se permite repetir
 su nombre ni borrar un cargo que todavía esté asociado a algún perfil.
-El cargo no determina automáticamente el área de trabajo.
+AreaCargo registra las áreas en las que se puede seleccionar cada cargo.
 """
 
 from django.db import models
 
+from .auditable import AuditableModel
 
-class CargoInstitucional(models.Model):
+
+class CargoInstitucional(AuditableModel):
     # Nombre del cargo que se podrá seleccionar en el perfil.
-    """Catálogo del puesto de trabajo, independiente del área institucional."""
+    """Catálogo del puesto de trabajo, compartible entre áreas mediante AreaCargo."""
     nombre = models.CharField(max_length=150, unique=True)
     descripcion = models.TextField(blank=True)
     # Permite retirar el cargo de uso sin perder los perfiles asociados.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_cargo_institucional'

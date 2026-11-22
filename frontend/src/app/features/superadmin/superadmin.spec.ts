@@ -22,14 +22,15 @@ import { API_URL } from '../../core/auth/api-url';
 import { FunctionalRole, ROLE_DASHBOARDS } from '../../core/auth/auth.models';
 import { SuperadminLayout } from './layout/superadmin-layout';
 import { SuperadminService } from './superadmin.service';
-import { Person } from './superadmin.models';
+import { Institution, Person } from './superadmin.models';
 import { UserForm } from './users/user-form';
+import { UserDetail } from './users/user-detail';
 import { UserList } from './users/user-list';
 import { UserPassword } from './users/user-password';
 import { superadminChildGuard } from './superadmin.routes';
 
 const person: Person = {
-  id: 2,
+  id: '00000000-0000-0000-0000-000000000002',
   email: 'ana@example.com',
   first_name: 'Ana',
   last_name: 'Prueba',
@@ -40,7 +41,6 @@ const person: Person = {
   last_login: null,
   codigo_empleado: 'SA-TEST',
   apellido_materno: '',
-  nombre_preferido: '',
   fecha_nacimiento: null,
   sexo: '',
   telefono: '',
@@ -51,7 +51,7 @@ const person: Person = {
   tiene_perfil: true,
 };
 const authUser = signal({
-  id: 1,
+  id: '00000000-0000-0000-0000-000000000001',
   email: 'root@example.com',
   first_name: 'Root',
   role: 'SUPERADMIN' as FunctionalRole,
@@ -59,8 +59,32 @@ const authUser = signal({
 });
 const routeData = new BehaviorSubject({});
 const query = new BehaviorSubject(convertToParamMap({}));
+const areaTic: Institution = {
+  id: '00000000-0000-0000-0000-000000000011',
+  nombre: 'Área de TIC',
+  descripcion: '',
+  activo: true,
+};
+const areaNegocios: Institution = {
+  id: '00000000-0000-0000-0000-000000000012',
+  nombre: 'Área de Negocios',
+  descripcion: '',
+  activo: true,
+};
+const cargoTic: Institution = {
+  id: '00000000-0000-0000-0000-000000000021',
+  nombre: 'ADMINISTRADOR DE SISTEMAS',
+  descripcion: '',
+  activo: true,
+};
+const cargoNegocios: Institution = {
+  id: '00000000-0000-0000-0000-000000000022',
+  nombre: 'ANALISTA DE NEGOCIOS',
+  descripcion: '',
+  activo: true,
+};
 
-function setup(component: unknown, id?: number) {
+function setup(component: unknown, id?: string) {
   routeData.next({});
   query.next(convertToParamMap({}));
   TestBed.configureTestingModule({
@@ -90,7 +114,9 @@ function catalogs(http: HttpTestingController, active = false) {
   for (const kind of ['areas', 'cargos'])
     http
       .expectOne(`/api/superadmin/${kind}/${active ? '?active=true' : ''}`)
-      .flush([{ id: 1, nombre: kind, descripcion: '', activo: true }]);
+      .flush([
+        { id: '00000000-0000-0000-0000-000000000001', nombre: kind, descripcion: '', activo: true },
+      ]);
 }
 
 describe('Superadmin layout y permisos', () => {
@@ -103,6 +129,28 @@ describe('Superadmin layout y permisos', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Usuarios');
+    expect(el.querySelector('#evaluations-menu')?.textContent).toContain('Instrumentos');
+    expect(el.querySelectorAll('#evaluations-menu a')).toHaveLength(4);
+    for (const [path, label] of [
+      ['preguntas', 'Preguntas'],
+      ['escalas', 'Escalas de respuesta'],
+      ['rangos', 'Rangos de interpretación'],
+    ]) {
+      expect(
+        el.querySelector(`a[href="/dashboard/superadmin/evaluaciones/${path}"]`)?.textContent,
+      ).toContain(label);
+    }
+    expect(el.querySelector('#evaluations-menu a')?.getAttribute('href')).toBe(
+      '/dashboard/superadmin/evaluaciones/instrumentos',
+    );
+    expect(
+      el.querySelector('a[href="/dashboard/superadmin/personas/asignaciones-profesionales"]')
+        ?.textContent,
+    ).toContain('Asignaciones profesionales');
+    expect(el.querySelector('#people-menu')?.textContent).toContain('Asignaciones profesionales');
+    expect(el.querySelector('#people-menu')?.textContent).not.toContain('Nuevos trabajadores');
+    expect(el.querySelectorAll('#people-menu a')).toHaveLength(2);
+    expect(el.querySelector('#people-menu button:disabled')).toBeNull();
     expect(el.textContent).not.toContain('auth_user');
     el.querySelector<HTMLButtonElement>('[aria-controls="people-menu"]')!.click();
     await fixture.whenStable();
@@ -132,18 +180,18 @@ describe('Superadmin layout y permisos', () => {
 describe('Formulario de personas', () => {
   let http: HttpTestingController;
   afterEach(() => http.verify());
-  function form(id?: number) {
+  function form(id?: string, record = person) {
     http = setup(UserForm, id);
     const fixture = TestBed.createComponent(UserForm);
-    catalogs(http, true);
-    if (id) http.expectOne(`/api/superadmin/users/${id}/`).flush(person);
+    http.expectOne('/api/superadmin/areas/?active=true').flush([areaTic, areaNegocios]);
+    if (id) http.expectOne(`/api/superadmin/users/${id}/`).flush(record);
     return fixture;
   }
   function fill(vm: UserForm['vm']) {
     vm.form.patchValue({
       ...person,
       role: 'NUEVO_TRABAJADOR',
-      fecha_nacimiento: '',
+      fecha_nacimiento: '1990-05-15',
       password: 'Clave-segura-528!',
       password_confirmation: 'Clave-segura-528!',
     });
@@ -164,7 +212,7 @@ describe('Formulario de personas', () => {
     expect(fixture.nativeElement.textContent).toContain('Las contraseñas no coinciden.');
     http.expectNone('/api/superadmin/users/');
   });
-  it('crea con datos reales, limpia claves y navega al detalle', () => {
+  it('crea sin enviar correo, limpia claves y vuelve al listado', () => {
     const fixture = form();
     const vm = fixture.componentInstance.vm;
     fill(vm);
@@ -172,11 +220,39 @@ describe('Formulario de personas', () => {
     vm.submit();
     const req = http.expectOne('/api/superadmin/users/');
     expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      first_name: 'Ana',
+      last_name: 'Prueba',
+      apellido_materno: '',
+      codigo_empleado: 'SA-TEST',
+      fecha_nacimiento: '1990-05-15',
+      sexo: '',
+      telefono: '',
+      area_id: null,
+      cargo_id: null,
+      role: 'NUEVO_TRABAJADOR',
+      password: 'Clave-segura-528!',
+      password_confirmation: 'Clave-segura-528!',
+    });
     expect(req.request.body.role).toBe('NUEVO_TRABAJADOR');
     expect(req.request.body).not.toHaveProperty('tamizaje_resuelto');
+    expect(req.request.body).not.toHaveProperty('email');
     req.flush(person);
     expect(vm.form.controls.password.value).toBe('');
-    expect(navigate).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/superadmin/personas'], {
+      queryParamsHandling: 'preserve',
+    });
+  });
+  it('muestra vista previa con tildes normalizadas y correo de solo lectura', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vm.form.patchValue({ first_name: 'Jesús Gabriel', last_name: 'Crúz' });
+    await fixture.whenStable();
+    const input = fixture.nativeElement.querySelector('input[type="email"]');
+    expect(input.value).toBe('jesus.cruz@saspel.com');
+    expect(input.readOnly).toBe(true);
+    expect(vm.form.get('email')).toBeNull();
   });
   it('exige confirmación adicional para crear Superadmin', () => {
     const vm = form().componentInstance.vm;
@@ -186,17 +262,228 @@ describe('Formulario de personas', () => {
     http.expectNone('/api/superadmin/users/');
     expect(vm.error()).toContain('Confirma');
   });
+  it('rechaza datos personales inválidos antes de crear y muestra errores por campo', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vm.form.patchValue({
+      first_name: 'Ana123',
+      last_name: 'Pérez!',
+      codigo_empleado: 'AB 01',
+      telefono: 'telefono',
+      fecha_nacimiento: '2099-01-01',
+    });
+    vm.submit();
+    await fixture.whenStable();
+    http.expectNone('/api/superadmin/users/');
+    expect(fixture.nativeElement.textContent).toContain('Usa solo letras y espacios');
+    expect(fixture.nativeElement.textContent).toContain('entre 8 y 15 dígitos');
+    expect(fixture.nativeElement.textContent).toContain('19 a 77 años cumplidos');
+    expect(
+      fixture.nativeElement
+        .querySelector('[formcontrolname="first_name"]')
+        .getAttribute('aria-invalid'),
+    ).toBe('true');
+  });
+  it('exige fecha al crear y normaliza espacios conservando tildes y ceros del teléfono', () => {
+    const vm = form().componentInstance.vm;
+    fill(vm);
+    vm.form.controls.fecha_nacimiento.setValue('');
+    vm.submit();
+    http.expectNone('/api/superadmin/users/');
+    expect(vm.form.controls.fecha_nacimiento.hasError('required')).toBe(true);
+    vm.form.patchValue({
+      fecha_nacimiento: '1990-05-15',
+      first_name: '  Jesús   Gabriel ',
+      telefono: '0012345678',
+    });
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.submit();
+    const request = http.expectOne('/api/superadmin/users/');
+    expect(request.request.body.first_name).toBe('Jesús Gabriel');
+    expect(request.request.body.telefono).toBe('0012345678');
+    request.flush(person);
+  });
+  it('muestra errores del backend junto al campo y permite corregirlos', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    await fixture.whenStable();
+    vm.submit();
+    http
+      .expectOne('/api/superadmin/users/')
+      .flush(
+        { codigo_empleado: ['Este código ya existe.'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('#employee-error').textContent).toContain(
+      'Este código ya existe.',
+    );
+    vm.form.controls.codigo_empleado.setValue('OTRO-123');
+    expect(vm.form.controls.codigo_empleado.valid).toBe(true);
+  });
   // La edición personal usa PATCH; clave, rol y estado deben conservar sus acciones dedicadas.
   it('edita sin enviar contraseña, rol ni estado', () => {
-    const vm = form(2).componentInstance.vm;
+    const vm = form(person.id).componentInstance.vm;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     vm.form.controls.first_name.setValue('Editada');
     vm.submit();
-    const req = http.expectOne('/api/superadmin/users/2/');
+    const req = http.expectOne('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
     expect(req.request.method).toBe('PATCH');
-    for (const key of ['password', 'password_confirmation', 'role', 'is_active'])
+    expect(req.request.body).toEqual({
+      first_name: 'Editada',
+      last_name: 'Prueba',
+      apellido_materno: '',
+      codigo_empleado: 'SA-TEST',
+      sexo: '',
+      telefono: '',
+      area_id: null,
+      cargo_id: null,
+    });
+    for (const key of ['email', 'password', 'password_confirmation', 'role', 'is_active'])
       expect(req.request.body).not.toHaveProperty(key);
+    expect(req.request.body).not.toHaveProperty('fecha_nacimiento');
     req.flush({ ...person, first_name: 'Editada' });
+  });
+  it('aplica las mismas validaciones durante la edición', () => {
+    const vm = form(person.id).componentInstance.vm;
+    vm.form.patchValue({ telefono: '123abc45', fecha_nacimiento: '2099-01-01' });
+    vm.submit();
+    http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/');
+    expect(vm.form.controls.telefono.invalid).toBe(true);
+    expect(vm.form.controls.fecha_nacimiento.invalid).toBe(true);
+  });
+
+  it('mantiene Cargo vacío y deshabilitado sin Área, sin consultar todos los cargos', async () => {
+    const fixture = form();
+    await fixture.whenStable();
+    const vm = fixture.componentInstance.vm;
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    expect(vm.cargos()).toEqual([]);
+    const select = fixture.nativeElement.querySelector(
+      'select[formcontrolname="cargo_id"]',
+    ) as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(select.options).toHaveLength(1);
+    http.expectNone((request) => request.url === '/api/superadmin/cargos/');
+  });
+
+  it('seleccionar Área carga solo sus cargos y permite crear con UUID string', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    fill(vm);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.form.controls.area_id.setValue(areaTic.id);
+    const request = http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`);
+    expect(vm.cargosLoading()).toBe(true);
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    vm.submit();
+    http.expectNone('/api/superadmin/users/');
+    request.flush([cargoTic]);
+    await fixture.whenStable();
+    const select = fixture.nativeElement.querySelector(
+      'select[formcontrolname="cargo_id"]',
+    ) as HTMLSelectElement;
+    expect(select.disabled).toBe(false);
+    expect(select.textContent).toContain(cargoTic.nombre);
+    expect(select.textContent).not.toContain(cargoNegocios.nombre);
+    vm.form.controls.cargo_id.setValue(cargoTic.id);
+    vm.submit();
+    const created = http.expectOne('/api/superadmin/users/');
+    expect(created.request.body.area_id).toBe(areaTic.id);
+    expect(created.request.body.cargo_id).toBe(cargoTic.id);
+    expect(typeof created.request.body.cargo_id).toBe('string');
+    created.flush({ ...person, area: areaTic, cargo: cargoTic });
+  });
+
+  it('cambiar Área limpia Cargo inmediatamente y descarta solicitudes anteriores', async () => {
+    const fixture = form();
+    const vm = fixture.componentInstance.vm;
+    vm.form.controls.area_id.setValue(areaTic.id);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    vm.form.controls.cargo_id.setValue(cargoTic.id);
+    vm.form.controls.area_id.setValue(areaNegocios.id);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    expect(vm.cargos()).toEqual([]);
+    const stale = http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaNegocios.id}`);
+    vm.form.controls.area_id.setValue(areaTic.id);
+    expect(stale.cancelled).toBe(true);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    await fixture.whenStable();
+    expect(vm.cargos()).toEqual([cargoTic]);
+    expect(vm.form.controls.cargo_id.value).toBeNull();
+    vm.form.controls.area_id.setValue(null);
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    expect(vm.cargos()).toEqual([]);
+    http.expectNone((request) => request.url === '/api/superadmin/cargos/');
+  });
+
+  it('editar carga únicamente los cargos del Área actual y conserva una combinación válida', () => {
+    const vm = form(person.id, { ...person, area: areaTic, cargo: cargoTic }).componentInstance.vm;
+    expect(vm.form.controls.area_id.value).toBe(areaTic.id);
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    expect(vm.form.controls.cargo_id.value).toBe(cargoTic.id);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.form.controls.first_name.setValue('Editada');
+    vm.submit();
+    const request = http.expectOne(`/api/superadmin/users/${person.id}/`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body.area_id).toBe(areaTic.id);
+    expect(request.request.body.cargo_id).toBe(cargoTic.id);
+    request.flush({ ...person, area: areaTic, cargo: cargoTic });
+  });
+
+  it('editar retira un Cargo que ya no tiene relación válida y muestra el aviso', async () => {
+    const fixture = form(person.id, { ...person, area: areaTic, cargo: cargoNegocios });
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance.vm.form.controls.cargo_id.value).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('El cargo anterior ya no está disponible');
+    expect(
+      fixture.nativeElement.querySelector('select[formcontrolname="cargo_id"]').textContent,
+    ).not.toContain(cargoNegocios.nombre);
+  });
+
+  it('un error al cargar cargos bloquea guardar y permite reintentar conservando el Cargo de edición', async () => {
+    const fixture = form(person.id, { ...person, area: areaTic, cargo: cargoTic });
+    const vm = fixture.componentInstance.vm;
+    http
+      .expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`)
+      .flush({}, { status: 500, statusText: 'Error' });
+    vm.submit();
+    http.expectNone(`/api/superadmin/users/${person.id}/`);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Reintentar cargos');
+    expect(vm.form.controls.cargo_id.disabled).toBe(true);
+    vm.retryCargos();
+    http.expectOne(`/api/superadmin/cargos/?active=true&area=${areaTic.id}`).flush([cargoTic]);
+    expect(vm.cargosError()).toBe('');
+    expect(vm.form.controls.cargo_id.value).toBe(cargoTic.id);
+  });
+});
+
+describe('Detalle de persona', () => {
+  it('presenta la identidad con nombres y apellidos reales', async () => {
+    const http = setup(UserDetail, person.id);
+    const fixture = TestBed.createComponent(UserDetail);
+    http.expectOne(`/api/superadmin/users/${person.id}/`).flush({
+      ...person,
+      apellido_materno: 'López',
+      nombre_completo: 'Ana Prueba López',
+    });
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('h1')?.textContent).toContain('Ana Prueba López');
+    const fields = Array.from(element.querySelectorAll('.sa-details > div')).map((field) => [
+      field.querySelector('dt')?.textContent?.trim(),
+      field.querySelector('dd')?.textContent?.trim(),
+    ]);
+    expect(fields).toContainEqual(['Nombres', 'Ana']);
+    expect(fields).toContainEqual(['Apellido paterno', 'Prueba']);
+    expect(fields).toContainEqual(['Apellido materno', 'López']);
+    http.verify();
   });
 });
 
@@ -210,7 +497,7 @@ describe('Listado y estado', () => {
     vi.restoreAllMocks();
   });
   it('presenta usuarios y solicita filtro de rol con la misma API', async () => {
-    routeData.next({ filterRole: 'PSICOLOGO', title: 'Psicólogos' });
+    query.next(convertToParamMap({ role: 'PSICOLOGO' }));
     const fixture = TestBed.createComponent(UserList);
     catalogs(http);
     const req = http.expectOne(
@@ -226,6 +513,22 @@ describe('Listado y estado', () => {
     );
     second.flush({ count: 1, page: 2, page_size: 20, results: [] });
   });
+  it('cambia categoría sobre la misma tabla y reinicia la página conservando búsqueda', () => {
+    query.next(convertToParamMap({ role: 'PSICOLOGO', search: 'Ana', page: 3 }));
+    const vm = TestBed.createComponent(UserList).componentInstance.vm;
+    catalogs(http);
+    http
+      .expectOne((r) => r.url === '/api/superadmin/users/')
+      .flush({ count: 0, page: 3, page_size: 20, results: [] });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vm.selectCategory('ADMINISTRADORES');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ role: 'ADMINISTRADORES', search: 'Ana', page: 1 }),
+      }),
+    );
+  });
   // Simulamos confirmación y respuesta HTTP para comprobar acción explícita y recarga.
   it('activa/desactiva mediante acción explícita y refresca el listado', () => {
     const vm = TestBed.createComponent(UserList).componentInstance.vm;
@@ -236,7 +539,9 @@ describe('Listado y estado', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     for (const active of [true, false]) {
       vm.toggle({ ...person, is_active: active });
-      const req = http.expectOne(`/api/superadmin/users/2/${active ? 'deactivate' : 'activate'}/`);
+      const req = http.expectOne(
+        `/api/superadmin/users/00000000-0000-0000-0000-000000000002/${active ? 'deactivate' : 'activate'}/`,
+      );
       expect(req.request.method).toBe('POST');
       req.flush({ ...person, is_active: !active });
       http
@@ -248,20 +553,22 @@ describe('Listado y estado', () => {
 
 describe('Restablecer contraseña', () => {
   it('valida, permite mostrar/ocultar y limpia ambos campos al guardar', async () => {
-    const http = setup(UserPassword, 2);
+    const http = setup(UserPassword, person.id);
     const fixture = TestBed.createComponent(UserPassword);
     const vm = fixture.componentInstance.vm;
-    http.expectOne('/api/superadmin/users/2/').flush(person);
+    http.expectOne('/api/superadmin/users/00000000-0000-0000-0000-000000000002/').flush(person);
     vm.form.setValue({ password: 'Nueva-segura-912!', password_confirmation: 'distinta' });
     vm.submit();
-    http.expectNone('/api/superadmin/users/2/reset-password/');
+    http.expectNone('/api/superadmin/users/00000000-0000-0000-0000-000000000002/reset-password/');
     vm.form.controls.password_confirmation.setValue('Nueva-segura-912!');
     await fixture.whenStable();
     fixture.nativeElement.querySelector('.sa-plain').click();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('input').type).toBe('text');
     vm.submit();
-    const req = http.expectOne('/api/superadmin/users/2/reset-password/');
+    const req = http.expectOne(
+      '/api/superadmin/users/00000000-0000-0000-0000-000000000002/reset-password/',
+    );
     req.flush({ detail: 'Contraseña restablecida.' });
     expect(vm.form.controls.password.value).toBe('');
     expect(vm.notice()).toContain('correctamente');

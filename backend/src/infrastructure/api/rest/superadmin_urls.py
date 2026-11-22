@@ -4,19 +4,50 @@ SuperadminService. No hay borrado físico publicado.
 """
 
 from django.urls import path
+from src.infrastructure.api.rest.views.instrument_content import ContentListView, ContentDetailView, ContentActionView
+from src.infrastructure.api.rest.views.instruments import InstrumentsView, InstrumentDetailView, InstrumentStateView
+from src.infrastructure.api.rest.views.assignments import (
+    AssignmentsView, FinishAssignmentView, PsychologistLoadsView, ReassignWorkerView, UnassignedWorkersView,
+)
 from src.infrastructure.api.rest.views.superadmin import InstitutionView, SummaryView, UserActionView, UserDetailView, UsersView
 
 urlpatterns = [
+    path('instruments/', InstrumentsView.as_view()),
+    path('instruments/<uuid:instrument_id>/', InstrumentDetailView.as_view()),
+    path('instruments/<uuid:instrument_id>/activate/', InstrumentStateView.as_view(), {'active': True}),
+    path('instruments/<uuid:instrument_id>/deactivate/', InstrumentStateView.as_view(), {'active': False}),
+    path('assignments/', AssignmentsView.as_view()),
+    path('assignments/unassigned-workers/', UnassignedWorkersView.as_view()),
+    path('assignments/psychologists/', PsychologistLoadsView.as_view()),
+    path('assignments/<uuid:assignment_id>/finish/', FinishAssignmentView.as_view()),
+    path('assignments/<uuid:assignment_id>/reassign/', ReassignWorkerView.as_view()),
     path('dashboard/summary/', SummaryView.as_view()),
     path('users/', UsersView.as_view()),
-    path('users/<int:user_id>/', UserDetailView.as_view()),
+    path('users/<uuid:user_id>/', UserDetailView.as_view()),
 ]
 for action in ('activate', 'deactivate', 'reset-password', 'role'):
-    urlpatterns.append(path(f'users/<int:user_id>/{action}/', UserActionView.as_view(), {'action': action}))
+    urlpatterns.append(path(f'users/<uuid:user_id>/{action}/', UserActionView.as_view(), {'action': action}))
 for kind in ('areas', 'cargos'):
     urlpatterns += [
         path(f'{kind}/', InstitutionView.as_view(), {'kind': kind}),
-        path(f'{kind}/<int:item_id>/', InstitutionView.as_view(), {'kind': kind}),
+        path(f'{kind}/<uuid:item_id>/', InstitutionView.as_view(), {'kind': kind}),
     ]
     for action in ('activate', 'deactivate'):
-        urlpatterns.append(path(f'{kind}/<int:item_id>/{action}/', InstitutionView.as_view(), {'kind': kind, 'action': action}))
+        urlpatterns.append(path(f'{kind}/<uuid:item_id>/{action}/', InstitutionView.as_view(), {'kind': kind, 'action': action}))
+
+
+# Contenido T25: las relaciones se fijan en la URL y no se pueden trasladar por PATCH.
+
+for kind, prefix in (
+    ('questions', 'instruments/<uuid:parent_id>/questions/'),
+    ('ranges', 'instruments/<uuid:parent_id>/ranges/'),
+    ('scales', 'scales/'),
+    ('options', 'scales/<uuid:parent_id>/options/'),
+):
+    urlpatterns += [
+        path(prefix, ContentListView.as_view(), {'kind': kind}),
+        path(prefix + '<uuid:item_id>/', ContentDetailView.as_view(), {'kind': kind}),
+    ]
+    for action in ('activate', 'deactivate') + (('move',) if kind in ('questions', 'options') else ()):
+        urlpatterns.append(path(prefix + '<uuid:item_id>/' + action + '/', ContentActionView.as_view(),
+                                {'kind': kind, 'action': action}))

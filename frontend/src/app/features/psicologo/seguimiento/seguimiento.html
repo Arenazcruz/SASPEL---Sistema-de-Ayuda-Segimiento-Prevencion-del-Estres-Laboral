@@ -1,0 +1,18 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()">
+<a routerLink="/dashboard/psicologo/trabajadores">Volver a mis trabajadores</a><h1>Seguimiento profesional</h1>
+@if(vm.busy()){<p role="status">Procesando…</p>}
+@if(vm.error()){<p role="alert" class="error">{{vm.error()}}</p><button type="button" (click)="vm.load()" [disabled]="vm.busy()">Reintentar consulta</button>}
+@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.datos();as datos){<h2>{{datos.trabajador}}</h2><p>Información privada del seguimiento profesional.</p>
+@if(datos.registros.length){<p>Último estado registrado: <strong>{{datos.registros[datos.registros.length-1].estado}}</strong></p>}
+<section class="card"><h2>Nuevo seguimiento</h2><form (ngSubmit)="vm.guardar()"><fieldset [disabled]="vm.busy()"><legend>Registro de la atención</legend>
+<label>Motivo<input name="motivo" [(ngModel)]="vm.form.motivo" maxlength="500" required></label>
+<label>Categoría<input name="categoria" [(ngModel)]="vm.form.categoria" maxlength="100" required></label>
+<label>Observación<textarea name="observacion" [(ngModel)]="vm.form.observacion" maxlength="10000" required></textarea></label>
+<label>Estado actual<input name="estado" [(ngModel)]="vm.form.estado" maxlength="100" required></label>
+<label>Evolución observada<textarea name="evolucion" [(ngModel)]="vm.form.evolucion" maxlength="5000" required></textarea></label>
+<label>Plan de acción<textarea name="plan" [(ngModel)]="vm.form.plan_accion" maxlength="5000" required></textarea></label>
+<label>Próxima revisión (opcional)<input name="revision" type="date" [(ngModel)]="vm.form.proxima_revision"></label>
+<button class="button" type="submit">Registrar seguimiento</button></fieldset></form></section>
+<section><h2>Historial cronológico</h2>@for(r of datos.registros;track r.id){<article class="card"><h3>{{r.fecha|date:'dd/MM/yyyy HH:mm'}} · {{r.estado}}</h3><p>Responsable: {{r.profesional}}</p><p>Motivo: {{r.motivo}}</p><p>Categoría: {{r.categoria}}</p><p>{{r.observacion}}</p><p>Evolución: {{r.evolucion}}</p><p>Plan de acción: {{r.plan_accion}}</p>@if(r.proxima_revision){<p>Próxima revisión: {{r.proxima_revision|date:'dd/MM/yyyy'}}</p>}</article>}@empty{<p>Sin seguimientos registrados.</p>}</section>}
+</main>

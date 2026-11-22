@@ -76,6 +76,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTH_USER_MODEL = 'api.Usuario'
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
@@ -165,11 +167,27 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4200',
 ]
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    # Local por proceso en desarrollo. En producción multiproceso, configurar
+    # un backend compartido con add/incr/decr atómicos (Redis o Memcached).
+    'login_attempts': {
+        'BACKEND': os.getenv('SASPEL_LOGIN_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+        'LOCATION': os.getenv('SASPEL_LOGIN_CACHE_LOCATION', 'saspel-login-attempts'),
+    },
+}
+
 # Angular identifica la sesión con JWT. No se activa la app de blacklist ni
 # se crean tablas nuevas; cerrar sesión elimina los tokens del navegador.
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'src.infrastructure.api.rest.permissions.PrimerAccesoCompleto',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'src.infrastructure.auth.jwt_authentication.UUIDJWTAuthentication',
     ],
 }
 SIMPLE_JWT = {

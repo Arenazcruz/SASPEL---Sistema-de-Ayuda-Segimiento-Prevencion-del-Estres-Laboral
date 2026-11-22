@@ -9,10 +9,13 @@ borrar mientras tenga esos registros asociados; la gestión de nuevas versiones
 se implementará más adelante.
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
+from .auditable import AuditableModel
 
-class InstrumentoPsicologico(models.Model):
+
+class InstrumentoPsicologico(AuditableModel):
     # Código corto que identifica el cuestionario a través de sus versiones.
     """Versión concreta del cuestionario, identificada por código y versión para conservar
     evaluaciones anteriores.
@@ -28,8 +31,6 @@ class InstrumentoPsicologico(models.Model):
     es_inicial = models.BooleanField(default=False)
     # Permite dejar de utilizar esta versión sin borrar las evaluaciones anteriores.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_instrumento_psicologico'
@@ -37,10 +38,21 @@ class InstrumentoPsicologico(models.Model):
         verbose_name_plural = 'instrumentos psicológicos'
         constraints = [
             models.UniqueConstraint(
+                fields=['es_inicial'], condition=models.Q(activo=True, es_inicial=True),
+                name='saspel_unico_instrumento_inicial_activo',
+            ),
+            models.UniqueConstraint(
                 fields=['codigo', 'version'],
                 name='saspel_instrumento_codigo_version_unico',
             ),
         ]
+
+    def clean(self):
+        super().clean()
+        if self.activo and self.es_inicial and type(self).objects.filter(
+            activo=True, es_inicial=True,
+        ).exclude(pk=self.pk).exists():
+            raise ValidationError({'es_inicial': 'Ya existe un instrumento inicial activo. Desactívalo antes de habilitar otro.'})
 
     def __str__(self):
         return f'{self.codigo} / {self.version}: {self.nombre}'

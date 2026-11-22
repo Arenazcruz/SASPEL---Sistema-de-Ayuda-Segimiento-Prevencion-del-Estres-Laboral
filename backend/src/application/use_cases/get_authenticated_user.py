@@ -1,5 +1,7 @@
 """Consulta identidad vigente para GET /api/auth/me/; el ID viene de la cuenta validada por JWT."""
 
+from uuid import UUID
+
 from src.application.dto.auth import AuthenticatedUserDTO
 from src.application.ports.output.auth_provider import AuthProvider
 from src.application.services.auth_identity import present_identity
@@ -10,7 +12,7 @@ class GetAuthenticatedUser:
     def __init__(self, provider: AuthProvider):
         self.provider = provider
 
-    def execute(self, user_id: int) -> AuthenticatedUserDTO:
+    def execute(self, user_id: UUID) -> AuthenticatedUserDTO:
         """Recibe el ID de la cuenta y devuelve su identidad con rol y panel actuales. No escribe
         datos; propaga cuenta inexistente, inactiva o sin rol. Revisar junto al login si
         cambia la información de sesión.

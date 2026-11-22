@@ -16,7 +16,7 @@
     <div class="login-form-container">
       <span class="eyebrow">BIENVENIDO A SASPEL</span>
       <h2>Qué bueno verte<br />por aquí.</h2>
-      <p class="form-intro">Ingresa con tu correo y contraseña para continuar.</p>
+      <p class="form-intro">Ingresa con tu correo institucional @saspel.com y contraseña.</p>
       <form
         [formGroup]="vm.form"
         (ngSubmit)="vm.submit()"
@@ -29,14 +29,21 @@
             id="email"
             type="email"
             formControlName="email"
-            placeholder="tu.correo@institucion.com"
+            placeholder="nombre.apellido@saspel.com"
             autocomplete="username"
             [attr.aria-invalid]="vm.form.controls.email.touched && vm.form.controls.email.invalid"
             aria-describedby="email-error"
           />
           <div id="email-error" class="field-error" aria-live="polite">
             @if (vm.form.controls.email.touched && vm.form.controls.email.invalid) {
-              Ingresa un correo electrónico válido.
+              @if (
+                vm.form.controls.email.hasError('required') ||
+                vm.form.controls.email.hasError('email')
+              ) {
+                Ingresa un correo electrónico válido.
+              } @else {
+                Credenciales no válidas.
+              }
             }
           </div>
         </div>

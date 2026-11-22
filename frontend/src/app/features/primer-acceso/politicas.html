@@ -1,0 +1,42 @@
+<main class="access-page">
+  <header>
+    <app-brand /><button type="button" class="text-link" (click)="vm.auth.logout()">
+      Cerrar sesión
+    </button>
+  </header>
+  <section class="access-card policies" aria-labelledby="policies-title">
+    <p class="eyebrow">PRIMER ACCESO · POLÍTICAS INSTITUCIONALES</p>
+    <h1 id="policies-title">Revisa y acepta las políticas</h1>
+    <p>Lee cada documento vigente y marca su casilla de aceptación para continuar.</p>
+    @if (vm.loading()) {
+      <p role="status">Cargando políticas…</p>
+    }
+    @for (politica of vm.politicas(); track politica.id) {
+      <article [attr.aria-labelledby]="'title-' + politica.id">
+        <h2 [id]="'title-' + politica.id">{{ politica.titulo }}</h2>
+        <p class="help">Versión {{ politica.version }}</p>
+        <div class="policy-content">{{ politica.contenido }}</div>
+        <label class="acceptance">
+          <input
+            type="checkbox"
+            [checked]="vm.selected().has(politica.id)"
+            [disabled]="vm.saving() || !vm.ready()"
+            (change)="vm.select(politica.id, $any($event.target).checked)"
+          />
+          <span>He leído y acepto {{ politica.titulo }}, versión {{ politica.version }}.</span>
+        </label>
+      </article>
+    }
+    @if (vm.error()) {
+      <div class="error" role="alert">
+        {{ vm.error() }}
+        <button type="button" (click)="vm.load()" [disabled]="vm.loading() || vm.saving()">
+          Volver a cargar
+        </button>
+      </div>
+    }
+    <button class="button" type="button" (click)="vm.submit()" [disabled]="!vm.canAccept()">
+      {{ vm.saving() ? 'Guardando…' : 'Aceptar y continuar' }}
+    </button>
+  </section>
+</main>

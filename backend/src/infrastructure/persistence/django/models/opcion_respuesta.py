@@ -9,10 +9,12 @@ Este archivo no calcula el resultado del cuestionario.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .escala_respuesta import EscalaRespuesta
 
 
-class OpcionRespuesta(models.Model):
+class OpcionRespuesta(AuditableModel):
     # Conjunto de respuestas al que pertenece esta opción.
     """Opción de una escala con orden y valor propios; ese valor no calcula resultados por sí
     solo.
@@ -28,8 +30,6 @@ class OpcionRespuesta(models.Model):
     orden = models.PositiveSmallIntegerField()
     # Permite retirar una opción de uso sin borrar las respuestas que la eligieron.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_opcion_respuesta'

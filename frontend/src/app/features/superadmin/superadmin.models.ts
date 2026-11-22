@@ -19,7 +19,7 @@ export type InstitutionKind = 'areas' | 'cargos';
  * Catálogo anidado o de listado; activo=false permite representar vínculos históricos.
  */
 export interface Institution {
-  id: number;
+  id: string;
   nombre: string;
   descripcion: string;
   activo: boolean;
@@ -30,7 +30,7 @@ export interface Institution {
  * esta interfaz.
  */
 export interface Person {
-  id: number;
+  id: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -41,7 +41,6 @@ export interface Person {
   last_login: string | null;
   codigo_empleado: string;
   apellido_materno: string;
-  nombre_preferido: string;
   fecha_nacimiento: string | null;
   sexo: string;
   telefono: string;

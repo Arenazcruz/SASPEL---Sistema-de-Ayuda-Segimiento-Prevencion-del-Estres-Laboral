@@ -14,7 +14,7 @@ import { AuthUser } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 const user: AuthUser = {
-  id: 1,
+  id: '00000000-0000-0000-0000-000000000001',
   email: 'test@example.com',
   first_name: 'Ana',
   last_name: '',
@@ -80,6 +80,21 @@ describe('AuthService e interceptor', () => {
   it('sin tokens no intenta recuperar identidad', () => {
     auth.restoreSession().subscribe((result) => expect(result).toBeNull());
     requests.expectNone('/api/auth/me/');
+  });
+
+  it('una consulta anterior a la transición no restaura el rol viejo ni cierra la sesión', () => {
+    storage.save({ access: 'access', refresh: 'refresh' });
+    auth.restoreSession().subscribe();
+    const stale = requests.expectOne('/api/auth/me/');
+    auth.refreshIdentity().subscribe();
+    requests.expectOne('/api/auth/me/').flush(user);
+    stale.flush({
+      ...user,
+      role: 'NUEVO_TRABAJADOR',
+      dashboard_path: '/dashboard/nuevo-trabajador',
+    });
+    expect(auth.user()?.role).toBe('TRABAJADOR');
+    expect(storage.access).toBe('access');
   });
 
   it('logout elimina tokens e identidad y vuelve al login', () => {
@@ -173,5 +188,21 @@ describe('AuthService e interceptor', () => {
     requests.expectOne('/api/auth/me/').flush({ ...user, dashboard_path: '/dashboard/admin' });
     expect(auth.user()).toBeNull();
     expect(storage.access).toBeNull();
+  });
+
+  it('un bloqueo de primer acceso redirige sin renovar JWT ni cerrar sesión', () => {
+    storage.save({ access: 'access', refresh: 'refresh' });
+    http.get('/api/functional/').subscribe({ error: () => undefined });
+    requests.expectOne('/api/functional/').flush(
+      {
+        code: 'primer_acceso_pendiente',
+        siguiente_ruta: '/primer-acceso/politicas',
+        detail: 'Completa el primer acceso para continuar.',
+      },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    expect(navigate).toHaveBeenCalledWith('/primer-acceso/politicas');
+    expect(storage.access).toBe('access');
+    requests.expectNone('/api/auth/refresh/');
   });
 });

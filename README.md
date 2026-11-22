@@ -75,9 +75,12 @@ Si una comprobación falla, no integrar ni publicar el cambio como estable.
 
 ## Estado e historial de implementación
 
-**Estado actual:** SA-01 incorpora el panel Superadmin funcional, Personas,
-Áreas y Cargos. Consulta [implementación y verificaciones de SA-01](docs/SA01_IMPLEMENTACION.md)
-y [pruebas Postman](docs/POSTMAN_PRUEBAS.md). Las secciones históricas siguientes
+**Estado actual de esta rama:** T23 incorpora asignaciones profesionales manuales
+en Superadmin, con carga de psicólogos, trabajadores sin asignación, finalización,
+reasignación e historial. Consulta [implementación y pruebas de T23](docs/T23_IMPLEMENTACION.md).
+Se conserva SA-01: panel Superadmin, Personas, Áreas y Cargos. Consulta también
+[implementación de SA-01](docs/SA01_IMPLEMENTACION.md) y
+[pruebas Postman](docs/POSTMAN_PRUEBAS.md). Las secciones históricas siguientes
 describen las fases anteriores de construcción.
 
 Base existente: Django 6.1, Django REST Framework, PostgreSQL y Angular 21.

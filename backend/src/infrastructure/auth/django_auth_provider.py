@@ -3,6 +3,8 @@ comprobación de actividad; la prioridad de roles está en Application y la emis
 jwt_token_provider.py.
 """
 
+from uuid import UUID
+
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password, make_password
 from django.utils import timezone
@@ -11,24 +13,36 @@ from src.application.dto.auth import AuthIdentity
 from src.application.services.auth_identity import InactiveAccount, InvalidCredentials
 
 
+def is_institutional_identifier(value: str) -> bool:
+    """Exige el dominio completo saspel.com; no admite subdominios ni sufijos añadidos."""
+    local, separator, domain = value.strip().lower().partition('@')
+    return bool(local) and separator == '@' and domain == 'saspel.com'
+
+
 class DjangoAuthProvider:
     """Implementa AuthProvider sobre User y sus grupos; devuelve DTO sin exponer modelos a
     Application.
     """
     def authenticate(self, email: str, password: str) -> AuthIdentity:
-        """Busca correo sin distinguir mayúsculas y exige exactamente una cuenta. Verifica clave
+        """Exige correo y username institucionales y busca una sola cuenta sin distinguir mayúsculas. Verifica clave
         y actividad, actualiza last_login y devuelve AuthIdentity. Duplicados o clave
         incorrecta producen InvalidCredentials; solo una clave correcta revela
         InactiveAccount.
         """
+        if not is_institutional_identifier(email):
+            make_password(password)
+            raise InvalidCredentials()
         User = get_user_model()
-        candidates = list(User.objects.filter(email__iexact=email.strip())[:2])
+        candidates = list(User.objects.filter(email__iexact=email.strip(), deleted=False)[:2])
         # Django permite correos repetidos. Si hay ambigüedad no elegimos una
         # cuenta arbitrariamente ni revelamos cuántas existen.
         if len(candidates) != 1:
             make_password(password)
             raise InvalidCredentials()
         user = candidates[0]
+        if not all(is_institutional_identifier(value) for value in (user.email, user.get_username())):
+            make_password(password)
+            raise InvalidCredentials()
         if not user.is_active:
             # Solo distinguimos una cuenta inactiva después de verificar su clave.
             if check_password(password, user.password):
@@ -38,14 +52,15 @@ class DjangoAuthProvider:
         if verified is None or verified.pk != user.pk:
             raise InvalidCredentials()
         # El login propio no utiliza la vista de SimpleJWT que actualiza este dato.
-        User.objects.filter(pk=verified.pk).update(last_login=timezone.now())
+        verified.last_login = timezone.now()
+        verified.save(update_fields=['last_login'])
         return self._identity(verified)
 
-    def get_identity(self, user_id: int) -> AuthIdentity:
+    def get_identity(self, user_id: UUID) -> AuthIdentity:
         """Busca ID de cuenta y devuelve identidad con grupos actuales. Lanza InvalidCredentials
         si falta e InactiveAccount si está desactivada; no modifica datos.
         """
-        user = get_user_model().objects.filter(pk=user_id).first()
+        user = get_user_model().objects.filter(pk=user_id, deleted=False).first()
         if user is None:
             raise InvalidCredentials()
         if not user.is_active:

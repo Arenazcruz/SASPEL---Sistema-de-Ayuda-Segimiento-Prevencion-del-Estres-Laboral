@@ -3,6 +3,7 @@ son tablas ni contienen dependencias de Django; los tokens se agregan en la vist
 """
 
 from dataclasses import dataclass, field
+from uuid import UUID
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,7 @@ class AuthIdentity:
     """Cuenta verificada por el proveedor. groups conserva sus membresías; is_superuser participa
     en la resolución de SUPERADMIN.
     """
-    id: int
+    id: UUID
     email: str
     first_name: str
     last_name: str
@@ -32,7 +33,7 @@ class AuthenticatedUserDTO:
     """Identidad pública del login y me. role es el rol resuelto y dashboard_path la ruta Angular
     asociada; el formato final del login se arma en LoginView.
     """
-    id: int
+    id: UUID
     email: str
     first_name: str
     last_name: str

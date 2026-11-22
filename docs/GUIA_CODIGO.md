@@ -6,7 +6,9 @@ Esta guía ayuda a encontrar dónde cambiar una funcionalidad. Las rutas parten 
 
 SASPEL tiene login por correo y JWT, consulta de sesión, renovación y paneles por rol. El panel Superadmin permite administrar personas, cambiar su estado, corregir roles administrativos, restablecer claves, consultar estadísticas y gestionar áreas/cargos.
 
-Los modelos de asignaciones profesionales, instrumentos, evaluaciones, disponibilidad y citas ya existen. Su existencia **no implica** que estén implementados los procesos de evaluación inicial, reparto automático de psicólogos, cálculo de resultados o detección de choques de agenda. Las cabeceras de esos modelos indican qué guardan y qué reglas faltan. Los paneles generales de otros roles presentan bienvenida y acceso a sesión.
+Al 16/10/2026 están integrados onboarding, asignación profesional, configuración y aplicación inicial de instrumentos, puntuación por reglas, consulta de resultados persistidos, agenda con comprobación de solapamientos, notas privadas, seguimiento, ánimo y factores psicosociales. Cada módulo restringe acceso por rol y asignación activa. El catálogo de factores se configura desde Administración o Superadmin. Alertas, notificaciones y el resto del alcance posterior al corte no se dan por implementados.
+
+Para el diseño actualizado: [modelo conceptual T13](T13_MODELO_DOMINIO.md), [DER/diccionario T14](T14_DER_DICCIONARIO.md) y [revisión Hito 2](T16_PAQUETE_HITO2.md).
 
 ## Mapa del backend
 
@@ -19,12 +21,12 @@ Todo el código del backend está bajo `backend/`:
 | `config/urls.py` | Monta `/admin/` y `/api/`. |
 | `src/domain/value_objects/functional_role.py` | Nombres de roles funcionales. |
 | `src/domain/exceptions/superadmin.py` | Errores administrativos que las vistas convierten en HTTP. |
-| `src/domain/entities/`, `services/`, `repositories/` | Espacios reservados, actualmente sin implementaciones propias. Los contratos de persistencia actuales están en Application. |
+| `src/domain/entities/`, `services/`, `repositories/` | Objetos de valor inmutables y servicios de validación, asignación, puntuación y citas; contratos de persistencia en Application. |
 | `src/application/dto/` | Datos de entrada y salida de autenticación, salud y administración. No son tablas. |
 | `src/application/ports/input/` | Operaciones que Application ofrece: sesión, salud y principales acciones administrativas. |
-| `src/application/ports/output/` | Lo que los casos necesitan del proveedor de identidad y del repositorio administrativo. |
+| `src/application/ports/output/` | Contratos de identidad, administración, asignaciones, evaluación, resultados, citas, notas, seguimiento y bienestar. |
 | `src/application/services/auth_identity.py` | Elige rol y dashboard de una identidad verificada. |
-| `src/application/use_cases/` | Flujos y reglas de login, identidad, salud, personas y catálogos. |
+| `src/application/use_cases/` | Coordinación de acceso, primer acceso, administración, asignaciones, evaluación, resultados, citas, notas, seguimiento y bienestar. |
 | `src/infrastructure/auth/` | Consulta y autenticación de cuentas Django; emisión/renovación JWT. |
 | `src/infrastructure/dependencies/` | Construye los casos con sus proveedores o repositorios concretos. |
 | `src/infrastructure/api/rest/` | URLs, vistas, permisos HTTP y serializers. El permiso administrativo está dentro de `views/superadmin.py`. |
@@ -34,7 +36,7 @@ Todo el código del backend está bajo `backend/`:
 | `src/infrastructure/persistence/django/management/commands/` | Comando de preparación del Superadmin local. |
 | `tests/` | Pruebas de arquitectura, casos, API, modelos, comando local y concurrencia. |
 
-El recorrido habitual es: **URL → vista y permiso → serializer → DTO/caso de uso → puerto/repositorio → DTO → respuesta JSON**. Las factorías de `dependencies/` conectan los casos con Infrastructure. El login agrega los tokens en su vista, después de resolver la identidad.
+El recorrido habitual es: **URL → vista y permiso → serializer → DTO/caso de uso → puerto/repositorio → DTO → respuesta JSON**. Las factorías de `dependencies/` y los puntos de composición de las vistas conectan los casos con Infrastructure. El login agrega los tokens en su vista, después de resolver la identidad.
 
 Los puertos evitan que los casos importen Django. Si cambia el almacenamiento, se cambia el adaptador y su factoría, conservando las operaciones, datos, errores y garantías del contrato. Algunas acciones administrativas —rol, activación y catálogos— usan casos concretos sin un puerto de entrada individual; no hay que buscar archivos de contratos que todavía no existen.
 
@@ -60,6 +62,10 @@ La aplicación Angular está en `frontend/src/`:
 | `app/features/superadmin/dashboard/` | Estadísticas y usuarios recientes. |
 | `app/features/superadmin/users/` | Listado, formulario, ficha, cambio de clave y validadores. |
 | `app/features/superadmin/institution/` | Pantalla compartida de áreas y cargos. |
+| `app/features/citas/` | Agenda, disponibilidad, cierre de citas y notas profesionales privadas. |
+| `app/features/psicologo/seguimiento/` | Seguimiento cronológico con estado, evolución y plan descriptivo. |
+| `app/features/bienestar/` | Ánimo y factores propios, consulta profesional y catálogo de factores. |
+| `app/features/trabajador/`, `app/features/psicologo/`, `app/shared/resultados/` | Consulta de resultados persistidos y trabajadores con asignación activa. |
 | `app/shared/brand/`, `app/features/superadmin/shared/` | Marca y etiqueta de rol reutilizables. |
 | `styles.scss`, estilos de cada pantalla y `superadmin.scss` | Aspecto global, local y del módulo administrativo. |
 

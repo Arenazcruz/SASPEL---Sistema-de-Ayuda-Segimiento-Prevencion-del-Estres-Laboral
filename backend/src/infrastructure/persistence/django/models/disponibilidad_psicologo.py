@@ -12,8 +12,10 @@ Un psicólogo con horarios guardados no se puede borrar.
 from django.conf import settings
 from django.db import models
 
+from .auditable import AuditableModel
 
-class DisponibilidadPsicologo(models.Model):
+
+class DisponibilidadPsicologo(AuditableModel):
     """Horario habitual que puede desactivarse cuando deja de estar disponible."""
 
     class DiaSemana(models.IntegerChoices):
@@ -42,8 +44,6 @@ class DisponibilidadPsicologo(models.Model):
     hora_fin = models.TimeField()
     # Permite dejar de ofrecer este horario sin borrar el registro.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_disponibilidad_psicologo'

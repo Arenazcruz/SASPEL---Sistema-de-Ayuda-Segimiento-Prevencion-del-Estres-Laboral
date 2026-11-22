@@ -49,7 +49,7 @@ Respuesta **200 OK** (el id depende de la cuenta existente):
   "refresh": "<refresh_token>",
   "user": {
     "id": 1,
-    "email": "superadmin@example.com",
+    "email": "superadmin@saspel.com",
     "first_name": "",
     "last_name": "",
     "role": "SUPERADMIN"
@@ -74,19 +74,48 @@ Errores principales:
 | Estado | Situación |
 | --- | --- |
 | 400 | Correo con formato incorrecto, contraseña vacía o datos requeridos ausentes. |
-| 401 | Correo o contraseña incorrectos; también correo ambiguo entre varias cuentas. |
+| 401 | Dominio no institucional, correo o contraseña incorrectos, o correo ambiguo entre varias cuentas. |
 | 403 | Cuenta inactiva con contraseña correcta, o cuenta sin rol funcional. |
 | 405 | Método diferente de POST. |
+| 429 | Límite temporal de fallos alcanzado; `Retry-After` indica los segundos restantes. |
 
-Correo inexistente y contraseña incorrecta reciben el mismo mensaje:
+Dominio no permitido, correo inexistente y contraseña incorrecta reciben el mismo mensaje:
 
 ```json
-{"detail": "Correo o contraseña incorrectos."}
+{"detail": "Credenciales no válidas."}
 ```
 
-La búsqueda del correo no distingue mayúsculas. Solo después de verificar la
-contraseña se distingue una cuenta inactiva; una clave incorrecta sigue dando 401.
+El login admite hasta **5 fallos por correo** (normalizado, independiente de la IP)
+y **20 por IP** dentro de ventanas fijas de **5 minutos**. Tras alcanzar cualquiera
+de los límites, también se rechaza una contraseña correcta hasta la siguiente
+ventana. Un 429 devuelve exactamente el mismo JSON genérico anterior, sin tokens;
+los intentos bloqueados no prolongan el plazo. Los éxitos no consumen intentos
+ni borran fallos previos. Los fallos de autenticación 401/403 cuentan; los errores
+de formato 400 no llegan a verificar credenciales ni consumen este presupuesto.
+Las peticiones en curso reservan temporalmente un intento; al tener éxito lo liberan.
+El control funciona igual para correos existentes, inexistentes y externos.
+No cambia `is_active`, roles ni contraseñas; al vencer el plazo vuelve a permitir
+autenticación normal. La IP procede de `REMOTE_ADDR`, no de cabeceras enviadas
+por el cliente. Detrás de un proxy, hay que configurar la IP real en infraestructura
+de confianza; de lo contrario, los clientes comparten el límite del proxy.
+
+Los contadores usan exclusivamente la caché `login_attempts`, sin tablas nuevas.
+Por defecto es memoria local por proceso para desarrollo; un despliegue con varios
+procesos necesita una caché compartida con operaciones atómicas (Redis/Memcached),
+configurable mediante `SASPEL_LOGIN_CACHE_BACKEND` y `SASPEL_LOGIN_CACHE_LOCATION`,
+con su servicio y cliente correspondientes. Reiniciar/vaciar esa caché reinicia
+los contadores. Para probar: enviar cinco claves incorrectas, comprobar 429 y
+`Retry-After` en el siguiente intento y reintentar la clave correcta al vencerlo.
+
+El login exige que el correo enviado y el email/username almacenados tengan
+exactamente el dominio `saspel.com`, sin distinguir mayúsculas. No acepta
+subdominios ni direcciones como `persona@saspel.com.otro.com`. Una cuenta externa
+existente también recibe 401, sin modificar sus datos ni revelar su existencia.
+Solo después de cumplir esta regla y verificar la contraseña se distingue una
+cuenta inactiva; una clave incorrecta sigue dando 401.
 Los usuarios creados por SASPEL utilizan el correo como `username` y `email`.
+Esta restricción se aplica al inicio de sesión; JWT, refresh y permisos mantienen
+su comportamiento y no se revocan sesiones emitidas anteriormente.
 
 ## 3. Consultar la cuenta autenticada
 
@@ -99,7 +128,7 @@ Los usuarios creados por SASPEL utilizan el correo como `username` y `email`.
 ```json
 {
   "id": 1,
-  "email": "superadmin@example.com",
+  "email": "superadmin@saspel.com",
   "first_name": "",
   "last_name": "",
   "role": "SUPERADMIN",
@@ -226,7 +255,7 @@ Variables adicionales del entorno Postman:
 | --- | --- |
 | `base_url` | Origen del backend, por ejemplo `http://127.0.0.1:8000` (sin `/api`). |
 | `superadmin_access` | Access token obtenido con el login del Superadmin. |
-| `test_user_email` | Correo único de la persona de prueba. |
+| `test_user_email` | Correo generado por el backend y devuelto al crear la persona. |
 | `test_user_password` | Clave de prueba definida localmente; no guardar en documentación. |
 | `test_user_new_password` | Nueva clave para comprobar el restablecimiento. |
 | `test_user_id` | ID devuelto al registrar la persona. |
@@ -243,6 +272,7 @@ una letra y un número; también se aplican los validadores de Django.
 GET {{base_url}}/api/superadmin/dashboard/summary/
 GET {{base_url}}/api/superadmin/users/
 GET {{base_url}}/api/superadmin/users/?role=NUEVO_TRABAJADOR&active=true&page=1
+GET {{base_url}}/api/superadmin/users/?role=ADMINISTRADORES
 GET {{base_url}}/api/superadmin/users/?search={{test_employee_code}}&area={{area_id}}&cargo={{cargo_id}}
 ```
 
@@ -253,6 +283,8 @@ El resumen calcula `users_total`, `new_workers`, `workers`, `psychologists`,
 Listado: `search` busca correo, nombres, apellido paterno y código;
 `role`, `active=true|false`, `area`, `cargo` son opcionales. Omitir `active`
 incluye ambos estados. `page` empieza en 1; las páginas contienen hasta 20 filas.
+`role=ADMINISTRADORES` incluye ADMIN y SUPERADMIN; los valores de rol individuales
+siguen disponibles. Es un filtro, no un nuevo rol funcional.
 
 Estructura de paginación:
 
@@ -279,15 +311,13 @@ POST {{base_url}}/api/superadmin/users/
 
 ```json
 {
-  "email": "{{test_user_email}}",
   "password": "{{test_user_password}}",
   "password_confirmation": "{{test_user_password}}",
   "first_name": "Persona",
   "last_name": "Prueba",
   "apellido_materno": "Temporal",
   "codigo_empleado": "{{test_employee_code}}",
-  "nombre_preferido": "",
-  "fecha_nacimiento": null,
+  "fecha_nacimiento": "1990-05-15",
   "sexo": "",
   "telefono": "",
   "area_id": {{area_id}},
@@ -297,16 +327,32 @@ POST {{base_url}}/api/superadmin/users/
 ```
 
 Respuesta 201: la persona creada, sin contraseña ni hash. Copiar `id` a
-`test_user_id`. Opcionalmente, usar en **Tests / Post-response**:
+`test_user_id` y `email` a `test_user_email`. Opcionalmente, usar en **Tests / Post-response**:
 
 ```javascript
 pm.test('Persona registrada', () => pm.response.to.have.status(201));
 pm.environment.set('test_user_id', pm.response.json().id);
+pm.environment.set('test_user_email', pm.response.json().email);
 ```
 
-El correo se normaliza; correo y username quedan sincronizados. Se rechazan
-duplicados de correo sin distinguir mayúsculas y códigos de empleado repetidos.
+El backend genera `primer_nombre.primer_apellido@saspel.com`: minúsculas, sin
+tildes, caracteres especiales ni espacios. Por ejemplo, Jesús Gabriel Cruz
+Lavadenz produce `jesus.cruz@saspel.com`. Si email o username ya está ocupado
+(incluyendo cuentas inactivas y diferencias de mayúsculas), se asigna
+`jesus.cruz2@saspel.com`, luego `jesus.cruz3@saspel.com`, etc. Para nombres
+extensos, el local-part se limita a 64 caracteres, reservando espacio al sufijo.
+`username = email`. Enviar `email` o `username` manualmente devuelve 400.
+Los nombres que no permiten generar una parte válida y códigos de empleado repetidos se rechazan.
 Cuenta, perfil y grupo se crean en una sola transacción.
+
+Nombres y apellidos admiten solo letras (incluidas tildes y ñ) y espacios;
+se normalizan los espacios repetidos. `first_name` y `last_name` son obligatorios;
+`apellido_materno` puede estar vacío. `codigo_empleado`
+admite letras y números, con guiones entre grupos (por ejemplo, `EMP-123`), sin espacios.
+`telefono` puede estar vacío; si se proporciona, debe contener entre 8 y 15 dígitos,
+sin prefijo `+`, espacios ni otros símbolos. `fecha_nacimiento` es obligatoria al crear
+y debe corresponder a una edad mayor de 18 y menor de 78 años (19 a 77 años cumplidos),
+calculada con la fecha de La Paz. Los datos inválidos devuelven 400 con errores por campo.
 
 Roles de creación: `NUEVO_TRABAJADOR`, `PSICOLOGO`, `ADMIN`, `SUPERADMIN`.
 `TRABAJADOR` devuelve 400. Para PSICOLOGO puede agregarse
@@ -324,11 +370,9 @@ Ejemplo de PATCH:
 
 ```json
 {
-  "email": "{{test_user_email}}",
   "first_name": "Persona editada",
   "apellido_materno": "Temporal",
-  "nombre_preferido": "Prueba",
-  "telefono": "+591 70000000",
+  "telefono": "59170000000",
   "area_id": {{area_id}},
   "cargo_id": {{cargo_id}}
 }
@@ -339,8 +383,12 @@ También admite `last_name`, `codigo_empleado`, `fecha_nacimiento`, `sexo`
 `null`. Se conservan vínculos históricos inactivos, pero las nuevas selecciones
 deben estar activas. `habilitado_asignaciones` solo se edita para PSICOLOGO.
 Para completar una cuenta sin perfil hay que proporcionar `codigo_empleado`.
+La edición aplica las mismas validaciones a los campos enviados. Puede omitirse
+`fecha_nacimiento` para conservar el dato histórico, incluso si está vacío;
+no se acepta `null` ni borrar una fecha existente.
 
-PATCH rechaza `password`, `role`, `is_active`, `is_superuser`,
+El correo generado y username se conservan aunque se editen nombres o apellidos.
+PATCH rechaza `email`, `username`, `password`, `role`, `is_active`, `is_superuser`,
 `tamizaje_resuelto` y cualquier campo no previsto (400).
 
 ### Activar y desactivar
@@ -443,6 +491,167 @@ campo existente `activo`. No hay eliminación física ni nuevas tablas.
 14. El login del trabajador vuelve a funcionar y conserva su perfil.
 
 Comprobar también 403 con JWT de ADMIN/TRABAJADOR contra `/api/superadmin/users/`,
-correo duplicado en mayúsculas, contraseña inválida y auto-desactivación rechazada.
+generación con tildes, colisiones con sufijos 2/3, correo manual rechazado,
+contraseña inválida y auto-desactivación rechazada. El login admite únicamente
+cuentas con email y username `@saspel.com`; otros dominios reciben 401 con
+`Credenciales no válidas.`.
+En Angular, Usuarios reúne Todos, Nuevos trabajadores, Trabajadores, Psicólogos
+y Administradores como filtros de la misma tabla. Nuevo usuario, Editar y Ver
+abren un modal; al cerrarlo se conservan los filtros. Comprobar creación sin
+correo editable, edición y Desactivar/Reactivar desde la tabla.
 Los registros reales se desactivan. La limpieza física solo corresponde a datos
 locales puramente temporales y sin historial; nunca se ofrece desde esta API.
+
+## T23 - Asignaciones profesionales
+
+Acceso en Angular: **Personas → Asignaciones profesionales**, en
+`http://localhost:4200/dashboard/superadmin/personas/asignaciones-profesionales`.
+Todos los endpoints siguientes requieren JWT de una cuenta activa perteneciente
+al grupo `SUPERADMIN`. En Postman utiliza:
+
+```text
+Authorization: Bearer {{superadmin_access}}
+Content-Type: application/json
+```
+
+Variables locales adicionales (IDs reales obtenidos en tu instalación):
+
+| Variable | Uso |
+| --- | --- |
+| `base_url` | `http://127.0.0.1:8000`, sin `/api` |
+| `t23_worker_id` | ID del trabajador seleccionado en pendientes |
+| `t23_psychologist_id` | ID de un psicólogo activo y habilitado |
+| `t23_replacement_psychologist_id` | ID de otro psicólogo disponible |
+| `t23_assignment_id` | ID devuelto al asignar |
+| `t23_replacement_assignment_id` | ID nuevo devuelto al reasignar |
+
+### Consultas de asignaciones, historial y carga
+
+| Método | URL | Resultado |
+| --- | --- | --- |
+| GET | `{{base_url}}/api/superadmin/assignments/` | Todos los vínculos, activos e históricos |
+| GET | `{{base_url}}/api/superadmin/assignments/?estado=ACTIVA` | Vínculos vigentes |
+| GET | `{{base_url}}/api/superadmin/assignments/?estado=FINALIZADA` | Finalizados manualmente |
+| GET | `{{base_url}}/api/superadmin/assignments/?estado=REASIGNADA` | Vínculos anteriores cerrados por reasignación |
+| GET | `{{base_url}}/api/superadmin/assignments/?trabajador_id={{t23_worker_id}}` | Historial completo del trabajador |
+| GET | `{{base_url}}/api/superadmin/assignments/?psicologo_id={{t23_psychologist_id}}&estado=ACTIVA` | Trabajadores vinculados actualmente al psicólogo |
+| GET | `{{base_url}}/api/superadmin/assignments/unassigned-workers/` | Trabajadores activos sin vínculo ACTIVA |
+| GET | `{{base_url}}/api/superadmin/assignments/psychologists/` | Psicólogos disponibles y su carga actual |
+
+Todas responden **200 OK**. Asignaciones y pendientes admiten `search` (nombre,
+apellido, correo o código) y `page` (desde 1), con 20 registros por página:
+
+```json
+{
+  "count": 0,
+  "page": 1,
+  "page_size": 20,
+  "results": []
+}
+```
+
+`count` indica el total filtrado, no solo la página actual. Las asignaciones se
+ordenan de más reciente a más antigua. Cada vínculo incluye `id`, `trabajador`,
+`psicologo`, `fecha_asignacion`, `fecha_fin`, `estado` y `motivo_fin`. Las personas
+incluyen ID, nombre completo, correo, código, rol, actividad y habilitación;
+nunca contraseña. Las fechas se devuelven en ISO 8601.
+
+La carga devuelve un array de objetos con `psicologo` y `trabajadores_activos`.
+Incluye profesionales con carga cero y ordena primero los de menor carga.
+Cuenta vínculos ACTIVA, aunque posteriormente se haya desactivado el acceso de
+algún trabajador. No incluye vínculos FINALIZADA o REASIGNADA.
+
+### Asignar manualmente
+
+**POST** `{{base_url}}/api/superadmin/assignments/`
+
+Cuerpo raw/JSON; Postman sustituye las variables numéricas antes del envío:
+
+```json
+{
+  "trabajador_id": {{t23_worker_id}},
+  "psicologo_id": {{t23_psychologist_id}}
+}
+```
+
+Respuesta **201 Created** con el vínculo creado: `estado=ACTIVA`,
+`fecha_fin=null` y `motivo_fin=""`. Guarda su ID mediante Post-response:
+
+```javascript
+if (pm.response.code === 201) {
+  pm.environment.set('t23_assignment_id', pm.response.json().id);
+}
+```
+
+El trabajador puede ser `TRABAJADOR` o `NUEVO_TRABAJADOR` activo. La operación
+no modifica su rol ni completa el tamizaje. El receptor debe tener rol funcional
+`PSICOLOGO`, estar activo y tener perfil con `habilitado_asignaciones=true`.
+
+### Reasignar conservando historial
+
+**POST** `{{base_url}}/api/superadmin/assignments/{{t23_assignment_id}}/reassign/`
+
+```json
+{
+  "psicologo_id": {{t23_replacement_psychologist_id}},
+  "motivo_fin": "Cambio de disponibilidad del profesional"
+}
+```
+
+Respuesta **201 Created** con una **nueva asignación ACTIVA y un ID diferente**.
+La anterior conserva trabajador, psicólogo y fecha original, y pasa a
+`REASIGNADA`, con `fecha_fin` y el motivo recibido. Ambas escrituras pertenecen
+a la misma transacción; si el alta falla, la anterior sigue ACTIVA.
+
+```javascript
+if (pm.response.code === 201) {
+  pm.environment.set('t23_replacement_assignment_id', pm.response.json().id);
+}
+```
+
+No se permite reasignar al mismo psicólogo ni operar sobre un vínculo cerrado.
+Una petición antigua no modifica el reemplazo vigente.
+
+### Finalizar
+
+**POST** `{{base_url}}/api/superadmin/assignments/{{t23_replacement_assignment_id}}/finish/`
+
+Para finalizar el vínculo inicial sin reasignarlo, utiliza `t23_assignment_id`.
+
+```json
+{
+  "motivo_fin": "Finalización administrativa del acompañamiento"
+}
+```
+
+Respuesta **200 OK** con el vínculo `FINALIZADA` y su fecha/motivo de cierre.
+El trabajador queda sin vínculo ACTIVA y reaparece en pendientes si su cuenta
+sigue activa y tiene un rol de trabajador. El historial no se elimina.
+
+Los motivos de finalizar/reasignar son obligatorios, se recortan los espacios
+exteriores y admiten hasta 2000 caracteres. Usar motivos administrativos sin
+información clínica. Los campos no ofrecidos por la operación se rechazan.
+
+### Casos de comprobación y errores
+
+1. Elegir un trabajador pendiente y dos psicólogos disponibles.
+2. Asignar: 201; desaparece de pendientes y aumenta la carga del receptor.
+3. Intentar otro vínculo ACTIVA para el mismo trabajador: 400, sin crear filas.
+4. Probar un receptor inactivo, inhabilitado, sin perfil o sin rol PSICOLOGO:
+   400 en `psicologo_id`. Trabajador=psicólogo también se rechaza.
+5. Reasignar: 201; consultar historial y comprobar anterior REASIGNADA y nueva ACTIVA.
+6. Finalizar el reemplazo: 200; consultar pendientes y carga actualizados.
+7. Repetir finalizar/reasignar sobre un ID cerrado: 400, sin alterar el historial.
+8. Repetir consultas y acciones con JWT de ADMIN, PSICOLOGO, TRABAJADOR y
+   NUEVO_TRABAJADOR: todos reciben 403.
+9. Sin JWT: 401. Persona/asignación inexistente: 404. Campos, filtros o motivo
+   inválidos: 400. DELETE: 405; no hay borrado físico publicado.
+
+Un `is_superuser=True` sin el grupo SUPERADMIN no concede acceso a esta API.
+La membresía se comprueba en cada solicitud: retirar el grupo invalida el
+permiso aunque el JWT todavía esté vigente. Las respuestas usan `no-store`.
+
+No ejecutar estos casos sobre vínculos reales solo para probar: usar cuentas
+y una base de desarrollo destinadas a pruebas. Las pruebas automatizadas de
+T23 usan PostgreSQL temporal y verifican además rollback y concurrencia.
+No se implementó asignación automática al finalizar tamizaje ni T24/T25.

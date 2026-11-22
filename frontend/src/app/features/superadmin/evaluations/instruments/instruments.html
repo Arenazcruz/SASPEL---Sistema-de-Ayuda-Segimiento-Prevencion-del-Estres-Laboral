@@ -1,0 +1,244 @@
+<div class="sa-heading">
+  <div>
+    <p class="eyebrow">SUPERADMIN / EVALUACIONES</p>
+    <h1>Instrumentos</h1>
+    <p>Catálogo de instrumentos psicológicos y sus versiones.</p>
+  </div>
+  <button class="button" type="button" (click)="vm.open('create')">Nuevo instrumento</button>
+</div>
+<form
+  class="sa-panel sa-filters instrument-filters"
+  [formGroup]="vm.filters"
+  (ngSubmit)="vm.search()"
+>
+  <label
+    >Buscar<input formControlName="search" placeholder="Código, nombre o versión" maxlength="200"
+  /></label>
+  <label
+    >Estado<select formControlName="activo">
+      <option value="">Todos</option>
+      <option value="true">Activo</option>
+      <option value="false">Inactivo</option>
+    </select></label
+  >
+  <label
+    >Evaluación inicial<select formControlName="es_inicial">
+      <option value="">Todas</option>
+      <option value="true">Sí</option>
+      <option value="false">No</option>
+    </select></label
+  >
+  <button class="button button-small" type="submit" [disabled]="vm.loading()">Buscar</button>
+</form>
+@if (vm.error()) {
+  <div class="sa-error" role="alert">
+    {{ vm.error() }} <button (click)="vm.reload()">Reintentar</button>
+  </div>
+}
+@if (vm.notice()) {
+  <p class="sa-success" role="status">{{ vm.notice() }}</p>
+}
+@if (vm.loading()) {
+  <p role="status">Cargando instrumentos…</p>
+}
+@if (vm.page(); as page) {
+  <section class="sa-panel" [attr.aria-busy]="vm.loading()">
+    <div class="sa-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Versión</th>
+            <th>Inicial</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of page.results; track item.id) {
+            <tr>
+              <td>{{ item.codigo }}</td>
+              <td>{{ item.nombre }}</td>
+              <td>{{ item.version }}</td>
+              <td>{{ item.es_inicial ? 'Sí' : 'No' }}</td>
+              <td>
+                <span class="sa-badge" [class.inactive]="!item.activo">{{
+                  item.activo ? 'Activo' : 'Inactivo'
+                }}</span>
+              </td>
+              <td>
+                <div class="sa-row-actions">
+                  <button type="button" (click)="vm.open('detail', item)">Ver</button>
+                  <button type="button" (click)="vm.open('edit', item)">Editar</button>
+                  <button
+                    type="button"
+                    (click)="vm.toggle(item)"
+                    [disabled]="vm.busy() || vm.loading()"
+                  >
+                    {{ item.activo ? 'Desactivar' : 'Reactivar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">No se encontraron instrumentos con estos filtros.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <nav class="sa-pagination" aria-label="Paginación de instrumentos">
+      <span>{{ page.count }} instrumentos · Página {{ page.page }}</span>
+      <button (click)="vm.goTo(page.page - 1)" [disabled]="page.page <= 1 || vm.loading()">
+        Anterior
+      </button>
+      <button
+        (click)="vm.goTo(page.page + 1)"
+        [disabled]="page.page * page.page_size >= page.count || vm.loading()"
+      >
+        Siguiente
+      </button>
+    </nav>
+  </section>
+}
+<dialog
+  #instrumentDialog
+  class="instrument-dialog"
+  aria-labelledby="instrument-dialog-title"
+  (cancel)="close($event)"
+>
+  <div class="sa-dialog-heading">
+    <h2 id="instrument-dialog-title">
+      {{
+        vm.mode() === 'create'
+          ? 'Nuevo instrumento'
+          : vm.mode() === 'edit'
+            ? 'Editar instrumento'
+            : 'Detalle del instrumento'
+      }}
+    </h2>
+    <button type="button" (click)="close()" [disabled]="vm.saving()" aria-label="Cerrar modal">
+      Cerrar ✕
+    </button>
+  </div>
+  @if (vm.modalError()) {
+    <div class="sa-error" role="alert">{{ vm.modalError() }}</div>
+  }
+  @if (vm.detailLoading()) {
+    <p role="status">Cargando instrumento…</p>
+  }
+  @if (vm.mode() === 'detail') {
+    @if (vm.selected(); as item) {
+      <section class="sa-panel">
+        <dl class="sa-details">
+          <div>
+            <dt>Código</dt>
+            <dd>{{ item.codigo }}</dd>
+          </div>
+          <div>
+            <dt>Versión</dt>
+            <dd>{{ item.version }}</dd>
+          </div>
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ item.nombre }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ item.activo ? 'Activo' : 'Inactivo' }}</dd>
+          </div>
+          <div>
+            <dt>Evaluación inicial</dt>
+            <dd>{{ item.es_inicial ? 'Sí' : 'No' }}</dd>
+          </div>
+          <div>
+            <dt>Creado</dt>
+            <dd>{{ item.creado_en | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Actualizado</dt>
+            <dd>{{ item.actualizado_en | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div class="wide">
+            <dt>Descripción</dt>
+            <dd class="multiline">{{ item.descripcion || 'Sin descripción' }}</dd>
+          </div>
+          <div class="wide">
+            <dt>Instrucciones</dt>
+            <dd class="multiline">{{ item.instrucciones || 'Sin instrucciones' }}</dd>
+          </div>
+        </dl>
+      </section>
+      <button class="button" type="button" (click)="vm.open('edit', item)">
+        Editar instrumento
+      </button>
+    }
+  } @else if (vm.mode() === 'create' || (vm.mode() === 'edit' && vm.selected())) {
+    <form [formGroup]="vm.form" (ngSubmit)="vm.save()" novalidate>
+      <fieldset [disabled]="vm.saving()" class="sa-panel">
+        <div class="sa-form-grid">
+          <label
+            >Código *<input
+              formControlName="codigo"
+              maxlength="50"
+              autofocus
+              [attr.aria-invalid]="!!vm.fieldError('codigo')"
+              aria-describedby="codigo-error"
+            />
+            @if (vm.fieldError('codigo')) {
+              <small id="codigo-error" class="sa-field-error">{{ vm.fieldError('codigo') }}</small>
+            }
+          </label>
+          <label
+            >Versión *<input
+              formControlName="version"
+              maxlength="50"
+              [attr.aria-invalid]="!!vm.fieldError('version')"
+              aria-describedby="version-error"
+            />
+            @if (vm.fieldError('version')) {
+              <small id="version-error" class="sa-field-error">{{
+                vm.fieldError('version')
+              }}</small>
+            }
+          </label>
+          <label class="wide"
+            >Nombre *<input
+              formControlName="nombre"
+              maxlength="200"
+              [attr.aria-invalid]="!!vm.fieldError('nombre')"
+              aria-describedby="nombre-error"
+            />
+            @if (vm.fieldError('nombre')) {
+              <small id="nombre-error" class="sa-field-error">{{ vm.fieldError('nombre') }}</small>
+            }
+          </label>
+          <label class="wide"
+            >Descripción<textarea formControlName="descripcion" rows="3"></textarea>
+          </label>
+          <label class="wide"
+            >Instrucciones<textarea formControlName="instrucciones" rows="5"></textarea>
+          </label>
+        </div>
+        <label class="sa-check"
+          ><input type="checkbox" formControlName="es_inicial" />Para evaluación inicial</label
+        >
+        <p class="sa-help">La combinación de código y versión debe ser única.</p>
+      </fieldset>
+      <div class="sa-actions">
+        <button class="button" type="submit" [disabled]="vm.saving()">
+          {{
+            vm.saving()
+              ? 'Guardando…'
+              : vm.mode() === 'create'
+                ? 'Crear instrumento'
+                : 'Guardar cambios'
+          }}
+        </button>
+        <button type="button" (click)="close()" [disabled]="vm.saving()">Cancelar</button>
+      </div>
+    </form>
+  }
+</dialog>

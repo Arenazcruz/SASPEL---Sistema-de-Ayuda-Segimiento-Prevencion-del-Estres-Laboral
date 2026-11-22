@@ -9,16 +9,16 @@ insertan escalas reales en la base de datos.
 
 from django.db import models
 
+from .auditable import AuditableModel
 
-class EscalaRespuesta(models.Model):
+
+class EscalaRespuesta(AuditableModel):
     # Nombre para reconocer el conjunto de opciones al preparar una pregunta.
     """Conjunto reutilizable de opciones para preguntas; retirar su uso conserva referencias."""
     nombre = models.CharField(max_length=150, unique=True)
     descripcion = models.TextField(blank=True)
     # Permite dejar de ofrecer la escala sin borrar sus opciones y preguntas.
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_escala_respuesta'

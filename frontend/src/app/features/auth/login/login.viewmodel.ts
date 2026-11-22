@@ -9,6 +9,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { sessionDestination } from '../../../core/auth/auth.models';
 
 @Injectable()
 export class LoginViewModel {
@@ -16,7 +17,10 @@ export class LoginViewModel {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly form = inject(FormBuilder).nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: [
+      '',
+      [Validators.required, Validators.email, Validators.pattern(/^[^@\s]+@saspel\.com$/i)],
+    ],
     password: ['', [Validators.required]],
   });
   readonly loading = signal(false);
@@ -44,14 +48,14 @@ export class LoginViewModel {
       .subscribe({
         next: (user) => {
           this.form.controls.password.reset();
-          void this.router.navigateByUrl(user.dashboard_path);
+          void this.router.navigateByUrl(sessionDestination(user));
         },
         error: (error: HttpErrorResponse) => {
           if (error.status === 403)
-            this.error.set(error.error?.detail ?? 'Tu cuenta no está habilitada para ingresar.');
+            this.error.set(typeof error.error?.detail === 'string' ? error.error.detail : 'Tu cuenta no está habilitada para ingresar.');
           else if (error.status === 0)
             this.error.set('No pudimos conectar con SASPEL. Inténtalo nuevamente.');
-          else if (error.status === 401) this.error.set('Correo o contraseña incorrectos.');
+          else if (error.status === 401) this.error.set('Credenciales no válidas.');
           else
             this.error.set('No pudimos iniciar sesión. Revisa tus datos e inténtalo nuevamente.');
         },

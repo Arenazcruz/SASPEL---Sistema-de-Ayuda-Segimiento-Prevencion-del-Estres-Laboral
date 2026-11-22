@@ -11,7 +11,7 @@
   >
     <a [routerLink]="base" class="brand" (click)="mobileOpen.set(false)"><app-brand /></a>
     <p class="sidebar-caption">ADMINISTRACIÓN GLOBAL</p>
-    <nav aria-label="Menú Superadmin">
+    <nav aria-label="Menú Superadmin"><a routerLink="/dashboard/reportes">Reportes operativos</a><a routerLink="/dashboard/notificaciones">Notificaciones</a>
       <a
         [routerLink]="base"
         routerLinkActive="active"
@@ -51,7 +51,7 @@
         Institución <span>{{ institutionOpen() ? '−' : '+' }}</span>
       </button>
       @if (institutionOpen()) {
-        <div id="institution-menu" class="submenu">
+        <div id="institution-menu" class="submenu"><a [routerLink]="base + '/institucion/factores'" routerLinkActive="active">Factores psicosociales</a>
           <a
             [routerLink]="base + '/institucion/areas'"
             routerLinkActive="active"
@@ -65,6 +65,46 @@
             ariaCurrentWhenActive="page"
             (click)="mobileOpen.set(false)"
             >Cargos</a
+          >
+        </div>
+      }
+      <button
+        class="group"
+        (click)="evaluationsOpen.set(!evaluationsOpen())"
+        [attr.aria-expanded]="evaluationsOpen()"
+        aria-controls="evaluations-menu"
+      >
+        Evaluaciones <span>{{ evaluationsOpen() ? '−' : '+' }}</span>
+      </button>
+      @if (evaluationsOpen()) {
+        <div id="evaluations-menu" class="submenu">
+          <a
+            [routerLink]="base + '/evaluaciones/instrumentos'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Instrumentos</a
+          >
+          <a
+            [routerLink]="base + '/evaluaciones/preguntas'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Preguntas</a
+          >
+          <a
+            [routerLink]="base + '/evaluaciones/escalas'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Escalas de respuesta</a
+          >
+          <a
+            [routerLink]="base + '/evaluaciones/rangos'"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="mobileOpen.set(false)"
+            >Rangos de interpretación</a
           >
         </div>
       }

@@ -1,18 +1,30 @@
 <div class="sa-heading">
   <div>
     <p class="eyebrow">SUPERADMIN / PERSONAS</p>
-    <h1>{{ vm.title() }}</h1>
+    <h1>Usuarios</h1>
     <p>Cuentas de acceso e información institucional.</p>
   </div>
-  <a class="button" [routerLink]="base + '/nuevo'">Registrar persona</a>
+  <a class="button" [routerLink]="base + '/nuevo'" queryParamsHandling="preserve">Nuevo usuario</a>
 </div>
+<nav class="sa-categories" aria-label="Categorías de usuarios">
+  @for (category of vm.categories; track category[0]) {
+    <button
+      type="button"
+      [attr.aria-pressed]="vm.filters.controls.role.value === category[0]"
+      (click)="vm.selectCategory(category[0])"
+    >
+      {{ category[1] }}
+    </button>
+  }
+</nav>
 <form class="sa-panel sa-filters" [formGroup]="vm.filters" (ngSubmit)="vm.search()">
   <label
     >Buscar<input formControlName="search" placeholder="Nombre, correo o código" maxlength="200"
   /></label>
   <label
-    >Rol<select formControlName="role" [attr.disabled]="vm.fixedRole() ? '' : null">
+    >Rol<select formControlName="role">
       <option value="">Todos los roles</option>
+      <option value="ADMINISTRADORES">Administradores y Superadmins</option>
       @for (role of vm.roles; track role[0]) {
         <option [value]="role[0]">{{ role[1] }}</option>
       }
@@ -90,14 +102,16 @@
               </td>
               <td>
                 <div class="sa-row-actions">
-                  <a [routerLink]="[base, user.id]">Ver</a
-                  ><a [routerLink]="[base, user.id, 'editar']">Editar</a
-                  ><a [routerLink]="[base, user.id, 'password']">Restablecer contraseña</a
+                  <a [routerLink]="[base, user.id]" queryParamsHandling="preserve">Ver</a
+                  ><a [routerLink]="[base, user.id, 'editar']" queryParamsHandling="preserve"
+                    >Editar</a
+                  ><a [routerLink]="[base, user.id, 'password']" queryParamsHandling="preserve"
+                    >Restablecer contraseña</a
                   ><button
                     (click)="vm.toggle(user)"
                     [disabled]="vm.busy() || (user.id === vm.currentUser()?.id && user.is_active)"
                   >
-                    {{ user.is_active ? 'Desactivar' : 'Activar' }}
+                    {{ user.is_active ? 'Desactivar' : 'Reactivar' }}
                   </button>
                 </div>
               </td>
@@ -123,3 +137,18 @@
     </nav>
   </section>
 }
+<dialog
+  #userDialog
+  class="sa-user-dialog"
+  aria-labelledby="user-dialog-title"
+  (cancel)="closeDialog($event)"
+>
+  <div class="sa-dialog-heading">
+    <strong id="user-dialog-title">Gestión de usuario</strong>
+    <button type="button" aria-label="Cerrar modal" (click)="closeDialog()">Cerrar ✕</button>
+  </div>
+  <router-outlet
+    (activate)="openDialog(userDialog, $event)"
+    (deactivate)="onDeactivate(userDialog)"
+  />
+</dialog>

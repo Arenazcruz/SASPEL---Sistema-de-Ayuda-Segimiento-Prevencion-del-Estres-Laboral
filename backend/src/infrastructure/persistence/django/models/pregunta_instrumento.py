@@ -9,11 +9,13 @@ Más adelante se comprobará que cada respuesta corresponda al tipo esperado.
 
 from django.db import models
 
+from .auditable import AuditableModel
+
 from .escala_respuesta import EscalaRespuesta
 from .instrumento_psicologico import InstrumentoPsicologico
 
 
-class PreguntaInstrumento(models.Model):
+class PreguntaInstrumento(AuditableModel):
     """Pregunta ordenada dentro de una versión; describe tipo, escala e inversión para un futuro
     proceso de respuesta.
     """
@@ -43,8 +45,6 @@ class PreguntaInstrumento(models.Model):
     # Indica si será necesario responder esta pregunta para completar la evaluación.
     obligatoria = models.BooleanField(default=True)
     activo = models.BooleanField(default=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'saspel_pregunta_instrumento'

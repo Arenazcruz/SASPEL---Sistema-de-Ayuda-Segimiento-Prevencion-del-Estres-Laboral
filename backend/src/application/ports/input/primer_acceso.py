@@ -1,0 +1,13 @@
+from typing import Protocol
+from uuid import UUID
+
+from src.application.dto.primer_acceso import (
+    AceptarPoliticasCommand, CambiarPasswordCommand, EstadoPrimerAcceso, PoliticaDTO,
+)
+
+
+class PrimerAcceso(Protocol):
+    def estado(self, usuario_id: UUID) -> EstadoPrimerAcceso: ...
+    def pendientes(self, usuario_id: UUID) -> list[PoliticaDTO]: ...
+    def cambiar_password(self, command: CambiarPasswordCommand) -> EstadoPrimerAcceso: ...
+    def aceptar(self, command: AceptarPoliticasCommand) -> EstadoPrimerAcceso: ...

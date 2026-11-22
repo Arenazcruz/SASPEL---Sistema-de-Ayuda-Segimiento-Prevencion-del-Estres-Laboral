@@ -14,7 +14,10 @@ from django.db.models import Case, CharField, Count, Q, Value, When
 from src.application.dto.superadmin import DashboardSummary, InstitutionDTO, UserDTO, UserPage
 from src.application.services.auth_identity import ROLE_DASHBOARDS
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
-from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.domain.services.institutional_email import institutional_email
+from src.domain.services.primer_acceso import requiere_password_temporal
+from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.infrastructure.persistence.django.models import AsignacionInstrumento, InstrumentoPsicologico
 
 User = get_user_model()
 
@@ -38,6 +41,8 @@ class DjangoAdministrationRepository:
             detail = getattr(error, 'message_dict', None)
             field = next(iter(detail)) if detail else 'detail'
             messages = detail[field] if detail else error.messages
+            if field == '__all__':
+                raise AdministrationError('Los datos no cumplen las restricciones de la operación. Revisa duplicados y referencias.') from None
             raise AdministrationError(' '.join(messages), field) from None
         except IntegrityError:
             raise AdministrationError('Los datos ya existen o una referencia dejó de estar disponible.') from None
@@ -75,7 +80,7 @@ class DjangoAdministrationRepository:
         data = {}
         if profile:
             data = {name: getattr(profile, name) for name in (
-                'codigo_empleado', 'apellido_materno', 'nombre_preferido',
+                'codigo_empleado', 'apellido_materno',
                 'fecha_nacimiento', 'sexo', 'telefono', 'tamizaje_resuelto',
                 'habilitado_asignaciones',
             )}
@@ -96,7 +101,7 @@ class DjangoAdministrationRepository:
         PersonNotFound.
         """
         try:
-            return self.users().get(pk=user_id)
+            return self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True).get(pk=user_id)
         except User.DoesNotExist:
             raise PersonNotFound('No se encontró la persona.') from None
 
@@ -109,13 +114,15 @@ class DjangoAdministrationRepository:
         actividad, área y cargo. Devuelve UserPage de 20 registros, recientes primero, con ID
         como desempate. Cambiar aquí tamaño/orden y revisar navegación del listado Angular.
         """
-        query = self.users()
+        query = self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True)
         if filters.search:
             query = query.filter(
                 Q(email__icontains=filters.search) | Q(first_name__icontains=filters.search)
                 | Q(last_name__icontains=filters.search) | Q(perfil_usuario__codigo_empleado__icontains=filters.search)
             )
-        if filters.role:
+        if filters.role == 'ADMINISTRADORES':
+            query = query.filter(functional_role__in=['ADMIN', 'SUPERADMIN'])
+        elif filters.role:
             query = query.filter(functional_role=filters.role)
         if filters.active is not None:
             query = query.filter(is_active=filters.active)
@@ -125,27 +132,43 @@ class DjangoAdministrationRepository:
             query = query.filter(perfil_usuario__cargo_id=filters.cargo)
         count, size = query.count(), 20
         start = (filters.page - 1) * size
+        if start >= count:
+            return UserPage(count, filters.page, size, [])
         return UserPage(count, filters.page, size, [self.user_dto(u) for u in query.order_by('-date_joined', '-pk')[start:start + size]])
 
     @staticmethod
-    def check_email(email, user_id=None):
-        """Rechaza correo o username ya utilizado sin distinguir mayúsculas; user_id excluye la
-        propia cuenta en ediciones. No escribe; lanza AdministrationError para email.
-        """
-        if User.objects.filter(Q(email__iexact=email) | Q(username__iexact=email)).exclude(pk=user_id).exists():
-            raise AdministrationError('Ya existe una cuenta con este correo.', 'email')
+    def available_email(first_name, last_name):
+        """Reserva lógica bajo el bloqueo de atomic(); incluye cuentas inactivas y usernames."""
+        sequence = 1
+        email = institutional_email(first_name, last_name, sequence)
+        while User.objects.filter(Q(email__iexact=email) | Q(username__iexact=email)).exists():
+            sequence += 1
+            email = institutional_email(first_name, last_name, sequence)
+        return email
 
     @staticmethod
     def check_references(changes, profile=None):
-        """Comprueba que nuevas áreas/cargos existan y estén activos. Un vínculo histórico sin
-        cambios puede seguir inactivo; None permite desvincular. Lanza AdministrationError por
-        campo sin escribir.
+        """Valida la combinación resultante de un alta o PATCH, sin alterar datos históricos
+        cuando no se envían referencias. None permite desvincular ambos campos.
         """
+        if not {'area_id', 'cargo_id'} & changes.keys():
+            return
         for field, model in (('area_id', AreaInstitucional), ('cargo_id', CargoInstitucional)):
             value = changes.get(field)
             if value is not None and (profile is None or value != getattr(profile, field)):
-                if not model.objects.filter(pk=value, activo=True).exists():
+                if not model.objects.filter(pk=value, activo=True, deleted=False).exists():
                     raise AdministrationError('Selecciona una opción activa y existente.', field)
+        area_id = changes.get('area_id', getattr(profile, 'area_id', None))
+        cargo_id = changes.get('cargo_id', getattr(profile, 'cargo_id', None))
+        if cargo_id is None:
+            return
+        if area_id is None:
+            raise AdministrationError('Selecciona un área antes de elegir el cargo.', 'cargo_id')
+        if not AreaCargo.objects.filter(
+            area_id=area_id, cargo_id=cargo_id, deleted=False,
+            area__activo=True, area__deleted=False, cargo__activo=True, cargo__deleted=False,
+        ).exists():
+            raise AdministrationError('El cargo no está habilitado para el área seleccionada.', 'cargo_id')
 
     @staticmethod
     def set_password(user, password):
@@ -159,15 +182,16 @@ class DjangoAdministrationRepository:
         user.set_password(password)
 
     def create_user(self, command):
-        """Comprueba correo y referencias, guarda User con hash, perfil sin tamizaje resuelto y
+        """Genera correo único y comprueba referencias, guarda User con hash, perfil sin tamizaje resuelto y
         un único grupo. Solo psicólogos conservan habilitado_asignaciones. Devuelve UserDTO;
         atomic() del caso garantiza que un fallo de perfil/grupo revierta también la cuenta.
         """
-        self.check_email(command.email)
+        email = self.available_email(command.first_name, command.last_name)
         data = asdict(command)
         self.check_references(data)
-        user = User(username=command.email, email=command.email,
+        user = User(username=email, email=email,
                     first_name=command.first_name, last_name=command.last_name,
+                    debe_cambiar_password=requiere_password_temporal(command.role),
                     is_superuser=command.role == 'SUPERADMIN', is_staff=command.role == 'SUPERADMIN')
         self.set_password(user, command.password)
         user.full_clean()
@@ -182,24 +206,35 @@ class DjangoAdministrationRepository:
         user.groups.set([Group.objects.get(name=command.role)])
         return self.get_user(user.pk)
 
+    def instrumento_inicial_activo(self):
+        return (InstrumentoPsicologico.objects.select_for_update()
+                .filter(activo=True, es_inicial=True, deleted=False)
+                .values_list('pk', flat=True).first())
+
+    def asegurar_asignacion_inicial(self, usuario_id, instrumento_id):
+        # Bloqueo de la cuenta dentro de atomic: serializa reintentos para esta persona.
+        User.objects.select_for_update().get(pk=usuario_id)
+        if not AsignacionInstrumento.objects.filter(
+            trabajador_id=usuario_id, instrumento_id=instrumento_id,
+        ).exists():
+            AsignacionInstrumento.objects.create(
+                trabajador_id=usuario_id, instrumento_id=instrumento_id,
+                origen='SISTEMA', estado='PENDIENTE', asignado_por=None,
+            )
+
     def update_user(self, user_id, changes):
-        """Actualiza cuenta y perfil desde cambios parciales; email también cambia username.
+        """Actualiza cuenta y perfil desde cambios parciales, conservando email y username.
         Puede completar un perfil ausente si se proporciona código. Guarda solo campos de
         cuenta editados para no sobrescribir last_login concurrente; devuelve UserDTO y
         requiere atomic() del caso.
         """
         user = self.find_user(user_id)
-        if 'email' in changes:
-            self.check_email(changes['email'], user_id)
-            user.username = changes['email']
-        for name in ('email', 'first_name', 'last_name'):
+        for name in ('first_name', 'last_name'):
             if name in changes:
                 setattr(user, name, changes[name])
         user.full_clean()
         # Solo escribe los campos de cuenta editados: no pisa un last_login concurrente.
-        account_fields = set(changes) & {'email', 'first_name', 'last_name'}
-        if 'email' in account_fields:
-            account_fields.add('username')
+        account_fields = set(changes) & {'first_name', 'last_name'}
         if account_fields:
             user.save(update_fields=account_fields)
         profile_changes = {key: value for key, value in changes.items() if key not in ('email', 'first_name', 'last_name')}
@@ -249,7 +284,7 @@ class DjangoAdministrationRepository:
         """Cuenta cuentas activas miembros del grupo SUPERADMIN para proteger el último acceso
         administrativo.
         """
-        return User.objects.filter(is_active=True, groups__name='SUPERADMIN').count()
+        return User.objects.filter(is_active=True, deleted=False, groups__name='SUPERADMIN').count()
 
     def reset_password(self, user_id, password):
         """Valida y guarda el hash de la clave por ID; devuelve None y nunca devuelve la
@@ -264,7 +299,7 @@ class DjangoAdministrationRepository:
         más recientes. Incluye cuentas sin perfil; utiliza la misma prioridad que login y
         listado.
         """
-        query = self.users()
+        query = self.users().filter(deleted=False).exclude(perfil_usuario__deleted=True)
         counts = query.aggregate(
             users_total=Count('pk'), active_users=Count('pk', filter=Q(is_active=True)),
             inactive_users=Count('pk', filter=Q(is_active=False)),
@@ -288,17 +323,25 @@ class DjangoAdministrationRepository:
         """
         model = self.institution_model(kind)
         try:
-            return model.objects.get(pk=item_id)
+            return model.objects.get(pk=item_id, deleted=False)
         except model.DoesNotExist:
             raise PersonNotFound('No se encontró el registro institucional.') from None
 
-    def list_institution(self, kind, active=None):
+    def list_institution(self, kind, active=None, area=None):
         """Consulta áreas/cargos con filtro opcional de activo y devuelve DTO ordenados por
         nombre e ID.
         """
-        query = self.institution_model(kind).objects.all()
+        query = self.institution_model(kind).objects.filter(deleted=False)
         if active is not None:
             query = query.filter(activo=active)
+        if active is True:
+            query = query.filter(deleted=False)
+        if kind == 'cargos' and area is not None:
+            query = query.filter(
+                activo=True, deleted=False,
+                relaciones_area__area_id=area, relaciones_area__deleted=False,
+                relaciones_area__area__activo=True, relaciones_area__area__deleted=False,
+            ).distinct()
         return [self.institution_dto(item) for item in query.order_by('nombre', 'pk')]
 
     def get_institution(self, kind, item_id):

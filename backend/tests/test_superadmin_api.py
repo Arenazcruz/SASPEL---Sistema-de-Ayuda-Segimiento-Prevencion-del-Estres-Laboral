@@ -3,22 +3,32 @@ permisos, estados, roles, claves y catálogos. Usa hash rápido solo en pruebas;
 escenarios de rollback y de acceso con token anterior al cambiar el módulo.
 """
 
+from datetime import date
 from unittest.mock import patch
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import caches
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 from src.application.use_cases.superadmin import ChangeUserRole, DeactivateUser
 from src.domain.exceptions.superadmin import AdministrationError
 from src.infrastructure.dependencies.superadmin import build_administration
-from src.infrastructure.persistence.django.models import AreaInstitucional, CargoInstitucional, PerfilUsuario
+from src.infrastructure.persistence.django.models import AreaCargo, AreaInstitucional, CargoInstitucional, PerfilUsuario
 
 User = get_user_model()
 PASSWORD = 'Prueba-segura-8274!'
 
 
-@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+@override_settings(
+    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
+    CACHES={
+        'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'},
+        'login_attempts': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'saspel-superadmin-tests'},
+    },
+)
 class SuperadminApiTests(TestCase):
     """Escenarios integrados de SA-01 con cuenta administrativa y catálogos ficticios."""
     @classmethod
@@ -27,8 +37,11 @@ class SuperadminApiTests(TestCase):
         cls.root.groups.add(Group.objects.get(name='SUPERADMIN'))
         cls.area = AreaInstitucional.objects.create(nombre='Área de pruebas')
         cls.cargo = CargoInstitucional.objects.create(nombre='Cargo de pruebas')
+        AreaCargo.objects.create(area=cls.area, cargo=cls.cargo)
 
     def setUp(self):
+        caches['login_attempts'].clear()
+        self.addCleanup(caches['login_attempts'].clear)
         self.client = APIClient()
         self.authorize(self.root)
 
@@ -40,9 +53,9 @@ class SuperadminApiTests(TestCase):
         """Devuelve un alta ficticia válida con sobrescrituras para provocar cada escenario; no
         crea datos.
         """
-        data = dict(email=' persona@example.com ', password=PASSWORD, password_confirmation=PASSWORD,
+        data = dict(password=PASSWORD, password_confirmation=PASSWORD,
                     first_name='Ana', last_name='Prueba', apellido_materno='López', codigo_empleado='SA-001',
-                    role='NUEVO_TRABAJADOR', area_id=self.area.pk, cargo_id=self.cargo.pk)
+                    role='NUEVO_TRABAJADOR', fecha_nacimiento='1990-05-15', area_id=self.area.pk, cargo_id=self.cargo.pk)
         return data | changes
 
     def create(self, **changes):
@@ -53,7 +66,7 @@ class SuperadminApiTests(TestCase):
         """Envía POST a una acción de persona con ID y datos opcionales; devuelve la respuesta."""
         return self.client.post(f'/api/superadmin/users/{user_id}/{action}/', data or {}, format='json')
 
-    def login(self, email='persona@example.com', password=PASSWORD):
+    def login(self, email='ana.prueba@saspel.com', password=PASSWORD):
         """Usa un cliente sin token administrativo para comprobar que las credenciales de la
         persona permiten entrar.
         """
@@ -66,9 +79,16 @@ class SuperadminApiTests(TestCase):
         paths = {'NUEVO_TRABAJADOR': 'nuevo-trabajador', 'PSICOLOGO': 'psicologo', 'ADMIN': 'admin', 'SUPERADMIN': 'superadmin'}
         for index, (role, path) in enumerate(paths.items()):
             with self.subTest(role=role):
-                email = f'person{index}@example.com'
-                response = self.create(role=role, email=email.upper(), codigo_empleado=f'EMP-{index}')
+                email = 'ana.prueba' + (str(index + 1) if index else '') + '@saspel.com'
+                response = self.create(role=role, codigo_empleado=f'EMP-{index}')
                 self.assertEqual(response.status_code, 201, response.data)
+                self.assertEqual(set(response.data), {
+                    'id', 'email', 'first_name', 'last_name', 'nombre_completo', 'role',
+                    'is_active', 'fecha_registro', 'last_login', 'codigo_empleado',
+                    'apellido_materno', 'fecha_nacimiento', 'sexo', 'telefono', 'area',
+                    'cargo', 'tamizaje_resuelto', 'habilitado_asignaciones', 'tiene_perfil',
+                })
+                self.assertEqual(response.data['nombre_completo'], 'Ana Prueba López')
                 user = User.objects.get(pk=response.data['id'])
                 self.assertEqual(user.email, email)
                 self.assertEqual(user.username, email)
@@ -134,16 +154,55 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.create(role='TRABAJADOR').status_code, 400)
         self.assertEqual(User.objects.count(), 1)
 
-    def test_duplicate_email_case_and_employee_code(self):
-        """Repite correo con distintas mayúsculas y código empleado; los intentos fallidos no
-        crean cuentas.
-        """
-        self.assertEqual(self.create().status_code, 201)
-        for changes in ({'email': 'persona@example.com', 'codigo_empleado': 'OTHER'},
-                        {'email': 'PERSONA@EXAMPLE.COM', 'codigo_empleado': 'OTHER'},
-                        {'email': 'other@example.com'}):
-            self.assertEqual(self.create(**changes).status_code, 400)
-        self.assertEqual(User.objects.count(), 2)
+    def test_generated_email_accents_and_normalized_names(self):
+        response = self.create(first_name='  Jesús Gabriel  ', last_name='Crúz Lavadenz')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'jesus.cruz@saspel.com')
+        response = self.create(first_name='ÁnaMaría', last_name='OÑéill', codigo_empleado='OTHER')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'anamaria.oneill@saspel.com')
+
+    def test_duplicate_emails_get_numbered_including_inactive_accounts(self):
+        first = self.create()
+        self.assertEqual(first.status_code, 201)
+        self.action(first.data['id'], 'deactivate')
+        for number in (2, 3):
+            response = self.create(codigo_empleado=f'OTHER-{number}')
+            self.assertEqual(response.status_code, 201, response.data)
+            self.assertEqual(response.data['email'], f'ana.prueba{number}@saspel.com')
+        self.assertEqual(self.create().status_code, 400)  # Código duplicado revierte el alta.
+        self.assertEqual(User.objects.count(), 4)
+
+    def test_collision_checks_email_and_username_case_insensitively(self):
+        User.objects.create_user(username='ANA.PRUEBA@SASPEL.COM', email='legacy@example.com')
+        User.objects.create_user(username='legacy', email='ANA.PRUEBA2@SASPEL.COM')
+        response = self.create()
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['email'], 'ana.prueba3@saspel.com')
+
+    def test_manual_email_and_invalid_name_rejected(self):
+        for fields in ({'email': 'manual@example.com'}, {'username': 'manual'},
+                       {'first_name': '!!!'}, {'last_name': '   '}):
+            self.assertEqual(self.create(**fields).status_code, 400, fields)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_long_names_produce_valid_email(self):
+        response = self.create(first_name='a' * 150, last_name='b' * 150)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertLessEqual(len(response.data['email'].split('@')[0]), 64)
+
+    def test_existing_external_email_login_is_rejected(self):
+        response = self.login('root@example.com')
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, {'detail': 'Credenciales no válidas.'})
+
+    def test_administrators_category_includes_admin_and_superadmin(self):
+        self.create(role='ADMIN')
+        self.create(role='PSICOLOGO', codigo_empleado='PSI')
+        response = self.client.get('/api/superadmin/users/', {'role': 'ADMINISTRADORES'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 2)
+        self.assertCountEqual([u['role'] for u in response.data['results']], ['ADMIN', 'SUPERADMIN'])
 
     def test_password_validators_and_confirmation(self):
         """Prueba claves débiles y confirmación distinta para impedir altas que no cumplen las
@@ -179,7 +238,7 @@ class SuperadminApiTests(TestCase):
         user.is_active = False
         user.groups.set([Group.objects.get(name='TRABAJADOR')])
         user.save()
-        for params in ({'role': 'TRABAJADOR'}, {'active': 'false'}, {'search': 'PERSONA@'},
+        for params in ({'role': 'TRABAJADOR'}, {'active': 'false'}, {'search': 'ANA.PRUEBA@'},
                        {'search': 'SA-001'}, {'area': self.area.pk}, {'cargo': self.cargo.pk}):
             response = self.client.get('/api/superadmin/users/', params)
             self.assertEqual(response.data['count'], 1, params)
@@ -188,20 +247,26 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.client.get('/api/superadmin/users/', {'page': 2}).data['results'], [])
         self.assertEqual(self.client.get('/api/superadmin/users/', {'page': 0}).status_code, 400)
 
-    def test_edit_person_and_email(self):
-        """Edita datos y correo; comprueba username sincronizado, login con nuevo correo y
-        rechazo de correo ocupado.
-        """
+    def test_edit_person_preserves_generated_email_and_password(self):
         user_id = self.create().data['id']
+        previous = User.objects.get(pk=user_id)
         response = self.client.patch(f'/api/superadmin/users/{user_id}/',
-                                    {'email': ' EDITADO@Example.com ', 'telefono': '+591 123', 'first_name': 'Editada'}, format='json')
+                                    {'telefono': '59170000123', 'first_name': 'Editada'}, format='json')
         self.assertEqual(response.status_code, 200, response.data)
         user = User.objects.get(pk=user_id)
-        self.assertEqual(user.username, 'editado@example.com')
-        self.assertEqual(user.email, user.username)
-        self.assertEqual(user.perfil_usuario.telefono, '+591 123')
+        self.assertEqual(user.first_name, 'Editada')
+        self.assertEqual(user.email, previous.email)
+        self.assertEqual(user.username, previous.username)
+        self.assertEqual(user.password, previous.password)
+        self.assertEqual(user.perfil_usuario.telefono, '59170000123')
+        detail = self.client.get(f'/api/superadmin/users/{user_id}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data, response.data)
+        self.assertEqual(detail.data['nombre_completo'], 'Editada Prueba López')
         self.assertEqual(self.login(user.email).status_code, 200)
-        self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', {'email': self.root.email}, format='json').status_code, 400)
+        for field in ('email', 'username'):
+            self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/',
+                                              {field: 'manual@saspel.com'}, format='json').status_code, 400)
 
     def test_edit_rejects_sensitive_fields_and_inactive_references(self):
         """Envía privilegios y datos sensibles por PATCH y selecciona área inactiva; las
@@ -211,7 +276,7 @@ class SuperadminApiTests(TestCase):
         for data in ({'role': 'ADMIN'}, {'password': PASSWORD}, {'is_active': False}, {'tamizaje_resuelto': True}, {'is_superuser': True}):
             self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', data, format='json').status_code, 400)
         area = AreaInstitucional.objects.create(nombre='Inactiva', activo=False)
-        self.assertEqual(self.create(email='new@example.com', codigo_empleado='NEW', area_id=area.pk).status_code, 400)
+        self.assertEqual(self.create(codigo_empleado='NEW', area_id=area.pk).status_code, 400)
         self.assertEqual(self.client.patch(f'/api/superadmin/users/{user_id}/', {'area_id': area.pk}, format='json').status_code, 400)
 
     def test_deactivate_blocks_login_activate_restores(self):
@@ -233,7 +298,7 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(self.action(self.root.pk, 'deactivate').status_code, 400)
         self.assertEqual(self.action(self.root.pk, 'role', {'role': 'ADMIN'}).status_code, 400)
         # Se ejercita la regla del último activo separadamente de la autooperación.
-        for case, args in ((DeactivateUser, (self.root.pk, -1)), (ChangeUserRole, (self.root.pk, 'ADMIN', -1))):
+        for case, args in ((DeactivateUser, (self.root.pk, UUID(int=999999))), (ChangeUserRole, (self.root.pk, 'ADMIN', UUID(int=999999)))):
             with self.assertRaisesMessage(AdministrationError, 'al menos un SUPERADMIN'):
                 build_administration(case).execute(*args)
         other = self.create(role='SUPERADMIN').data['id']
@@ -271,7 +336,7 @@ class SuperadminApiTests(TestCase):
         recientes.
         """
         for i in range(6):
-            self.create(email=f'recent{i}@example.com', codigo_empleado=f'R-{i}')
+            self.create(codigo_empleado=f'R-{i}')
         response = self.client.get('/api/superadmin/dashboard/summary/')
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['users_total'], User.objects.count())
@@ -279,7 +344,7 @@ class SuperadminApiTests(TestCase):
         self.assertEqual(response.data['active_users'], 7)
         self.assertEqual(response.data['inactive_users'], 0)
         self.assertEqual(len(response.data['recent_users']), 5)
-        self.assertEqual(response.data['recent_users'][0]['email'], 'recent5@example.com')
+        self.assertEqual(response.data['recent_users'][0]['email'], 'ana.prueba6@saspel.com')
 
     def test_institution_crud_preserves_associated_profiles(self):
         """Crea, edita y cambia estados de catálogos; comprueba que se conserve la referencia del
@@ -299,5 +364,87 @@ class SuperadminApiTests(TestCase):
 
     def test_unknown_ids_are_404(self):
         """Consulta IDs ausentes de persona, área y cargo para proteger el contrato HTTP 404."""
-        for url in ('users/999999/', 'areas/999999/', 'cargos/999999/'):
+        for url in ('users/00000000-0000-0000-0000-000000999999/', 'areas/00000000-0000-0000-0000-000000999999/', 'cargos/00000000-0000-0000-0000-000000999999/'):
             self.assertEqual(self.client.get('/api/superadmin/' + url).status_code, 404)
+
+    def test_personal_data_rejects_invalid_types_with_field_errors(self):
+        response = self.create(first_name='Ana123', last_name='Pérez!', apellido_materno='123',
+                               codigo_empleado='EMP 01', telefono='abcdefghi')
+        self.assertEqual(response.status_code, 400)
+        for field in ('first_name', 'last_name', 'apellido_materno', 'codigo_empleado', 'telefono'):
+            self.assertIn(field, response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_names_accents_spaces_and_alphanumeric_code_are_accepted(self):
+        response = self.create(first_name='  Jesu\u0301s   Gabriel  ', last_name='Muñoz',
+                               apellido_materno='', codigo_empleado='AB12-34',
+                               telefono='0012345678')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['first_name'], 'Jesús Gabriel')
+        self.assertEqual(response.data['telefono'], '0012345678')
+
+    def test_names_and_codes_reject_symbols_and_embedded_whitespace(self):
+        for values in ({'first_name': 'Ana\nMaría'}, {'last_name': "O'Neill"},
+                       {'first_name': 'Ana-María'}, {'codigo_empleado': '-AB12'},
+                       {'codigo_empleado': 'AB--12'}, {'codigo_empleado': 'AB_12'},
+                       {'codigo_empleado': '   '}):
+            with self.subTest(values=values):
+                response = self.create(**values)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(values)), response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_phone_requires_eight_to_fifteen_ascii_digits(self):
+        for phone in ('1234567', '1' * 16, '+59170000000', '7000 0000', '7000000x', '１２３４５６７８'):
+            with self.subTest(phone=phone):
+                response = self.create(telefono=phone)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('telefono', response.data)
+        for index, phone in enumerate(('', '12345678', '1' * 15)):
+            self.assertEqual(self.create(telefono=phone, codigo_empleado=f'PHONE-{index}').status_code, 201)
+
+    @patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2026, 9, 21))
+    def test_age_boundaries_and_invalid_birth_dates(self, _today):
+        for birth in ('2008-09-21', '2007-09-22', '1948-09-21', '2027-01-01', '2000-02-30', None):
+            with self.subTest(birth=birth):
+                response = self.create(fecha_nacimiento=birth)
+                self.assertEqual(response.status_code, 400, response.data)
+                self.assertIn('fecha_nacimiento', response.data)
+        for index, birth in enumerate(('2007-09-21', '1948-09-22', '1949-09-21')):
+            response = self.create(fecha_nacimiento=birth, codigo_empleado=f'AGE-{index}')
+            self.assertEqual(response.status_code, 201, response.data)
+
+    def test_birth_date_required_when_creating(self):
+        data = self.payload()
+        data.pop('fecha_nacimiento')
+        response = self.client.post('/api/superadmin/users/', data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('fecha_nacimiento', response.data)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_birth_date_handles_leap_year_birthday(self):
+        with patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2027, 2, 28)):
+            self.assertEqual(self.create(fecha_nacimiento='2008-02-29').status_code, 400)
+        with patch('src.infrastructure.api.rest.serializers.superadmin.timezone.localdate', return_value=date(2027, 3, 1)):
+            self.assertEqual(self.create(fecha_nacimiento='2008-02-29').status_code, 201)
+
+    def test_edit_validates_supplied_fields_and_preserves_existing_data_on_failure(self):
+        created = self.create().data
+        url = f'/api/superadmin/users/{created["id"]}/'
+        for values in ({'first_name': '123'}, {'telefono': 'texto'}, {'fecha_nacimiento': '2099-01-01'},
+                       {'fecha_nacimiento': None}, {'codigo_empleado': 'AB_12'}):
+            with self.subTest(values=values):
+                response = self.client.patch(url, values, format='json')
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(values)), response.data)
+        unchanged = self.client.get(url).data
+        for field in ('first_name', 'telefono', 'fecha_nacimiento', 'codigo_empleado', 'email'):
+            self.assertEqual(unchanged[field], created[field])
+        self.assertEqual(self.client.patch(url, {'telefono': '70000000'}, format='json').status_code, 200)
+
+    def test_legacy_account_without_birth_date_can_edit_other_fields(self):
+        created = self.create().data
+        PerfilUsuario.objects.filter(usuario_id=created['id']).update(fecha_nacimiento=None)
+        response = self.client.patch(f'/api/superadmin/users/{created["id"]}/', {'telefono': '70000000'}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.data['fecha_nacimiento'])

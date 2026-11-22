@@ -1,0 +1,8 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()"><a [routerLink]="vm.panel">Volver a mi panel</a><h1>Catálogo de factores psicosociales</h1><p>Configura los tipos definidos por la institución. Desactivar un tipo conserva los registros existentes.</p>
+@if(vm.busy()){<p role="status">Procesando…</p>}
+@if(vm.error()){<p role="alert" class="error">{{vm.error()}}</p><button type="button" (click)="vm.load()" [disabled]="vm.busy()">Reintentar consulta</button>}
+@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.ready()){
+<form class="card" (ngSubmit)="vm.guardar()"><fieldset [disabled]="vm.busy()"><legend>{{vm.id?'Editar tipo':'Nuevo tipo'}}</legend><label>Nombre<input name="nombre" [(ngModel)]="vm.nombre" maxlength="120" required></label><label>Descripción<textarea name="descripcion" [(ngModel)]="vm.descripcion" maxlength="1000"></textarea></label><label><input type="checkbox" name="activo" [(ngModel)]="vm.activo">Activo para nuevos registros</label><button class="button" type="submit">Guardar tipo</button><button type="button" (click)="vm.limpiar()">Nuevo / cancelar edición</button></fieldset></form>
+<section><h2>Tipos configurados</h2>@for(t of vm.tipos();track t.id){<article class="card"><h3>{{t.nombre}} · {{t.activo?'Activo':'Inactivo'}}</h3><p>{{t.descripcion}}</p><button type="button" [disabled]="vm.busy()" (click)="vm.editar(t)">Editar {{t.nombre}}</button></article>}@empty{<p>No hay tipos configurados.</p>}</section>}
+</main>

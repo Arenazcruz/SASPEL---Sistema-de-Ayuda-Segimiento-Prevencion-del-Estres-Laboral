@@ -4,8 +4,13 @@ Cada modelo se mantiene en su propio archivo para encontrarlo fácilmente.
 Importarlos aquí permite que Django los descubra; no crea registros de ejemplo.
 """
 
+from .usuario import Usuario
+from .politica_sistema import PoliticaSistema
+from .aceptacion_politica import AceptacionPolitica
+from .auditable import AuditableModel
 from .aplicacion_instrumento import AplicacionInstrumento
 from .area_institucional import AreaInstitucional
+from .area_cargo import AreaCargo
 from .asignacion_instrumento import AsignacionInstrumento
 from .asignacion_profesional import AsignacionProfesional
 from .cargo_institucional import CargoInstitucional
@@ -21,8 +26,13 @@ from .respuesta_pregunta import RespuestaPregunta
 from .resultado_instrumento import ResultadoInstrumento
 
 __all__ = [
+    'PoliticaSistema',
+    'AceptacionPolitica',
+    'Usuario',
+    'AuditableModel',
     'AplicacionInstrumento',
     'AreaInstitucional',
+    'AreaCargo',
     'AsignacionInstrumento',
     'AsignacionProfesional',
     'CargoInstitucional',
@@ -37,3 +47,15 @@ __all__ = [
     'RespuestaPregunta',
     'ResultadoInstrumento',
 ]
+
+from .nota_cita import NotaCita
+
+from .seguimiento import Seguimiento
+
+from .estado_animo import EstadoAnimo
+
+from .factor_psicosocial import TipoFactorPsicosocial, FactorPsicosocial
+
+from .alerta import ReglaAlerta, Alerta, AccionAlerta
+
+from .notificacion import Notificacion

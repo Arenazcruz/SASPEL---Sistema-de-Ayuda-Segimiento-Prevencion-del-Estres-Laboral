@@ -8,13 +8,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Brand } from '../../../shared/brand/brand';
 
-// El menú publica únicamente las funciones disponibles en SA-01.
+// Personas reúne el listado unificado de usuarios y las asignaciones profesionales.
 export const PERSON_LINKS = [
   ['Usuarios', 'personas'],
-  ['Nuevos trabajadores', 'personas/nuevos-trabajadores'],
-  ['Trabajadores', 'personas/trabajadores'],
-  ['Psicólogos', 'personas/psicologos'],
-  ['Administradores', 'personas/administradores'],
+  ['Asignaciones profesionales', 'personas/asignaciones-profesionales'],
 ];
 
 @Component({
@@ -29,6 +26,7 @@ export class SuperadminLayout {
   readonly mobileOpen = signal(false);
   readonly peopleOpen = signal(true);
   readonly institutionOpen = signal(true);
+  readonly evaluationsOpen = signal(true);
   readonly links = PERSON_LINKS;
   readonly base = '/dashboard/superadmin';
 }

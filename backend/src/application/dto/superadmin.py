@@ -5,6 +5,7 @@ contienen claves.
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from uuid import UUID
 
 
 @dataclass(frozen=True)
@@ -12,19 +13,17 @@ class CreateUserCommand:
     """Datos para dar de alta cuenta, perfil y rol desde Superadmin. area_id/cargo_id son
     referencias opcionales; habilitado_asignaciones solo se conserva para PSICOLOGO.
     """
-    email: str
     password: str = field(repr=False)
     first_name: str
     last_name: str
     apellido_materno: str
     codigo_empleado: str
     role: str
-    nombre_preferido: str = ''
     fecha_nacimiento: date | None = None
     sexo: str = ''
     telefono: str = ''
-    area_id: int | None = None
-    cargo_id: int | None = None
+    area_id: UUID | None = None
+    cargo_id: UUID | None = None
     habilitado_asignaciones: bool = True
 
 
@@ -33,7 +32,7 @@ class UpdateUserCommand:
     """ID de cuenta y diccionario de campos presentes en una edición parcial; omitir un campo
     conserva su valor. No transporta cambios de rol, estado o contraseña.
     """
-    user_id: int
+    user_id: UUID
     changes: dict
 
 
@@ -42,7 +41,7 @@ class ResetPasswordCommand:
     """ID objetivo y clave con confirmación para el restablecimiento. Ambas claves se omiten de
     repr, pero siguen en memoria hasta terminar la operación.
     """
-    user_id: int
+    user_id: UUID
     password: str = field(repr=False)
     password_confirmation: str = field(repr=False)
 
@@ -55,8 +54,8 @@ class UserFilters:
     search: str = ''
     role: str = ''
     active: bool | None = None
-    area: int | None = None
-    cargo: int | None = None
+    area: UUID | None = None
+    cargo: UUID | None = None
     page: int = 1
 
 
@@ -65,7 +64,7 @@ class InstitutionDTO:
     """Área o cargo para listados y fichas; activo permite conservar referencias retiradas del
     catálogo seleccionable.
     """
-    id: int
+    id: UUID
     nombre: str
     descripcion: str
     activo: bool
@@ -78,7 +77,7 @@ class UserDTO:
     tamizaje_resuelto marca evaluación inicial y habilitado_asignaciones la recepción de
     trabajadores, no el acceso a la cuenta.
     """
-    id: int
+    id: UUID
     email: str
     first_name: str
     last_name: str
@@ -89,7 +88,6 @@ class UserDTO:
     last_login: datetime | None
     codigo_empleado: str = ''
     apellido_materno: str = ''
-    nombre_preferido: str = ''
     fecha_nacimiento: date | None = None
     sexo: str = ''
     telefono: str = ''

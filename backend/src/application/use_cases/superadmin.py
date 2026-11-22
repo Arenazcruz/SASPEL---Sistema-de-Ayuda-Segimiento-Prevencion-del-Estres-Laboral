@@ -6,7 +6,8 @@ campos editables o las transiciones de rol; revisar serializers y formularios al
 reglas.
 """
 
-from dataclasses import replace
+from uuid import UUID
+
 from src.application.dto.superadmin import CreateUserCommand, ResetPasswordCommand, UpdateUserCommand, UserFilters
 from src.application.ports.output.administration import AdministrationRepository
 from src.application.ports.input.administration import (
@@ -14,12 +15,13 @@ from src.application.ports.input.administration import (
 )
 from src.domain.exceptions.superadmin import AdministrationError
 from src.domain.value_objects.functional_role import FunctionalRole
+from src.application.use_cases.evaluacion_inicial import AsignarEvaluacionInicial
 
 CREATION_ROLES = {role.value for role in FunctionalRole} - {'TRABAJADOR'}
 ADMINISTRATIVE_ROLES = {'PSICOLOGO', 'ADMIN', 'SUPERADMIN'}
 EDITABLE_FIELDS = {
-    'email', 'first_name', 'last_name', 'apellido_materno', 'codigo_empleado',
-    'nombre_preferido', 'fecha_nacimiento', 'sexo', 'telefono', 'area_id', 'cargo_id',
+    'first_name', 'last_name', 'apellido_materno', 'codigo_empleado',
+    'fecha_nacimiento', 'sexo', 'telefono', 'area_id', 'cargo_id',
     'habilitado_asignaciones',
 }
 
@@ -53,7 +55,7 @@ class ListUsers(UseCase, UserListing):
 
 class GetUserDetail(UseCase, UserDetail):
     """Sirve la ficha de una persona al panel Superadmin."""
-    def execute(self, user_id: int):
+    def execute(self, user_id: UUID):
         """Recibe el ID de cuenta y devuelve UserDTO, incluso si falta perfil; propaga
         PersonNotFound si no existe.
         """
@@ -61,7 +63,7 @@ class GetUserDetail(UseCase, UserDetail):
 
 
 class CreateUser(UseCase, UserRegistration):
-    """Registro desde Superadmin: valida rol y clave, normaliza correo y crea cuenta, perfil y
+    """Registro desde Superadmin: valida rol y clave y crea cuenta con correo institucional, perfil y
     grupo en una transacción. Requiere AdministrationRepository; no permite crear TRABAJADOR
     directamente.
     """
@@ -74,23 +76,22 @@ class CreateUser(UseCase, UserRegistration):
         if command.role not in CREATION_ROLES:
             raise AdministrationError('El rol TRABAJADOR se obtiene mediante la evaluación inicial.', 'role')
         validate_password(command.password)
-        command = replace(command, email=command.email.strip().lower())
         with self.repository.atomic():
-            return self.repository.create_user(command)
+            user = self.repository.create_user(command)
+            AsignarEvaluacionInicial(self.repository).execute(user.id, command.role)
+            return user
 
 
 class UpdateUser(UseCase, UserEdition):
     """Edita datos personales desde la ficha; rol, estado y contraseña tienen acciones separadas."""
     def execute(self, command: UpdateUserCommand):
         """Recibe ID y cambios parciales en UpdateUserCommand; devuelve la ficha actualizada.
-        Normaliza correo y solo permite habilitado_asignaciones a psicólogos. Rechaza campos
+        Conserva el correo y solo permite habilitado_asignaciones a psicólogos. Rechaza campos
         ajenos a EDITABLE_FIELDS y revierte la escritura si falla el repositorio.
         """
         if set(command.changes) - EDITABLE_FIELDS:
             raise AdministrationError('Utiliza las acciones específicas para cambiar rol, estado o contraseña.')
         changes = dict(command.changes)
-        if 'email' in changes:
-            changes['email'] = changes['email'].strip().lower()
         with self.repository.atomic():
             user = self.repository.get_user(command.user_id)
             if 'habilitado_asignaciones' in changes and user.role != 'PSICOLOGO':
@@ -113,7 +114,7 @@ def protect_superadmin(repository, user, actor_id):
 
 class DeactivateUser(UseCase):
     """Desactiva acceso desde Superadmin conservando la persona y su historial."""
-    def execute(self, user_id: int, actor_id: int):
+    def execute(self, user_id: UUID, actor_id: UUID):
         """Recibe ID objetivo y actor; protege el acceso administrativo y devuelve la ficha
         inactiva. La cuenta deja de pasar login y renovación JWT. El bloqueo y la escritura
         comparten transacción.
@@ -126,7 +127,7 @@ class DeactivateUser(UseCase):
 
 class ActivateUser(UseCase):
     """Rehabilita una cuenta existente desde el panel administrativo."""
-    def execute(self, user_id: int):
+    def execute(self, user_id: UUID):
         """Recibe ID y devuelve la ficha con is_active=True dentro de una transacción; no cambia
         rol ni habilitado_asignaciones.
         """
@@ -138,7 +139,7 @@ class ChangeUserRole(UseCase):
     """Corrige roles desde el panel y protege el acceso de los Superadmin. El repositorio
     sincroniza grupo, flags Django y datos del perfil.
     """
-    def execute(self, user_id: int, role: str, actor_id: int):
+    def execute(self, user_id: UUID, role: str, actor_id: UUID):
         """Recibe ID, rol destino y actor. Devuelve la ficha sin escribir si el rol es el mismo;
         para cambios exige un origen PSICOLOGO, ADMIN o SUPERADMIN y un destino de
         CREATION_ROLES. Protege al actor y al último Superadmin; cualquier fallo revierte la
@@ -179,17 +180,17 @@ class ManageInstitution(UseCase):
     """Gestiona áreas y cargos para las pantallas institucionales mediante
     AdministrationRepository. Desactivar conserva los vínculos históricos.
     """
-    def list(self, kind: str, active: bool | None = None):
+    def list(self, kind: str, active: bool | None = None, area: UUID | None = None):
         """Recibe kind (areas o cargos) y active; None incluye ambos estados. Devuelve DTO
         ordenados por el repositorio, sin escrituras.
         """
-        return self.repository.list_institution(kind, active)
+        return self.repository.list_institution(kind, active, area)
 
-    def get(self, kind: str, item_id: int):
+    def get(self, kind: str, item_id: UUID):
         """Recibe kind e ID; devuelve InstitutionDTO o propaga PersonNotFound."""
         return self.repository.get_institution(kind, item_id)
 
-    def save(self, kind: str, item_id: int | None, changes: dict):
+    def save(self, kind: str, item_id: UUID | None, changes: dict):
         """Recibe kind, ID (None para crear) y cambios de nombre/descripcion. Devuelve el
         catálogo guardado en una transacción; rechaza otros campos. El estado solo se cambia
         por la acción dedicada.
@@ -199,7 +200,7 @@ class ManageInstitution(UseCase):
         with self.repository.atomic():
             return self.repository.save_institution(kind, item_id, changes)
 
-    def set_active(self, kind: str, item_id: int, active: bool):
+    def set_active(self, kind: str, item_id: UUID, active: bool):
         """Recibe kind, ID y estado; devuelve el registro actualizado. Conserva perfiles
         asociados y revierte ante errores del repositorio.
         """
