@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 /**
  * Carga persona por ID de ruta y coordina cambio de rol/estado mediante SuperadminService.
  * Expone avisos, carga y operación en curso; las restricciones definitivas están en permisos y
@@ -13,6 +14,8 @@ import { apiError, SuperadminService } from '../superadmin.service';
 
 @Injectable()
 export class UserDetailViewModel {
+  readonly context = inject(ADMINISTRATION_CONTEXT);
+  readonly panel = this.context.panel;
   private readonly api = inject(SuperadminService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
@@ -26,7 +29,7 @@ export class UserDetailViewModel {
     this.route.snapshot.queryParamMap.has('saved') ? 'Datos guardados correctamente.' : '',
   );
   readonly selectedRole = signal('');
-  readonly roles = CREATION_ROLES;
+  readonly roles = CREATION_ROLES.filter(([role])=>this.context.global||['NUEVO_TRABAJADOR','PSICOLOGO'].includes(role));
   constructor() {
     this.load();
   }
@@ -57,7 +60,7 @@ export class UserDetailViewModel {
    */
   canChangeRole() {
     return (
-      ['PSICOLOGO', 'ADMIN', 'SUPERADMIN'].includes(this.person()?.role || '') &&
+      this.context.global && ['PSICOLOGO', 'ADMIN', 'SUPERADMIN'].includes(this.person()?.role || '') &&
       this.id !== this.currentUser()?.id
     );
   }

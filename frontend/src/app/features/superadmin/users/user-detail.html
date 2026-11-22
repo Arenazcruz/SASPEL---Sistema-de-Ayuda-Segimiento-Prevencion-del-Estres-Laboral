@@ -1,4 +1,4 @@
-<p class="eyebrow">SUPERADMIN / PERSONAS / DETALLE</p>
+<p class="eyebrow">ADMINISTRACIÓN / PERSONAS / DETALLE</p>
 @if (vm.error()) {
   <div class="sa-error" role="alert">
     {{ vm.error() }} <button (click)="vm.load()">Reintentar</button>
@@ -16,19 +16,22 @@
       <h1>{{ user.nombre_completo || user.email }}</h1>
       <app-role-badge [role]="user.role" />
     </div>
-    <a class="text-link" routerLink="/dashboard/superadmin/personas" queryParamsHandling="preserve"
+    <a class="text-link" [routerLink]="vm.panel+'/personas'" queryParamsHandling="preserve"
       >Volver a usuarios</a
     >
   </div>
   <div class="sa-actions">
+    @if (vm.context.global && user.role === 'TRABAJADOR') {
+      <a class="button button-outline button-small" [routerLink]="['/dashboard/administracion/trabajadores',user.id,'instrumentos']">Asignar instrumento</a>
+    }
     <a
       class="button button-small"
-      [routerLink]="['/dashboard/superadmin/personas', user.id, 'editar']"
+      [routerLink]="[vm.panel+'/personas', user.id, 'editar']"
       queryParamsHandling="preserve"
       >Editar usuario</a
     ><a
       class="button button-outline button-small"
-      [routerLink]="['/dashboard/superadmin/personas', user.id, 'password']"
+      [routerLink]="[vm.panel+'/personas', user.id, 'password']"
       queryParamsHandling="preserve"
       >Restablecer contraseña</a
     ><button

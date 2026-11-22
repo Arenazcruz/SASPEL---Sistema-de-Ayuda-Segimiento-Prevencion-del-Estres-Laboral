@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../../administration-context';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { EMPTY, expand, reduce } from 'rxjs';
@@ -8,7 +9,7 @@ import { ContentPage, ContentRow, ContentScope, ContentValue } from './content.m
 @Injectable({ providedIn: 'root' })
 export class InstrumentContentService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_URL)}/superadmin`;
+  private readonly base = `${inject(API_URL)}/${inject(ADMINISTRATION_CONTEXT).apiSegment}`;
   private path(scope: ContentScope) {
     if (scope.kind === 'scales') return `${this.base}/scales/`;
     const parent = scope.kind === 'options' ? 'scales' : 'instruments';

@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../../administration-context';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_URL } from '../../../../core/auth/api-url';
@@ -6,7 +7,7 @@ import { Instrument, InstrumentData, InstrumentPage } from './instruments.models
 @Injectable({ providedIn: 'root' })
 export class InstrumentsService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_URL)}/superadmin/instruments/`;
+  private readonly base = `${inject(API_URL)}/${inject(ADMINISTRATION_CONTEXT).apiSegment}/instruments/`;
 
   list(filters: Record<string, string | number>) {
     let params = new HttpParams();

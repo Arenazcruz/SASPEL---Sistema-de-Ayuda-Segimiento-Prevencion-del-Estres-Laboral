@@ -25,6 +25,7 @@ import { DashboardViewModel } from './dashboard.viewmodel';
     </header>
     <main class="wrap dashboard-main">
       <p class="eyebrow">SASPEL / {{ vm.panel()?.label }}</p>
+      <a class="button button-outline" routerLink="/dashboard/perfil">Mi perfil</a>
       <a class="button button-outline" routerLink="/dashboard/notificaciones">Notificaciones</a><h1>{{ vm.panel()?.title }}</h1><app-indicadores />
       <section class="welcome-panel">
         <span class="panel-symbol" aria-hidden="true">✳</span>
@@ -33,9 +34,10 @@ import { DashboardViewModel } from './dashboard.viewmodel';
         <p>{{ vm.panel()?.description }}</p>
         <span class="role-label">{{ vm.panel()?.label }}</span>
         @if (vm.user()?.role === 'TRABAJADOR') {
+          <p><a class="button" routerLink="/dashboard/trabajador/instrumentos">Mis instrumentos</a> <a class="button button-outline" routerLink="/dashboard/trabajador/evolucion">Mi evolución del estrés</a></p>
           <p><a class="button" routerLink="/dashboard/trabajador/resultados">Mis resultados</a><a class="button" routerLink="/dashboard/trabajador/recomendaciones">Mis recomendaciones</a></p><p><a class="button" routerLink="/dashboard/trabajador/citas">Mis citas</a><a class="button button-outline" routerLink="/dashboard/trabajador/animo">Mi estado de ánimo</a><a class="button button-outline" routerLink="/dashboard/trabajador/factores">Mis factores psicosociales</a></p>
         }
-        @if(vm.user()?.role==='ADMIN'){<a class="button" routerLink="/dashboard/reportes">Reportes operativos</a><a class="button" routerLink="/dashboard/admin/catalogo-factores">Configurar factores psicosociales</a>}
+        @if(vm.user()?.role==='ADMIN'){<a class="button" routerLink="/dashboard/reportes">Reportes operativos</a><a class="button" routerLink="/dashboard/admin/catalogo-factores">Configurar factores psicosociales</a><a class="button" routerLink="/dashboard/administracion/auditoria">Auditoría administrativa</a>}
         <div class="panel-note">
           Los indicadores reflejan únicamente los datos disponibles para tu rol.
         </div>

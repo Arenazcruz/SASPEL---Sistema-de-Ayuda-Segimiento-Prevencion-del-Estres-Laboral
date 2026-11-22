@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 /**
  * Coordina listado y catálogos mediante SuperadminService. Ruta y query params son la fuente
  * de filtros/página; switchMap evita que búsquedas antiguas sustituyan resultados nuevos.
@@ -24,12 +25,14 @@ import { apiError, SuperadminService } from '../superadmin.service';
 
 @Injectable()
 export class UserListViewModel {
+  readonly context = inject(ADMINISTRATION_CONTEXT);
+  readonly panel = this.context.panel;
   private readonly api = inject(SuperadminService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly currentUser = inject(AuthService).user;
-  readonly roles = ROLES;
+  readonly roles = ROLES.filter(([role])=>this.context.global||['NUEVO_TRABAJADOR','TRABAJADOR','PSICOLOGO'].includes(role));
   readonly page = signal<UserPage | null>(null);
   readonly areas = signal<Institution[]>([]);
   readonly cargos = signal<Institution[]>([]);
@@ -44,7 +47,7 @@ export class UserListViewModel {
     ['TRABAJADOR', 'Trabajadores'],
     ['PSICOLOGO', 'Psicólogos'],
     ['ADMINISTRADORES', 'Administradores'],
-  ];
+  ].filter(([role])=>this.context.global||role!=='ADMINISTRADORES');
   readonly filters = inject(FormBuilder).nonNullable.group({
     search: '',
     role: '',
