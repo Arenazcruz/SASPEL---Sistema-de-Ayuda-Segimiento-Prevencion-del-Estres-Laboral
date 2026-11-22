@@ -1,0 +1,10 @@
+Respaldo local creado y catálogo de archivo verificado. No se exportan datos al informe.
+Operations to perform:
+  Apply all migrations: admin, api, auth, contenttypes, sessions
+Running migrations:
+  Applying api.0013_recomendaciones... OK
+  Applying api.0014_auditoria_funcional... OK
+  Applying api.0015_revocacion_sesion... OK
+System check identified no issues (0 silenced).
+No changes detected
+Tres migraciones aditivas aplicadas; conteos previos preservados; comprobaciones correctas.

@@ -1,0 +1,119 @@
+
+> frontend@0.0.0 test
+> ng test --watch=false
+
+> Building...
+√ Building...
+Initial chunk files                                                 | Names                                                            |  Raw size
+chunk-3B55QKS7.js                                                   | -                                                                |  76.66 kB |
+chunk-6CMRMMOB.js                                                   | -                                                                |  61.06 kB |
+chunk-V3N52YJX.js                                                   | -                                                                |  56.71 kB |
+chunk-4EYIOROW.js                                                   | -                                                                |  51.60 kB |
+chunk-CECDZTVY.js                                                   | -                                                                |  47.78 kB |
+chunk-JXU7RNQN.js                                                   | -                                                                |  44.74 kB |
+chunk-UEKUUWI3.js                                                   | -                                                                |  37.91 kB |
+chunk-NK6QZZOD.js                                                   | -                                                                |  34.12 kB |
+chunk-JFS7RB6B.js                                                   | -                                                                |  34.10 kB |
+chunk-XPXQYNVK.js                                                   | -                                                                |  31.50 kB |
+spec-app-features-nuevo-trabajador-evaluacion.js                    | spec-app-features-nuevo-trabajador-evaluacion                    |  28.41 kB |
+chunk-SNFROUMB.js                                                   | -                                                                |  28.28 kB |
+chunk-6ZVEDIQX.js                                                   | -                                                                |  27.58 kB |
+chunk-PX5GVQDS.js                                                   | -                                                                |  26.25 kB |
+chunk-U6IKCPXS.js                                                   | -                                                                |  24.95 kB |
+chunk-32GBHFCL.js                                                   | -                                                                |  24.86 kB |
+spec-app-features-superadmin-superadmin.js                          | spec-app-features-superadmin-superadmin                          |  23.83 kB |
+chunk-TF7T6J4N.js                                                   | -                                                                |  23.24 kB |
+chunk-OAJAJ6ZW.js                                                   | -                                                                |  23.16 kB |
+chunk-O5HPQJCY.js                                                   | -                                                                |  22.79 kB |
+chunk-X2AK4MLN.js                                                   | -                                                                |  22.60 kB |
+chunk-A36FWPY7.js                                                   | -                                                                |  21.90 kB |
+chunk-TI5ZWXMU.js                                                   | -                                                                |  19.80 kB |
+spec-app-features-superadmin-evaluations-content-content.js         | spec-app-features-superadmin-evaluations-content-content         |  18.88 kB |
+chunk-RHN3565Q.js                                                   | -                                                                |  18.63 kB |
+chunk-PN6L54G2.js                                                   | -                                                                |  17.89 kB |
+chunk-QDPOT5SA.js                                                   | -                                                                |  16.42 kB |
+chunk-5CGL3WBI.js                                                   | -                                                                |  16.07 kB |
+spec-app-features-primer-acceso-primer-acceso.js                    | spec-app-features-primer-acceso-primer-acceso                    |  15.22 kB |
+spec-app-shared-resultados-resultados.js                            | spec-app-shared-resultados-resultados                            |  14.78 kB |
+chunk-3QTM2FPB.js                                                   | -                                                                |  13.35 kB |
+spec-app-features-nuevo-trabajador-dashboard.js                     | spec-app-features-nuevo-trabajador-dashboard                     |  12.21 kB |
+chunk-CCJQDCAH.js                                                   | -                                                                |  11.85 kB |
+chunk-PXSADXFF.js                                                   | -                                                                |  11.84 kB |
+chunk-F72YYV3A.js                                                   | -                                                                |  11.08 kB |
+spec-app-core-auth-auth.service.js                                  | spec-app-core-auth-auth.service                                  |  10.94 kB |
+spec-app-features-superadmin-evaluations-instruments-instruments.js | spec-app-features-superadmin-evaluations-instruments-instruments |  10.89 kB |
+chunk-LOGJQUYR.js                                                   | -                                                                |  10.68 kB |
+spec-app-features-superadmin-assignments-assignments.js             | spec-app-features-superadmin-assignments-assignments             |  10.38 kB |
+chunk-GIAF3VEZ.js                                                   | -                                                                |   9.96 kB |
+chunk-5JW267WU.js                                                   | -                                                                |   9.73 kB |
+spec-app-features-cierre-funcional.js                               | spec-app-features-cierre-funcional                               |   9.62 kB |
+chunk-VQFPCNNL.js                                                   | -                                                                |   8.89 kB |
+styles.css                                                          | styles                                                           |   8.11 kB |
+spec-app-features-citas-citas.js                                    | spec-app-features-citas-citas                                    |   6.30 kB |
+chunk-ORASUWSG.js                                                   | -                                                                |   6.22 kB |
+chunk-PLIYXTSQ.js                                                   | -                                                                |   5.53 kB |
+spec-app-features-auth-login-login.js                               | spec-app-features-auth-login-login                               |   5.45 kB |
+spec-app-features-bienestar-factores.js                             | spec-app-features-bienestar-factores                             |   5.30 kB |
+chunk-JBWBLPNK.js                                                   | -                                                                |   5.19 kB |
+spec-app-features-psicologo-seguimiento-seguimiento.js              | spec-app-features-psicologo-seguimiento-seguimiento              |   3.62 kB |
+spec-app-core-auth-auth.guard.js                                    | spec-app-core-auth-auth.guard                                    |   3.56 kB |
+chunk-RITQR62V.js                                                   | -                                                                |   3.33 kB |
+spec-app-features-notificaciones-notificaciones.js                  | spec-app-features-notificaciones-notificaciones                  |   3.09 kB |
+spec-app-features-superadmin-users-user-validation.js               | spec-app-features-superadmin-users-user-validation               |   3.07 kB |
+spec-app-features-reportes-reportes.js                              | spec-app-features-reportes-reportes                              |   3.02 kB |
+chunk-PAVVYHHZ.js                                                   | -                                                                |   3.00 kB |
+spec-app-features-bienestar-animo.js                                | spec-app-features-bienestar-animo                                |   2.83 kB |
+chunk-YFSIM4BU.js                                                   | -                                                                |   2.54 kB |
+chunk-LU6AEUXB.js                                                   | -                                                                |   2.33 kB |
+chunk-I6MGUC7B.js                                                   | -                                                                |   2.01 kB |
+spec-app-features-dashboards-indicadores.js                         | spec-app-features-dashboards-indicadores                         |   1.97 kB |
+chunk-5R4WLNQ3.js                                                   | -                                                                |   1.93 kB |
+spec-app-app.js                                                     | spec-app-app                                                     |   1.84 kB |
+chunk-H2YVOEAX.js                                                   | -                                                                |   1.79 kB |
+spec-app-features-primer-acceso-rotacion-sesion.js                  | spec-app-features-primer-acceso-rotacion-sesion                  |   1.69 kB |
+chunk-WKT44F2E.js                                                   | -                                                                |   1.66 kB |
+chunk-YFP6D4EC.js                                                   | -                                                                |   1.59 kB |
+chunk-4X5JU2J2.js                                                   | -                                                                |   1.52 kB |
+chunk-3UOZPZKN.js                                                   | -                                                                |   1.49 kB |
+chunk-LYXHVZDU.js                                                   | -                                                                |   1.46 kB |
+spec-app-features-superadmin-api-error.js                           | spec-app-features-superadmin-api-error                           |   1.39 kB |
+chunk-YLHFSTWA.js                                                   | -                                                                |   1.37 kB |
+init-testbed.js                                                     | init-testbed                                                     |   1.21 kB |
+chunk-GKMOBDBU.js                                                   | -                                                                |   1.13 kB |
+vitest-mock-patch.js                                                | vitest-mock-patch                                                | 974 bytes |
+chunk-SIRIFDAG.js                                                   | -                                                                | 835 bytes |
+chunk-GNUJZMIM.js                                                   | -                                                                | 514 bytes |
+chunk-J6OKPEL3.js                                                   | -                                                                | 433 bytes |
+chunk-E4KBLMBY.js                                                   | -                                                                | 389 bytes |
+chunk-56FL7A5J.js                                                   | -                                                                | 381 bytes |
+
+                                                                    | Initial total                                                    |   1.15 MB
+
+Lazy chunk files                                                    | Names                                                            |  Raw size
+chunk-NLM3QNP2.js                                                   | welcome                                                          |  35.49 kB |
+chunk-JM3AZNUO.js                                                   | institution                                                      |  18.47 kB |
+chunk-CIX5SCNA.js                                                   | dashboard                                                        |  12.42 kB |
+chunk-ZTWQ2IFR.js                                                   | area-cargos                                                      |  11.31 kB |
+chunk-4AVQ2OQL.js                                                   | admin-routes                                                     | 462 bytes |
+chunk-KZNBXVDL.js                                                   | password                                                         | 410 bytes |
+chunk-C2TXBVVR.js                                                   | politicas                                                        | 382 bytes |
+chunk-GH7HVWUS.js                                                   | dashboard                                                        | 376 bytes |
+chunk-VIM4D3WL.js                                                   | user-detail                                                      | 360 bytes |
+chunk-32OBZIXR.js                                                   | catalogo-factores                                                | 360 bytes |
+chunk-53SLQN5D.js                                                   | user-list                                                        | 356 bytes |
+chunk-PATOGR5G.js                                                   | trabajadores                                                     | 352 bytes |
+chunk-W6TEYEXE.js                                                   | superadmin-layout                                                | 344 bytes |
+chunk-IOJQMPG2.js                                                   | evaluacion                                                       | 332 bytes |
+chunk-5OUKYF7G.js                                                   | superadmin-routes                                                | 332 bytes |
+...and 21 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [3.464 seconds] - 2026-10-26T09:07:05.760Z
+
+
+ RUN  v4.1.11 C:/Users/jgabr/Documents/SASPEL/frontend
+
+
+ Test Files  23 passed (23)
+      Tests  222 passed (222)
+   Start at  05:07:06
+   Duration  7.38s (transform 3.41s, setup 21.17s, import 8.15s, tests 9.85s, environment 92.10s)
