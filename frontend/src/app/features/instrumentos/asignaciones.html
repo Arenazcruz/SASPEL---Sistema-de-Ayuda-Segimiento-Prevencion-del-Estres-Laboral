@@ -1,0 +1,14 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()">
+<a [routerLink]="vm.regreso">Volver</a><h1>Instrumentos asignados</h1>
+@if(vm.busy()){<p role="status">Procesando…</p>}@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button (click)="vm.load()" [disabled]="vm.busy()">Reintentar</button>}
+@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.datos();as datos){
+@if(vm.trabajador){<form (ngSubmit)="vm.asignar()"><fieldset [disabled]="vm.busy()"><legend>Asignar instrumento</legend>
+<label>Instrumento<select name="instrumento" [(ngModel)]="vm.instrumento" required><option value="">Seleccionar</option>@for(i of datos.instrumentos;track i.id){<option [value]="i.id">{{i.nombre}} · {{i.version}}</option>}</select></label>
+<label>Fecha límite opcional<input type="datetime-local" name="limite" [(ngModel)]="vm.limite"></label><button type="submit">Asignar</button>
+@if(!datos.instrumentos?.length){<p>No hay instrumentos activos para asignar.</p>}</fieldset></form>}
+@for(a of datos.asignaciones;track a.id){<article class="card"><h2>{{a.nombre}} · {{a.version}}</h2><p>{{a.estado}} · {{a.fecha_asignacion|date:'dd/MM/yyyy'}}</p>
+@if(a.fecha_limite){<p>Fecha límite: {{a.fecha_limite|date:'dd/MM/yyyy HH:mm'}}</p>}
+@if(!vm.trabajador&&a.activo&&(a.estado==='PENDIENTE'||a.estado==='EN_PROGRESO')){<a class="button" [routerLink]="['/dashboard/trabajador/evaluacion',a.id]">{{a.estado==='EN_PROGRESO'?'Continuar':'Responder'}}</a>}
+</article>}@empty{<p>No hay instrumentos asignados.</p>}}
+</main>

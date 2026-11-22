@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django.utils import timezone
-from src.infrastructure.persistence.django.models import Notificacion, Cita, AsignacionProfesional, AsignacionInstrumento
+from src.infrastructure.persistence.django.models import Notificacion, Cita, AsignacionProfesional, AsignacionInstrumento, Recomendacion
 from src.infrastructure.persistence.django.repositories.alertas import DjangoAlertasRepository
 from src.domain.exceptions.resultados import ResultadoNoDisponible
 
@@ -17,11 +17,13 @@ class DjangoNotificacionesRepository(DjangoAlertasRepository):
             if role=='PSICOLOGO':
                 citas=citas.filter(psicologo_id=actor,trabajador_id__in=workers)
                 links=links.filter(psicologo_id=actor,estado='ACTIVA',trabajador_id__in=workers)
+                allowed |= Q(tipo='RESULTADO', origen_id__in=self.resultados().filter(aplicacion__asignacion__trabajador_id__in=workers).values('pk'))
                 allowed |= Q(tipo='ALERTA',origen_id__in=self.autorizadas(actor).values('pk'))
             else:
                 citas=citas.filter(trabajador_id=actor)
                 links=links.filter(trabajador_id=actor)
                 allowed |= Q(tipo='RESULTADO',origen_id__in=self.resultados().filter(aplicacion__asignacion__trabajador_id=actor).values('pk'))
+                allowed |= Q(tipo='RECOMENDACION', origen_id__in=Recomendacion.objects.filter(compartida=True, deleted=False, seguimiento__deleted=False, seguimiento__trabajador_id=actor).values('pk'))
                 allowed |= Q(tipo='INSTRUMENTO',origen_id__in=AsignacionInstrumento.objects.filter(trabajador_id=actor,deleted=False).values('pk'))
             allowed |= Q(tipo='CITA',origen_id__in=citas.values('pk')) | Q(tipo='ASIGNACION',origen_id__in=links.values('pk'))
         return Notificacion.objects.filter(allowed,destinatario_id=actor,deleted=False)

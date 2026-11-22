@@ -71,6 +71,9 @@ class LoginView(AuthErrorMixin, APIView):
             raise
         attempt.release()
         identity = asdict(user)
+        # El evento de acceso exitoso debe identificar al actor autenticado.
+        from django.contrib.auth import get_user_model
+        request.user = get_user_model().objects.get(pk=user.id)
         identity['primer_acceso'] = asdict(build_primer_acceso().estado(user.id))
         dashboard_path = identity.pop('dashboard_path')
         return Response({
@@ -112,3 +115,41 @@ class RefreshView(APIView):
             JWTTokenProvider.renew(serializer.validated_data['refresh']),
             headers={'Cache-Control': 'no-store'},
         )
+
+
+from rest_framework.authentication import BaseAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+
+
+class LogoutAuthentication(BaseAuthentication):
+    """El refresh firmado permite cerrar incluso cuando el access ya expiró."""
+    def authenticate_header(self, request):
+        return 'Bearer'
+
+    def authenticate(self, request):
+        raw = request.data.get('refresh') if isinstance(request.data, dict) else None
+        if not raw:
+            return None
+        try:
+            token = RefreshToken(raw)
+            return UUIDJWTAuthentication().get_user(token), token
+        except (TokenError, TypeError, ValueError):
+            raise InvalidToken('La sesión ya no es válida.') from None
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [LogoutAuthentication]
+
+    def post(self, request):
+        from django.db import transaction
+        from django.contrib.auth import get_user_model
+        serializer=RefreshSerializer(data=request.data);serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            user=get_user_model().objects.select_for_update().get(pk=request.user.pk)
+            if request.auth.get('version_sesion',0) == user.version_sesion:
+                user.version_sesion += 1
+                user.actualizado_por=str(user.pk)
+                user.save(update_fields=['version_sesion','actualizado_por'])
+        return Response(status=204,headers={'Cache-Control':'no-store'})

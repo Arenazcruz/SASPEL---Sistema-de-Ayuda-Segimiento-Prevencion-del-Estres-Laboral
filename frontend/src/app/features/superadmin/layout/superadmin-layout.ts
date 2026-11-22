@@ -6,6 +6,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 import { Brand } from '../../../shared/brand/brand';
 
 // Personas reúne el listado unificado de usuarios y las asignaciones profesionales.
@@ -28,5 +29,6 @@ export class SuperadminLayout {
   readonly institutionOpen = signal(true);
   readonly evaluationsOpen = signal(true);
   readonly links = PERSON_LINKS;
-  readonly base = '/dashboard/superadmin';
+  readonly context = inject(ADMINISTRATION_CONTEXT);
+  readonly base = this.context.panel;
 }

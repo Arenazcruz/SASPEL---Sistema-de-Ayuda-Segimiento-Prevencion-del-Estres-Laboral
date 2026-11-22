@@ -6,3 +6,7 @@ from src.infrastructure.persistence.django.repositories.assignments import Djang
 
 def build_responder_evaluacion() -> ResponderEvaluacion:
     return GestionarRespuestasEvaluacion(DjangoResponderEvaluacionRepository(), DjangoAssignmentRepository())
+
+
+def build_responder_instrumento() -> ResponderEvaluacion:
+    return GestionarRespuestasEvaluacion(DjangoResponderEvaluacionRepository(inicial=False), DjangoAssignmentRepository(), inicial=False)

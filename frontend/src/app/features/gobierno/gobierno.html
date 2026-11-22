@@ -1,0 +1,15 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()"><a [routerLink]="auth.user()?.dashboard_path||'/login'">Volver al panel</a><h1>{{vm.modo==='politicas'?'Políticas institucionales':'Auditoría funcional'}}</h1>
+@if(vm.busy()){<p role="status">Procesando…</p>}@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button [disabled]="vm.busy()" (click)="vm.load()">Actualizar</button>}@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.modo==='politicas'){
+<form (ngSubmit)="vm.publicar()"><fieldset [disabled]="vm.busy()"><legend>Publicar una nueva versión</legend>
+<label>Tipo<select name="tipo" [(ngModel)]="vm.form.tipo"><option>TERMINOS_USO</option><option>PRIVACIDAD_DATOS</option><option>CONSENTIMIENTO_EVALUACION</option></select></label>
+<label>Título<input name="titulo" [(ngModel)]="vm.form.titulo" maxlength="200" required></label><label>Versión<input name="version" [(ngModel)]="vm.form.version" maxlength="50" required></label>
+<label>Contenido aprobado por la institución<textarea name="contenido" [(ngModel)]="vm.form.contenido" maxlength="100000" required></textarea></label>
+<label><input type="checkbox" name="obligatoria" [(ngModel)]="vm.form.obligatoria">Aceptación obligatoria</label>
+<label><input type="checkbox" name="confirmacion" [(ngModel)]="vm.confirmacion" required>Confirmo publicar esta versión y sustituir la vigente del mismo tipo.</label><button type="submit">Publicar versión</button></fieldset></form>
+@if(vm.politicas();as politicas){@for(p of politicas;track p.id){<article class="card"><h2>{{p.titulo}} · {{p.version}}</h2><p>{{p.activo?'Vigente':'Histórica'}} · {{p.vigente_desde|date:'dd/MM/yyyy HH:mm'}}</p><details><summary>Leer contenido</summary><pre>{{p.contenido}}</pre></details></article>}@empty{<p>No hay políticas publicadas.</p>}}
+} @else {
+<p>Se muestran metadatos de operaciones, sin contraseñas, respuestas ni notas clínicas. El administrador consulta únicamente sus operaciones administrativas permitidas.</p>
+<form (ngSubmit)="vm.filtrar()"><label>Actor (UUID)<input name="actor" [(ngModel)]="vm.actor" maxlength="36"></label><label>Operación<input name="accion" [(ngModel)]="vm.accion" maxlength="20"></label><label>Entidad<input name="entidad" [(ngModel)]="vm.entidad" maxlength="200"></label><label>Desde<input name="desde" type="date" [(ngModel)]="vm.desde"></label><label>Hasta<input name="hasta" type="date" [(ngModel)]="vm.hasta"></label><button [disabled]="vm.busy()">Filtrar</button></form>
+@if(vm.eventos();as eventos){<p>{{eventos.count}} eventos · Página {{eventos.page}}</p>@for(e of eventos.results;track e.id){<article class="card"><strong>{{e.accion}} · {{e.entidad}}</strong><p>{{e.fecha|date:'dd/MM/yyyy HH:mm:ss'}} · {{e.estado}}</p><p>Actor: {{e.actor_id||'Sistema'}}</p><p>Registro: {{e.entidad_id||'Operación de colección'}}</p></article>}@empty{<p>No hay eventos para estos filtros.</p>}<button [disabled]="vm.busy()||vm.page===1" (click)="vm.pagina(-1)">Anterior</button><button [disabled]="vm.busy()||vm.page*eventos.page_size>=eventos.count" (click)="vm.pagina(1)">Siguiente</button>}
+}</main>

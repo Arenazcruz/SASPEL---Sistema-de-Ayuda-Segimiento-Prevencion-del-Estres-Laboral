@@ -3,8 +3,8 @@
 Registra el puntaje total, cuándo se calculó y el rango que lo describe, si ya
 se conoce. Cada aplicación puede tener un solo resultado. El trabajador y el
 cuestionario se conocen desde la aplicación, y la explicación se consulta en
-el rango. Esos registros asociados se conservan. Por ahora se guarda el puntaje
-proporcionado; su cálculo automático se implementará más adelante.
+el rango. Esos registros asociados se conservan. El caso de resolución calcula
+el puntaje y el rango antes de persistir este resultado; el modelo no los recalcula.
 """
 
 from django.db import models

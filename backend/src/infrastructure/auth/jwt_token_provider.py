@@ -22,6 +22,7 @@ class JWTTokenProvider:
         if user is None:
             raise InvalidToken('No se pudo iniciar la sesión.')
         refresh = RefreshToken.for_user(user)
+        refresh['version_sesion'] = user.version_sesion
         return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
     @staticmethod
@@ -34,8 +35,8 @@ class JWTTokenProvider:
             refresh = RefreshToken(raw_token)
             user_id = UUID(str(refresh[api_settings.USER_ID_CLAIM]))
             # Una cuenta borrada o desactivada tampoco puede renovar su sesión.
-            if not get_user_model().objects.filter(pk=user_id, is_active=True, deleted=False).exists():
-                raise InvalidToken('La sesión ya no es válida.')
+            from src.infrastructure.auth.jwt_authentication import UUIDJWTAuthentication
+            UUIDJWTAuthentication().get_user(refresh)
             return {'access': str(refresh.access_token)}
         except (TokenError, KeyError, ValueError, TypeError, OverflowError) as error:
             raise InvalidToken('La sesión expiró o no es válida.') from error

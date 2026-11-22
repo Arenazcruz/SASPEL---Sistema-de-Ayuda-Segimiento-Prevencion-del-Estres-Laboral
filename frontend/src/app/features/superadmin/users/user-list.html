@@ -1,6 +1,6 @@
 <div class="sa-heading">
   <div>
-    <p class="eyebrow">SUPERADMIN / PERSONAS</p>
+    <p class="eyebrow">ADMINISTRACIÓN / PERSONAS</p>
     <h1>Usuarios</h1>
     <p>Cuentas de acceso e información institucional.</p>
   </div>
@@ -24,7 +24,7 @@
   <label
     >Rol<select formControlName="role">
       <option value="">Todos los roles</option>
-      <option value="ADMINISTRADORES">Administradores y Superadmins</option>
+      @if(vm.context.global){<option value="ADMINISTRADORES">Administradores y Superadmins</option>}
       @for (role of vm.roles; track role[0]) {
         <option [value]="role[0]">{{ role[1] }}</option>
       }

@@ -10,8 +10,12 @@
     (keydown.escape)="mobileOpen.set(false)"
   >
     <a [routerLink]="base" class="brand" (click)="mobileOpen.set(false)"><app-brand /></a>
-    <p class="sidebar-caption">ADMINISTRACIÓN GLOBAL</p>
-    <nav aria-label="Menú Superadmin"><a routerLink="/dashboard/reportes">Reportes operativos</a><a routerLink="/dashboard/notificaciones">Notificaciones</a>
+    <p class="sidebar-caption">{{context.global?'ADMINISTRACIÓN GLOBAL':'ADMINISTRACIÓN INSTITUCIONAL'}}</p>
+    <nav [attr.aria-label]="context.global?'Menú Superadmin':'Menú Admin'">
+      <a routerLink="/dashboard/perfil">Mi perfil</a>
+      @if(context.global){<a routerLink="/dashboard/administracion/politicas">Políticas y versiones</a>}
+      <a routerLink="/dashboard/administracion/auditoria">Auditoría funcional</a>
+      <a routerLink="/dashboard/reportes">Reportes operativos</a><a routerLink="/dashboard/notificaciones">Notificaciones</a>
       <a
         [routerLink]="base"
         routerLinkActive="active"

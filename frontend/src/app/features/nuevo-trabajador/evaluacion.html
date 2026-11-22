@@ -9,7 +9,7 @@
   </button>
 </header>
 <main class="wrap" [attr.aria-busy]="vm.bloqueado()">
-  <p class="eyebrow">MI EVALUACIÓN INICIAL</p>
+  <p class="eyebrow">{{vm.inicial ? 'MI EVALUACIÓN INICIAL' : 'MI EVALUACIÓN ASIGNADA'}}</p>
   @if (vm.loading()) {
     <p role="status">Cargando evaluación…</p>
   }
@@ -22,7 +22,7 @@
   <p role="status" aria-live="polite">{{ vm.procesando() }}</p>
   @if (vm.resultado(); as resultado) {
     <section class="instructions" aria-labelledby="result-title">
-      <h1 id="result-title">Evaluación inicial completada</h1>
+      <h1 id="result-title">{{vm.inicial ? 'Evaluación inicial completada' : 'Evaluación completada'}}</h1>
       <p>{{ resultado.nombre }} · Versión {{ resultado.version }}</p>
       @if (resultado.fecha_calculo) {
         <p>Fecha: {{ resultado.fecha_calculo | date: 'dd/MM/yyyy HH:mm' }}</p>
@@ -62,9 +62,9 @@
         <p>{{ detalle.instrucciones || 'Lee cada pregunta y elige o escribe tu respuesta.' }}</p>
       </section>
       @if (vm.completada()) {
-        <p role="status">Evaluación inicial completada. Tus respuestas son de solo lectura.</p>
+        <p role="status">Evaluación completada. Tus respuestas son de solo lectura.</p>
       } @else if (!vm.configurada()) {
-        <p role="status">La evaluación inicial todavía está siendo configurada.</p>
+        <p role="status">{{vm.inicial ? 'La evaluación inicial todavía está siendo configurada.' : 'La evaluación todavía está siendo configurada.'}}</p>
       } @else if (vm.puedeIniciar()) {
         <button class="button" type="button" [disabled]="vm.bloqueado()" (click)="vm.iniciar()">
           {{ vm.operacion() === 'iniciando' ? 'Iniciando…' : 'Comenzar evaluación' }}

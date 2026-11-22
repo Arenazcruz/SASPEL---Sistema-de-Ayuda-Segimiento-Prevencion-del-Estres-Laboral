@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from src.infrastructure.persistence.django.models import (Notificacion,Alerta,Cita,AsignacionProfesional,AsignacionInstrumento,ResultadoInstrumento,AplicacionInstrumento)
+from src.infrastructure.persistence.django.models import (Notificacion,Alerta,Cita,AsignacionProfesional,AsignacionInstrumento,ResultadoInstrumento,AplicacionInstrumento,Recomendacion)
 from src.infrastructure.persistence.django.repositories.resultados import DjangoResultadosRepository
 
 def emitir(tipo,origen,evento,titulo,destinatarios):
@@ -35,7 +35,11 @@ def alerta(sender,instance,created=False,raw=False,**kwargs):
 
 def avisar_resultado(pk):
     row=DjangoResultadosRepository.resultados().filter(pk=pk).first()
-    if row: emitir('RESULTADO',row.pk,'DISPONIBLE','Tu resultado está disponible',[row.aplicacion.asignacion.trabajador_id])
+    if row:
+        worker=row.aplicacion.asignacion.trabajador_id
+        emitir('RESULTADO',row.pk,'DISPONIBLE','Tu resultado está disponible',[worker])
+        ids=AsignacionProfesional.objects.filter(trabajador_id=worker,estado='ACTIVA',deleted=False).values_list('psicologo_id',flat=True)
+        emitir('RESULTADO',row.pk,'REVISION','Hay un resultado disponible para revisión',ids)
 
 @receiver(post_save,sender=ResultadoInstrumento,dispatch_uid='saspel_notificacion_resultado')
 def resultado(sender,instance,raw=False,**kwargs):
@@ -45,3 +49,10 @@ def resultado(sender,instance,raw=False,**kwargs):
 def finalizada(sender,instance,raw=False,**kwargs):
     if not raw and instance.estado=='FINALIZADA':
         for pk in ResultadoInstrumento.objects.filter(aplicacion=instance,deleted=False).values_list('pk',flat=True): avisar_resultado(pk)
+
+
+@receiver(post_save, sender=Recomendacion, dispatch_uid='saspel_notificacion_recomendacion')
+def recomendacion(sender, instance, raw=False, **kwargs):
+    if not raw and instance.compartida and not instance.deleted and not instance.seguimiento.deleted:
+        emitir('RECOMENDACION', instance.pk, instance.estado, 'Hay una actualización en tus recomendaciones',
+               [instance.seguimiento.trabajador_id])

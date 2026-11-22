@@ -189,7 +189,9 @@ describe('Dashboard propio del nuevo trabajador', () => {
       auth.user.set(identity);
       auth.restoreSession.mockReturnValue(of(identity));
       const harness = await RouterTestingHarness.create();
-      await harness.navigateByUrl(user.dashboard_path, Dashboard);
+      if (role === 'ADMIN') await harness.navigateByUrl(user.dashboard_path, SuperadminLayout);
+      else await harness.navigateByUrl(user.dashboard_path, Dashboard);
+      if(role==='ADMIN')http.expectOne('/api/institucional/dashboard/summary/').flush({recent_users:[],users_total:0});
     http.expectOne('/api/dashboard/').flush({rol:role,indicadores:[]});
       expect(TestBed.inject(Router).url).toBe(identity.dashboard_path);
       http.expectNone(URL);
@@ -263,6 +265,9 @@ describe('Logout del nuevo trabajador con AuthService real', () => {
     await fixture.whenStable();
     fixture.nativeElement.querySelector('header button').click();
     expect(auth.user()).toBeNull();
+    const logout = http.expectOne('/api/auth/logout/');
+    expect(logout.request.body).toEqual({ refresh: 'refresh' });
+    logout.flush({ detail: 'Sesión cerrada.' });
     expect(storage.access).toBeFalsy();
     expect(storage.refresh).toBeFalsy();
     expect(navigate).toHaveBeenCalledWith('/login');

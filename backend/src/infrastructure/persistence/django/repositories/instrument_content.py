@@ -11,8 +11,9 @@ from src.application.dto.instrument_content import (
     ContentKind, ContentPage, QuestionDTO, ScaleDTO, OptionDTO, RangeDTO,
 )
 from src.domain.exceptions.superadmin import AdministrationError, PersonNotFound
+from src.domain.services.version_instrumento import exigir_version_editable
 from src.infrastructure.persistence.django.models import (
-    InstrumentoPsicologico, PreguntaInstrumento, EscalaRespuesta, OpcionRespuesta, RangoInterpretacion,
+    InstrumentoPsicologico, PreguntaInstrumento, EscalaRespuesta, OpcionRespuesta, RangoInterpretacion, AplicacionInstrumento,
 )
 
 CATALOGS = {
@@ -92,6 +93,7 @@ class DjangoContentRepository:
         return self.dto(kind, self.find(kind, parent_id, item_id, lock=lock))
 
     def create(self, kind: ContentKind, parent_id: UUID | None, data: dict):
+        self.exigir_editable(kind, parent_id)
         model, _, parent_field, _, _ = CATALOGS[kind]
         row = model(**data, **({parent_field: parent_id} if parent_field else {}))
         row.full_clean()
@@ -100,6 +102,8 @@ class DjangoContentRepository:
 
     def update(self, kind: ContentKind, parent_id: UUID | None, item_id: UUID, data: dict):
         row = self.find(kind, parent_id, item_id, lock=True)
+        if any(name != 'activo' and getattr(row, name) != value for name, value in data.items()):
+            self.exigir_editable(kind, parent_id, item_id)
         for name, value in data.items():
             setattr(row, name, value)
         row.full_clean()
@@ -108,6 +112,7 @@ class DjangoContentRepository:
 
     def move(self, kind: ContentKind, parent_id: UUID, item_id: UUID, direction):
         row = self.find(kind, parent_id, item_id, lock=True)
+        self.exigir_editable(kind, parent_id, item_id)
         rows = self.rows(kind, parent_id)
         neighbor = (rows.filter(orden__lt=row.orden).order_by('-orden') if direction == 'up'
                     else rows.filter(orden__gt=row.orden).order_by('orden')).select_for_update().first()
@@ -128,3 +133,15 @@ class DjangoContentRepository:
         neighbor.save(update_fields=['orden'])
         row.save(update_fields=['orden'])
         return self.dto(kind, row)
+
+    @staticmethod
+    def exigir_editable(kind, parent_id, item_id=None):
+        apps = AplicacionInstrumento.objects.all()
+        if kind in ('questions', 'ranges'):
+            utilizada = apps.filter(asignacion__instrumento_id=parent_id).exists()
+        elif kind == 'options' or (kind == 'scales' and item_id):
+            scale_id = parent_id if kind == 'options' else item_id
+            utilizada = apps.filter(asignacion__instrumento__preguntas__escala_id=scale_id).exists()
+        else:
+            utilizada = False
+        exigir_version_editable(utilizada)

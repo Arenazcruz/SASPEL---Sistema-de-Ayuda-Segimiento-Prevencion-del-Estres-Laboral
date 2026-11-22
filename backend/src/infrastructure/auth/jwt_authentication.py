@@ -16,4 +16,6 @@ class UUIDJWTAuthentication(JWTAuthentication):
         user = super().get_user(validated_token)
         if user.deleted:
             raise InvalidToken('La sesión ya no es válida.')
+        if validated_token.get('version_sesion', 0) != user.version_sesion:
+            raise InvalidToken('La sesión ya no es válida.')
         return user

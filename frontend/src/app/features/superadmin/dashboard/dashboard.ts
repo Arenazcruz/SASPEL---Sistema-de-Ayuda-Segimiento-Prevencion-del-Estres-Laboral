@@ -12,6 +12,7 @@ import { finalize } from 'rxjs';
 import { Summary } from '../superadmin.models';
 import { apiError, SuperadminService } from '../superadmin.service';
 import { RoleBadge } from '../shared/role-badge';
+import { ADMINISTRATION_CONTEXT } from '../administration-context';
 
 @Injectable()
 /**
@@ -34,6 +35,7 @@ export class SuperadminDashboardViewModel {
     ['inactive_users', 'Usuarios inactivos'],
   ];
   constructor() {
+    if (!inject(ADMINISTRATION_CONTEXT).global) this.cards.splice(4, 2);
     this.load();
   }
   /**
@@ -63,7 +65,7 @@ export class SuperadminDashboardViewModel {
   template: `
     <div class="sa-heading">
       <div>
-        <p class="eyebrow">SUPERADMIN / INICIO</p>
+        <p class="eyebrow">ADMINISTRACIÓN / INICIO</p>
         <h1>Administración de SASPEL</h1><app-indicadores />
         <p>Gestiona las personas y la estructura de la institución.</p>
       </div>

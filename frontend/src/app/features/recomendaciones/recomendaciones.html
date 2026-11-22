@@ -1,0 +1,8 @@
+<main class="wrap content" [attr.aria-busy]="vm.busy()"><a [routerLink]="vm.propias ? '/dashboard/trabajador' : '/dashboard/psicologo/trabajadores'">Volver al panel</a><h1>{{vm.propias ? 'Mis recomendaciones' : 'Recomendaciones del seguimiento'}}</h1>
+@if(!vm.propias){<p>Marca la casilla para que el trabajador pueda leer esta recomendación.</p>}
+@if(vm.busy()){<p role="status">Procesando…</p>}@if(vm.error()){<p class="error" role="alert">{{vm.error()}}</p><button (click)="vm.load()" [disabled]="vm.busy()">Actualizar</button>}@if(vm.mensaje()){<p role="status">{{vm.mensaje()}}</p>}
+@if(vm.datos();as datos){@if(!vm.propias){<form (ngSubmit)="vm.guardar()"><fieldset [disabled]="vm.busy()"><legend>Registrar recomendación</legend><label>Texto<textarea name="texto" [(ngModel)]="vm.texto" required maxlength="5000"></textarea></label><label><input type="checkbox" name="compartida" [(ngModel)]="vm.compartida">Compartir con el trabajador</label><button type="submit">Guardar</button></fieldset></form>}
+@for(r of datos;track r.id){<article class="card"><p>{{r.creado_en|date:'dd/MM/yyyy HH:mm'}} · {{r.estado}}</p><p>{{r.texto}}</p>
+@if(!vm.propias && r.estado==='PENDIENTE'){<button [disabled]="vm.busy()" (click)="vm.cambiar(r,'EN_PROGRESO')">Iniciar</button>}
+@if(!vm.propias && (r.estado==='PENDIENTE'||r.estado==='EN_PROGRESO')){<button [disabled]="vm.busy()" (click)="vm.cambiar(r,'COMPLETADA')">Completar</button><button [disabled]="vm.busy()" (click)="vm.cambiar(r,'CANCELADA')">Cancelar recomendación</button>}</article>}@empty{<p>Sin recomendaciones registradas.</p>}}
+</main>
