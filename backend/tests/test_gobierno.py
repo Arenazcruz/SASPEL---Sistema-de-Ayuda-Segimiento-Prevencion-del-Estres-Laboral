@@ -25,7 +25,7 @@ class GobiernoTests(TestCase):
         primera.refresh_from_db();self.assertFalse(primera.activo)
         self.assertEqual(PoliticaSistema.objects.count(),2)
         self.auth(self.w)
-        self.assertEqual(self.client.get('/api/trabajador/instrumentos/').status_code,403)
+        self.assertEqual(self.client.get('/api/trabajador/animo/').status_code,403)
         pendientes=self.client.get('/api/auth/primer-acceso/politicas/')
         self.assertEqual(pendientes.status_code,200)
         self.assertIn('2',str(pendientes.data))
