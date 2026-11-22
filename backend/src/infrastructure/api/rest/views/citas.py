@@ -26,6 +26,12 @@ class AccionSerializer(EstrictoSerializer):
     motivo = serializers.CharField(max_length=2000, required=False, allow_blank=True, default='')
 
 
+class ReprogramarSerializer(EstrictoSerializer):
+    fecha_inicio = serializers.DateTimeField()
+    fecha_fin = serializers.DateTimeField()
+    motivo = serializers.CharField(max_length=2000)
+
+
 class DisponibilidadSerializer(EstrictoSerializer):
     dia_semana = serializers.IntegerField(min_value=0, max_value=6)
     hora_inicio = serializers.TimeField()
@@ -64,6 +70,10 @@ class AccionCitaView(CitasBaseView):
     http_method_names = ['post', 'options']
 
     def post(self, request, cita_id, accion):
+        if accion == 'reprogramar':
+            data = ReprogramarSerializer(data=request.data)
+            data.is_valid(raise_exception=True)
+            return Response(caso().reprogramar(request.user.pk, cita_id, data.validated_data), status=201)
         data = AccionSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         return Response(caso().accion(request.user.pk, cita_id, accion, data.validated_data['motivo']))

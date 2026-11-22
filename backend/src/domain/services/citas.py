@@ -13,6 +13,7 @@ def transicion_cita(estado, accion, rol, motivo):
         'completar': ('PSICOLOGO', {'CONFIRMADA'}, 'COMPLETADA'),
         'confirmar': ('PSICOLOGO', {'SOLICITADA'}, 'CONFIRMADA'),
         'rechazar': ('PSICOLOGO', {'SOLICITADA'}, 'RECHAZADA'),
+        'reprogramar': ('PSICOLOGO', {'SOLICITADA', 'CONFIRMADA'}, 'REPROGRAMADA'),
         'cancelar': (None, {'SOLICITADA', 'CONFIRMADA'}, 'CANCELADA'),
     }
     regla = reglas.get(accion)
@@ -20,6 +21,6 @@ def transicion_cita(estado, accion, rol, motivo):
         raise AdministrationError('Acción no permitida.')
     if estado not in regla[1]:
         raise AdministrationError('La cita cambió de estado; actualiza el listado.')
-    if accion in ('rechazar', 'cancelar') and not motivo.strip():
+    if accion in ('rechazar', 'cancelar', 'reprogramar') and not motivo.strip():
         raise AdministrationError('Indica el motivo del cierre.')
     return regla[2]
