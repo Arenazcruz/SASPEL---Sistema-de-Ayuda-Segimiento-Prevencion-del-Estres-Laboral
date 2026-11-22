@@ -102,7 +102,10 @@ def main():
                         raise RuntimeError('No se recuperó el vínculo sintético del respaldo.')
                 print('Migración, reversión 0015→0012→0015 y pg_dump/pg_restore comprobados.', flush=True)
             else:
-                manage('test', *(args.labels or ['tests']), '--noinput', '--verbosity=2')
+                from contextlib import nullcontext
+                from frontend_temporal import frontend_temporal
+                with frontend_temporal(backend.parent, env) if args.browser else nullcontext():
+                    manage('test', *(args.labels or ['tests']), '--noinput', '--verbosity=2')
             return 0
         finally:
             if (cluster / 'postmaster.pid').exists():
