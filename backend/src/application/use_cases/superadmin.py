@@ -159,8 +159,8 @@ class ResetUserPassword(UseCase, PasswordReset):
     """Restablece la clave de una persona desde la acción administrativa dedicada."""
     def execute(self, command: ResetPasswordCommand):
         """Recibe ID, contraseña y confirmación; valida y persiste el hash mediante el
-        repositorio. Devuelve None y propaga errores por campo. No ejecuta una revocación de
-        tokens existentes.
+        repositorio. Devuelve None y propaga errores por campo. La autenticación
+        invalida tokens anteriores al cambiar el hash de contraseña.
         """
         validate_password(command.password, command.password_confirmation)
         with self.repository.atomic():
@@ -185,6 +185,15 @@ class ManageInstitution(UseCase):
         ordenados por el repositorio, sin escrituras.
         """
         return self.repository.list_institution(kind, active, area)
+
+    def area_cargos(self, area_id):
+        return self.repository.area_cargos(area_id)
+
+    def set_area_cargos(self, area_id, cargo_ids):
+        if len(cargo_ids) != len(set(cargo_ids)):
+            raise AdministrationError('No repitas cargos.', 'cargo_ids')
+        with self.repository.atomic():
+            return self.repository.set_area_cargos(area_id, cargo_ids)
 
     def get(self, kind: str, item_id: UUID):
         """Recibe kind e ID; devuelve InstitutionDTO o propaga PersonNotFound."""

@@ -18,7 +18,7 @@ import { UserListViewModel } from './user-list.viewmodel';
 })
 export class UserList {
   readonly vm = inject(UserListViewModel);
-  readonly base = '/dashboard/superadmin/personas';
+  readonly base = this.vm.panel+'/personas';
   private readonly router = inject(Router);
   private modalContent: { vm?: { saving?: () => boolean; busy?: () => boolean } } | null = null;
   private returnFocus: HTMLElement | null = null;

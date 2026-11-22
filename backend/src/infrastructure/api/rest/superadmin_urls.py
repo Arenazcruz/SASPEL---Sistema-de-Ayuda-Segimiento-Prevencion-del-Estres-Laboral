@@ -9,9 +9,10 @@ from src.infrastructure.api.rest.views.instruments import InstrumentsView, Instr
 from src.infrastructure.api.rest.views.assignments import (
     AssignmentsView, FinishAssignmentView, PsychologistLoadsView, ReassignWorkerView, UnassignedWorkersView,
 )
-from src.infrastructure.api.rest.views.superadmin import InstitutionView, SummaryView, UserActionView, UserDetailView, UsersView
+from src.infrastructure.api.rest.views.superadmin import AreaCargoView, InstitutionView, SummaryView, UserActionView, UserDetailView, UsersView
 
 urlpatterns = [
+    path('areas/<uuid:area_id>/cargos/', AreaCargoView.as_view()),
     path('instruments/', InstrumentsView.as_view()),
     path('instruments/<uuid:instrument_id>/', InstrumentDetailView.as_view()),
     path('instruments/<uuid:instrument_id>/activate/', InstrumentStateView.as_view(), {'active': True}),

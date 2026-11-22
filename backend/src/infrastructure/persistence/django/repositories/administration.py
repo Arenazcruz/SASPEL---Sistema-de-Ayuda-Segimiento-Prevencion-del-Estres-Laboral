@@ -348,6 +348,29 @@ class DjangoAdministrationRepository:
         """Devuelve InstitutionDTO por kind (areas/cargos) e ID, o lanza PersonNotFound."""
         return self.institution_dto(self.find_institution(kind, item_id))
 
+    def area_cargos(self, area_id):
+        self.find_institution('areas', area_id)
+        return [str(pk) for pk in AreaCargo.objects.filter(area_id=area_id, deleted=False)
+                .order_by('cargo_id').values_list('cargo_id', flat=True)]
+
+    def set_area_cargos(self, area_id, cargo_ids):
+        area = self.find_institution('areas', area_id)
+        if not area.activo:
+            raise AdministrationError('Activa el área antes de configurar sus cargos.')
+        valid = CargoInstitucional.objects.filter(pk__in=cargo_ids, activo=True, deleted=False)
+        if valid.count() != len(cargo_ids):
+            raise AdministrationError('Selecciona cargos existentes y activos.', 'cargo_ids')
+        desired = set(cargo_ids)
+        for link in AreaCargo.objects.filter(area=area):
+            deleted = link.cargo_id not in desired
+            desired.discard(link.cargo_id)
+            if link.deleted != deleted:
+                link.deleted = deleted
+                link.save(update_fields=['deleted', 'actualizado_en'])
+        for cargo_id in desired:
+            AreaCargo.objects.create(area=area, cargo_id=cargo_id)
+        return self.area_cargos(area_id)
+
     def save_institution(self, kind, item_id, changes):
         """Crea o edita el catálogo y rechaza nombres duplicados sin distinguir mayúsculas.
         Ejecuta full_clean, guarda y devuelve DTO; depende de atomic() del caso para revertir

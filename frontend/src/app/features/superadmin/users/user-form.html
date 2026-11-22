@@ -1,6 +1,6 @@
 <div class="sa-heading">
   <div>
-    <p class="eyebrow">SUPERADMIN / PERSONAS</p>
+    <p class="eyebrow">ADMINISTRACIÓN / PERSONAS</p>
     <h1>{{ vm.id ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
     <p>Los campos con * son obligatorios.</p>
   </div>
@@ -267,7 +267,7 @@
         {{ vm.saving() ? 'Guardando…' : vm.id ? 'Guardar cambios' : 'Crear usuario' }}</button
       ><a
         class="button button-outline"
-        [routerLink]="vm.saving() ? null : '/dashboard/superadmin/personas'"
+        [routerLink]="vm.saving() ? null : vm.panel+'/personas'"
         queryParamsHandling="preserve"
         [attr.aria-disabled]="vm.saving()"
         >Cancelar</a

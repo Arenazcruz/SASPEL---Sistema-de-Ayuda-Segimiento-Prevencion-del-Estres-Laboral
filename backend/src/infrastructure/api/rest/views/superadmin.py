@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 from src.infrastructure.auth.jwt_authentication import UUIDJWTAuthentication
 from src.application.dto.superadmin import CreateUserCommand, ResetPasswordCommand, UpdateUserCommand, UserFilters
 from src.application.use_cases import superadmin as cases
@@ -39,6 +40,7 @@ class SuperadminView(APIView):
     """Base que comparte JWT, permiso funcional, traducción de errores y respuesta no-store."""
     authentication_classes = [UUIDJWTAuthentication]
     permission_classes = [IsAuthenticated, PrimerAccesoCompleto, IsFunctionalSuperadmin]
+    build_administration = staticmethod(build_administration)
 
     def handle_exception(self, exc):
         """Convierte ausencia en 404 y AdministrationError en 400 por campo; deja los demás
@@ -74,7 +76,7 @@ class SummaryView(SuperadminView):
         """GET dashboard/summary/: ejecuta GetSuperadminDashboardSummary y devuelve su DTO como
         JSON.
         """
-        return Response(asdict(build_administration(cases.GetSuperadminDashboardSummary).execute()))
+        return Response(asdict(self.build_administration(cases.GetSuperadminDashboardSummary).execute()))
 
 
 class UsersView(SuperadminView):
@@ -84,28 +86,28 @@ class UsersView(SuperadminView):
         escrituras.
         """
         filters = UserFilters(**self.validated(UserFilterSerializer, request.query_params.dict()))
-        return Response(asdict(build_administration(cases.ListUsers).execute(filters)))
+        return Response(asdict(self.build_administration(cases.ListUsers).execute(filters)))
 
     def post(self, request):
         """Valida el alta, crea CreateUserCommand y llama CreateUser; devuelve la ficha con HTTP
         201 o el error traducido.
         """
         command = CreateUserCommand(**self.validated(UserCreateSerializer, request.data))
-        return Response(asdict(build_administration(cases.CreateUser).execute(command)), status=201)
+        return Response(asdict(self.build_administration(cases.CreateUser).execute(command)), status=201)
 
 
 class UserDetailView(SuperadminView):
     """Consulta y edición parcial de una persona por ID de cuenta."""
     def get(self, request, user_id):
         """GET users/{id}/: devuelve la ficha de GetUserDetail o 404 si no existe."""
-        return Response(asdict(build_administration(cases.GetUserDetail).execute(user_id)))
+        return Response(asdict(self.build_administration(cases.GetUserDetail).execute(user_id)))
 
     def patch(self, request, user_id):
         """Valida campos presentes en el JSON y llama UpdateUser; devuelve la ficha guardada.
         Rol, estado y clave se tramitan en UserActionView.
         """
         changes = self.validated(UserEditSerializer, request.data, partial=True)
-        return Response(asdict(build_administration(cases.UpdateUser).execute(UpdateUserCommand(user_id, changes))))
+        return Response(asdict(self.build_administration(cases.UpdateUser).execute(UpdateUserCommand(user_id, changes))))
 
 
 class UserActionView(SuperadminView):
@@ -120,15 +122,15 @@ class UserActionView(SuperadminView):
         """
         if action == 'role':
             data = self.validated(RoleSerializer, request.data)
-            result = build_administration(cases.ChangeUserRole).execute(user_id, data['role'], request.user.pk)
+            result = self.build_administration(cases.ChangeUserRole).execute(user_id, data['role'], request.user.pk)
         elif action == 'reset-password':
             data = self.validated(PasswordSerializer, request.data)
-            build_administration(cases.ResetUserPassword).execute(ResetPasswordCommand(user_id, **data))
+            self.build_administration(cases.ResetUserPassword).execute(ResetPasswordCommand(user_id, **data))
             return Response({'detail': 'Contraseña restablecida.'})
         elif action == 'activate':
-            result = build_administration(cases.ActivateUser).execute(user_id)
+            result = self.build_administration(cases.ActivateUser).execute(user_id)
         else:
-            result = build_administration(cases.DeactivateUser).execute(user_id, request.user.pk)
+            result = self.build_administration(cases.DeactivateUser).execute(user_id, request.user.pk)
         return Response(asdict(result))
 
 
@@ -142,7 +144,7 @@ class InstitutionView(SuperadminView):
         """
         if action:
             return Response({'detail': 'Utiliza POST para esta acción.'}, status=405)
-        case = build_administration(cases.ManageInstitution)
+        case = self.build_administration(cases.ManageInstitution)
         if item_id:
             return Response(asdict(case.get(kind, item_id)))
         filters = self.validated(UserFilterSerializer, request.query_params.dict())
@@ -152,7 +154,7 @@ class InstitutionView(SuperadminView):
         """Crea catálogo validado con 201 o activa/desactiva por ID con 200. Rechaza POST de
         edición con 405; el caso controla la transacción.
         """
-        case = build_administration(cases.ManageInstitution)
+        case = self.build_administration(cases.ManageInstitution)
         if action:
             return Response(asdict(case.set_active(kind, item_id, action == 'activate')))
         if item_id:
@@ -166,4 +168,18 @@ class InstitutionView(SuperadminView):
         if item_id is None or action:
             return Response({'detail': 'Selecciona un registro para editar.'}, status=405)
         changes = self.validated(InstitutionSerializer, request.data, partial=True)
-        return Response(asdict(build_administration(cases.ManageInstitution).save(kind, item_id, changes)))
+        return Response(asdict(self.build_administration(cases.ManageInstitution).save(kind, item_id, changes)))
+
+
+class AreaCargoSerializer(serializers.Serializer):
+    cargo_ids = serializers.ListField(child=serializers.UUIDField(), max_length=1000)
+
+
+class AreaCargoView(SuperadminView):
+    def get(self, request, area_id):
+        return Response({'cargo_ids': self.build_administration(cases.ManageInstitution).area_cargos(area_id)})
+
+    def put(self, request, area_id):
+        data = self.validated(AreaCargoSerializer, request.data)
+        ids = self.build_administration(cases.ManageInstitution).set_area_cargos(area_id, data['cargo_ids'])
+        return Response({'cargo_ids': ids})

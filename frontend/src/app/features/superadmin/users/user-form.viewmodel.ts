@@ -1,3 +1,4 @@
+import {ADMINISTRATION_CONTEXT} from '../administration-context';
 /**
  * Prepara alta o edición con SuperadminService, catálogos activos y datos de la persona cuando
  * hay ID. Gestiona validación, confirmación visual de alta SUPERADMIN y retorno al listado;
@@ -22,11 +23,13 @@ import {
 
 @Injectable()
 export class UserFormViewModel {
+  readonly context = inject(ADMINISTRATION_CONTEXT);
+  readonly panel = this.context.panel;
   private readonly api = inject(SuperadminService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id');
-  readonly roles = CREATION_ROLES;
+  readonly roles = CREATION_ROLES.filter(([role])=>this.context.global||['NUEVO_TRABAJADOR','PSICOLOGO'].includes(role));
   readonly person = signal<Person | null>(null);
   readonly areas = signal<Institution[]>([]);
   readonly cargos = signal<Institution[]>([]);
@@ -259,7 +262,7 @@ export class UserFormViewModel {
         next: () => {
           this.form.controls.password.reset();
           this.form.controls.password_confirmation.reset();
-          void this.router.navigate(['/dashboard/superadmin/personas'], {
+          void this.router.navigate([this.panel+'/personas'], {
             queryParamsHandling: 'preserve',
           });
         },
