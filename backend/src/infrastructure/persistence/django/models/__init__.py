@@ -59,3 +59,5 @@ from .factor_psicosocial import TipoFactorPsicosocial, FactorPsicosocial
 from .alerta import ReglaAlerta, Alerta, AccionAlerta
 
 from .notificacion import Notificacion
+from .recomendacion import Recomendacion
+from .evento_auditoria import EventoAuditoria
