@@ -55,7 +55,7 @@ class AlertasTests(TestCase):
         self.assertEqual(self.client.get('/api/alertas/').status_code,401)
         self.p.debe_cambiar_password=True;self.p.save();self.auth(self.p);self.assertEqual(self.client.get('/api/alertas/').status_code,403)
 
-def test_aviso_de_resultado_se_revalida_al_consultar_y_al_marcar_leido(self):
+    def test_aviso_de_resultado_se_revalida_al_consultar_y_al_marcar_leido(self):
         result = self.result()
         result.save()
         url = '/api/notificaciones/'
