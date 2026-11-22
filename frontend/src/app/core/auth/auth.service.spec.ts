@@ -102,6 +102,10 @@ describe('AuthService e interceptor', () => {
     auth.restoreSession().subscribe();
     requests.expectOne('/api/auth/me/').flush(user);
     auth.logout();
+    const logout = requests.expectOne('/api/auth/logout/');
+    expect(logout.request.body).toEqual({refresh:'refresh'});
+    expect(logout.request.headers.has('Authorization')).toBe(false);
+    logout.flush(null, {status:204,statusText:'No Content'});
     expect(storage.access).toBeNull();
     expect(storage.refresh).toBeNull();
     expect(auth.user()).toBeNull();
@@ -168,6 +172,7 @@ describe('AuthService e interceptor', () => {
     auth.restoreSession().subscribe((result) => expect(result).toBeNull());
     const pending = requests.expectOne('/api/auth/me/');
     auth.logout();
+    requests.expectOne('/api/auth/logout/').flush(null, {status:204,statusText:'No Content'});
     pending.flush(user);
     expect(auth.user()).toBeNull();
     expect(storage.access).toBeNull();
@@ -178,6 +183,7 @@ describe('AuthService e interceptor', () => {
     auth.refreshAccess().subscribe({ error: () => undefined });
     const pending = requests.expectOne('/api/auth/refresh/');
     auth.logout();
+    requests.expectOne('/api/auth/logout/').flush(null, {status:204,statusText:'No Content'});
     pending.flush({ access: 'late' });
     expect(storage.access).toBeNull();
   });

@@ -38,7 +38,10 @@ from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesVie
 
 from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
 
+from src.infrastructure.api.rest.views.perfil import PerfilPropioView
+
 urlpatterns = [
+    path('perfil/', PerfilPropioView.as_view()),
     path('administracion/politicas/', PoliticasAdministracionView.as_view()),
     path('administracion/auditoria/', AuditoriaView.as_view()),
     path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),

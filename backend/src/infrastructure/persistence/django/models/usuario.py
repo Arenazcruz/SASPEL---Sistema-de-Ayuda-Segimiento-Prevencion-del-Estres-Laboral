@@ -8,6 +8,7 @@ from .auditable import AuditableModel
 
 class Usuario(AuditableModel, AbstractUser):
     debe_cambiar_password = models.BooleanField(default=False)
+    version_sesion = models.PositiveIntegerField(default=0, editable=False)
 
     class Meta(AbstractUser.Meta):
         db_table = 'saspel_usuario'
