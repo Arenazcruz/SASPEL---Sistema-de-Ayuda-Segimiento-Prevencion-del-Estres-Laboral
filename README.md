@@ -591,3 +591,5 @@ local que use ese mismo usuario. Documentación:
 ## Versión del Hito 4
 
 [Instalación, reglas y uso por rol](docs/h4/MANUAL.md) · [Diccionario físico y relaciones](docs/h4/DICCIONARIO.md) · [Evidencias en navegador](docs/h4/E2E.md).
+
+[Paquete documental y guion H4](docs/h4/INDICE.md).

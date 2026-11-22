@@ -80,14 +80,14 @@ Las rutas son relativas a `/api/`. Cada fila HU/CU enlaza al requisito que mater
 | HU-20 | Marcar notificación como leída | RF-41 |
 | HU-21 | Consultar mi evolución del estrés | RF-47 |
 | HU-22 | Visualizar dashboard de Psicólogo | RF-05 |
-| HU-23 | Consultar trabajadores asignados | RF-13 |
+| HU-23 | Consultar trabajadores asignados | RF-13 / RF-25 · `psicologo/trabajadores/` · Mis trabajadores · test_resultados_historial |
 | HU-24 | Revisar resultados de un trabajador | RF-25 |
 | HU-25 | Asignar instrumento | RF-19 |
 | HU-26 | Resolver solicitud de cita | RF-27 |
 | HU-27 | Consultar agenda | RF-29 |
 | HU-28 | Registrar nota de cita | RF-30 |
 | HU-29 | Registrar seguimiento profesional | RF-34 |
-| HU-30 | Consultar estado de ánimo y factores | RF-33 |
+| HU-30 | Consultar estado de ánimo y factores | RF-31 / RF-33 · `psicologo/trabajadores/{id}/animo/` y `factores/` · test_estado_animo / test_factores |
 | HU-31 | Atender alerta de riesgo | RF-38 |
 | HU-32 | Registrar recomendación profesional | RF-36 |
 | HU-33 | Consultar evolución de un trabajador | RF-48 |
@@ -126,7 +126,7 @@ Las rutas son relativas a `/api/`. Cada fila HU/CU enlaza al requisito que mater
 | CU-11 | Asignar instrumento | RF-19 |
 | CU-12 | Resolver instrumento | RF-21 |
 | CU-13 | Calcular resultado | RF-23 |
-| CU-14 | Consultar resultados | RF-24 |
+| CU-14 | Consultar resultados | RF-24 / RF-25 |
 | CU-15 | Solicitar cita | RF-26 |
 | CU-16 | Resolver solicitud de cita | RF-27 |
 | CU-17 | Registrar nota de cita | RF-30 |
