@@ -33,11 +33,13 @@ def preguntas_disponibles(instrumento_id):
 
 
 class DjangoResponderEvaluacionRepository:
-    @staticmethod
-    def asignacion(usuario_id, asignacion_id, lock=False):
+    def __init__(self, inicial=True):
+        self.inicial = inicial
+
+    def asignacion(self, usuario_id, asignacion_id, lock=False):
         rows = AsignacionInstrumento.objects.filter(
             pk=asignacion_id, trabajador_id=usuario_id, deleted=False,
-            instrumento__es_inicial=True, instrumento__deleted=False,
+            instrumento__es_inicial=self.inicial, instrumento__deleted=False,
         )
         if lock:
             rows = rows.select_for_update(of=('self',))
