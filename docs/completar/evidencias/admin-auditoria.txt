@@ -1,0 +1,66 @@
+PostgreSQL temporal verificado; .env deshabilitado; datos sintéticos.
+Creating test database for alias 'default' ('test_saspel_verificacion')...
+
+Found 13 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, messages, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying api.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying api.0002_crear_roles_iniciales... OK
+  Applying api.0003_eliminar_nombre_preferido... OK
+  Applying api.0004_primer_acceso_institucional... OK
+  Applying api.0005_area_cargo... OK
+  Applying api.0006_unico_instrumento_inicial_activo... OK
+  Applying api.0007_notas_cita... OK
+  Applying api.0008_seguimiento... OK
+  Applying api.0009_estado_animo... OK
+  Applying api.0010_factores_psicosociales... OK
+  Applying api.0011_alertas_reglas... OK
+  Applying api.0012_notificaciones_internas... OK
+  Applying api.0013_recomendaciones... OK
+  Applying api.0014_auditoria_funcional... OK
+  Applying api.0015_revocacion_sesion... OK
+test_auditoria_actor_sin_contenido_sensible_y_paginacion (tests.test_gobierno.GobiernoTests.test_auditoria_actor_sin_contenido_sensible_y_paginacion) ... ok
+test_eventos_son_inmutables_y_api_solo_lectura (tests.test_gobierno.GobiernoTests.test_eventos_son_inmutables_y_api_solo_lectura) ... ok
+test_login_registra_actor_sin_credenciales (tests.test_gobierno.GobiernoTests.test_login_registra_actor_sin_credenciales) ... ok
+test_publicacion_conserva_historia_y_exige_nueva_aceptacion (tests.test_gobierno.GobiernoTests.test_publicacion_conserva_historia_y_exige_nueva_aceptacion) ... ok
+test_publicar_solo_superadmin_y_no_sobrescribe_version (tests.test_gobierno.GobiernoTests.test_publicar_solo_superadmin_y_no_sobrescribe_version) ... ok
+test_actualizacion_y_desactivacion_preservan_historial (tests.test_institutional_admin.InstitutionalAdminTests.test_actualizacion_y_desactivacion_preservan_historial) ... ok
+test_catalogos_instrumentos_y_contenido_comparten_validaciones (tests.test_institutional_admin.InstitutionalAdminTests.test_catalogos_instrumentos_y_contenido_comparten_validaciones) ... ok
+test_ids_directos_no_permiten_modificar_admin_ni_escalar_rol (tests.test_institutional_admin.InstitutionalAdminTests.test_ids_directos_no_permiten_modificar_admin_ni_escalar_rol) ... ok
+test_lista_resumen_y_busqueda_no_revelan_administradores (tests.test_institutional_admin.InstitutionalAdminTests.test_lista_resumen_y_busqueda_no_revelan_administradores) ... ok
+test_reasignacion_autorizada_preserva_origen (tests.test_institutional_admin.InstitutionalAdminTests.test_reasignacion_autorizada_preserva_origen) ... ok
+test_registra_solo_nuevos_y_psicologos_con_onboarding (tests.test_institutional_admin.InstitutionalAdminTests.test_registra_solo_nuevos_y_psicologos_con_onboarding) ... ok
+test_roles_revocacion_y_superficie_clinica (tests.test_institutional_admin.InstitutionalAdminTests.test_roles_revocacion_y_superficie_clinica) ... ok
+test_vinculos_area_cargo_reversibles_sin_perder_perfiles (tests.test_institutional_admin.InstitutionalAdminTests.test_vinculos_area_cargo_reversibles_sin_perder_perfiles) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.882s
+
+OK
+Destroying test database for alias 'default' ('test_saspel_verificacion')...
+
+  Applying sessions.0001_initial... OK
+System check identified no issues (0 silenced).
+Clúster temporal detenido; limpieza limitada a su directorio.

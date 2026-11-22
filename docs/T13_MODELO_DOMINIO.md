@@ -1,5 +1,10 @@
 # T13 · Modelo conceptual del dominio
 
+Actualización de implementación H4 (26/10/2026): recomendaciones, evolución,
+auditoría y alcance institucional único se describen en
+[IMPLEMENTACION](completar/IMPLEMENTACION.md). Esta referencia no modifica ni
+extiende retrospectivamente la aprobación conceptual registrada abajo.
+
 Revisión técnica: 16/10/2026. Alcance funcional: tareas hasta T37, con límite 19/10/2026. Fuente: hojas ReglasNegocio, RolesPermisos, CasosUso y Cronograma de SASPELCronograma3.xlsx. Este documento describe conceptos y contratos independientes de Django, SQL, HTTP y Angular.
 
 **Estado de aceptación:** modelo conceptual aprobado por el responsable del desarrollo del proyecto SASPEL mediante declaración explícita en esta conversación el 16/10/2026. El diseño revisado permanece independiente de Django ORM. La aprobación satisface el criterio literal de T13 y permite cerrar la tarea; no se atribuye aprobación a terceros ni se presenta como una validación histórica previa a las tablas ya existentes.

@@ -39,5 +39,7 @@ class UnifiedUsersBrowserTests(LiveServerTestCase):
         self.assertTrue(created.is_active)
         self.assertEqual(created.username, created.email)
         self.assertEqual(created.perfil_usuario.telefono, '59170000000')
-        self.assertTrue(created.check_password(password))
+        self.assertFalse(created.check_password(password))
+        self.assertTrue(created.check_password(password+'N7!'))
+        self.assertFalse(created.debe_cambiar_password)
         self.assertTrue(created.groups.filter(name='NUEVO_TRABAJADOR').exists())

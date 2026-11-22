@@ -54,3 +54,21 @@ class AlertasTests(TestCase):
     def test_jwt_primer_acceso_y_anonimo(self):
         self.assertEqual(self.client.get('/api/alertas/').status_code,401)
         self.p.debe_cambiar_password=True;self.p.save();self.auth(self.p);self.assertEqual(self.client.get('/api/alertas/').status_code,403)
+
+    def test_aviso_de_resultado_se_revalida_al_consultar_y_al_marcar_leido(self):
+        result = self.result()
+        result.save()
+        url = '/api/notificaciones/'
+        self.auth(self.p)
+        avisos = [r for r in self.client.get(url).data if r['tipo'] == 'RESULTADO']
+        self.assertEqual(len(avisos), 1)
+        self.assertEqual(avisos[0]['origen_id'], result.pk)
+        leer = f"{url}{avisos[0]['id']}/leer/"
+        self.auth(self.foreign)
+        self.assertEqual(self.client.post(leer).status_code, 404)
+        self.link.estado = 'REASIGNADA'
+        self.link.save()
+        self.auth(self.p)
+        self.assertFalse(any(r['tipo'] == 'RESULTADO' for r in self.client.get(url).data))
+        self.assertEqual(self.client.post(leer).status_code, 404)
+

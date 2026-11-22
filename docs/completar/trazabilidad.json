@@ -1,0 +1,1217 @@
+{
+  "fecha": "2026-10-26",
+  "fuente": "gestion/SASPELCronograma3.xlsx",
+  "metodo": "Un requisito cuenta una vez solo con estado IMPLEMENTADO y evidencia; parcial/no verificado valen cero. RF-50 futuro excluido. No equivale a cobertura de líneas ni aceptación externa.",
+  "funcionales": [
+    {
+      "id": "RF-01",
+      "modulo": "Acceso y seguridad",
+      "requisito": "El sistema debe permitir iniciar sesión mediante credenciales institucionales.",
+      "origen": "auth/ManualLoginController.php",
+      "destino": "auth, primer_acceso",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Hash y rol vivo; cierre revoca sesiones; aceptación por versión",
+      "dependencias": "Django Auth, JWT, políticas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_auth_api.py",
+        "backend/tests/test_auth_use_cases.py",
+        "backend/tests/test_primer_acceso.py",
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-02",
+      "modulo": "Acceso y seguridad",
+      "requisito": "El sistema debe permitir cerrar la sesión de forma segura.",
+      "origen": "auth/ManualLoginController.php",
+      "destino": "auth, primer_acceso",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Hash y rol vivo; cierre revoca sesiones; aceptación por versión",
+      "dependencias": "Django Auth, JWT, políticas",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_auth_api.py",
+        "backend/tests/test_auth_use_cases.py",
+        "backend/tests/test_primer_acceso.py",
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-03",
+      "modulo": "Acceso y seguridad",
+      "requisito": "El sistema debe permitir cambiar una contraseña temporal en el primer acceso.",
+      "origen": "auth/ManualLoginController.php",
+      "destino": "auth, primer_acceso",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Hash y rol vivo; cierre revoca sesiones; aceptación por versión",
+      "dependencias": "Django Auth, JWT, políticas",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_auth_api.py",
+        "backend/tests/test_auth_use_cases.py",
+        "backend/tests/test_primer_acceso.py",
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-04",
+      "modulo": "Acceso y seguridad",
+      "requisito": "El sistema debe registrar la aceptación de las políticas de uso, privacidad y tratamiento de información vigentes.",
+      "origen": "auth/ManualLoginController.php",
+      "destino": "auth, primer_acceso",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Hash y rol vivo; cierre revoca sesiones; aceptación por versión",
+      "dependencias": "Django Auth, JWT, políticas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_auth_api.py",
+        "backend/tests/test_auth_use_cases.py",
+        "backend/tests/test_primer_acceso.py",
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-05",
+      "modulo": "Acceso y seguridad",
+      "requisito": "El sistema debe redirigir al usuario al dashboard correspondiente según su rol.",
+      "origen": "auth/ManualLoginController.php",
+      "destino": "auth, primer_acceso",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Hash y rol vivo; cierre revoca sesiones; aceptación por versión",
+      "dependencias": "Django Auth, JWT, políticas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_auth_api.py",
+        "backend/tests/test_auth_use_cases.py",
+        "backend/tests/test_primer_acceso.py",
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-06",
+      "modulo": "Usuarios y perfiles",
+      "requisito": "El sistema debe permitir completar y consultar el perfil institucional del usuario.",
+      "origen": "UserProfileController.php",
+      "destino": "perfil",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Editar campos personales propios sin permitir rol, email ni campos institucionales",
+      "dependencias": "Usuario/PerfilUsuario, primer acceso",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_sesion_perfil.py"
+      ]
+    },
+    {
+      "id": "RF-07",
+      "modulo": "Usuarios y perfiles",
+      "requisito": "El sistema debe permitir al Administrador registrar trabajadores y psicólogos de la institución.",
+      "origen": "AdminStudentRegistrationController.php; AdminPsychologistRegistrationController.php; Superadmin/GestionAdminController.php",
+      "destino": "superadmin, institutional_administration; frontend/features/admin",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Institución única confirmada; Admin limitado a personal; áreas/cargos vinculables sin perder historial",
+      "dependencias": "Catálogos, roles, perfiles",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_institutional_admin.py",
+        "backend/tests/test_area_cargo_api.py"
+      ]
+    },
+    {
+      "id": "RF-08",
+      "modulo": "Usuarios y perfiles",
+      "requisito": "El sistema debe permitir activar o desactivar cuentas institucionales sin eliminar su historial.",
+      "origen": "AdminStudentRegistrationController.php; AdminPsychologistRegistrationController.php; Superadmin/GestionAdminController.php",
+      "destino": "superadmin, institutional_administration; frontend/features/admin",
+      "reglas": [
+        "RN-USR-04"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Institución única confirmada; Admin limitado a personal; áreas/cargos vinculables sin perder historial",
+      "dependencias": "Catálogos, roles, perfiles",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_institutional_admin.py",
+        "backend/tests/test_area_cargo_api.py"
+      ]
+    },
+    {
+      "id": "RF-09",
+      "modulo": "Usuarios y perfiles",
+      "requisito": "El sistema debe permitir al Superadministrador gestionar usuarios y roles de forma global.",
+      "origen": "AdminStudentRegistrationController.php; AdminPsychologistRegistrationController.php; Superadmin/GestionAdminController.php",
+      "destino": "superadmin, institutional_administration; frontend/features/admin",
+      "reglas": [
+        "RN-USR-05"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Institución única confirmada; Admin limitado a personal; áreas/cargos vinculables sin perder historial",
+      "dependencias": "Catálogos, roles, perfiles",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_institutional_admin.py",
+        "backend/tests/test_area_cargo_api.py"
+      ]
+    },
+    {
+      "id": "RF-10",
+      "modulo": "Onboarding",
+      "requisito": "Todo trabajador recién registrado debe iniciar como Nuevo Trabajador y acceder a un dashboard de bienvenida y orientación.",
+      "origen": "InstrumentTestController.php; InstrumentService.php",
+      "destino": "nuevo_trabajador, responder_evaluacion, cerrar_onboarding",
+      "reglas": [
+        "RN-USR-01",
+        "RN-USR-02"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar onboarding y transición transaccional, nunca permitir tamizaje desde registro administrativo",
+      "dependencias": "Políticas, instrumento inicial, respuestas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_nuevo_trabajador_dashboard.py",
+        "backend/tests/test_responder_evaluacion.py",
+        "backend/tests/test_cierre_onboarding.py"
+      ]
+    },
+    {
+      "id": "RF-11",
+      "modulo": "Onboarding",
+      "requisito": "El sistema debe permitir al Nuevo Trabajador realizar la evaluación inicial obligatoria.",
+      "origen": "InstrumentTestController.php; InstrumentService.php",
+      "destino": "nuevo_trabajador, responder_evaluacion, cerrar_onboarding",
+      "reglas": [
+        "RN-USR-02",
+        "RN-INS-04"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar onboarding y transición transaccional, nunca permitir tamizaje desde registro administrativo",
+      "dependencias": "Políticas, instrumento inicial, respuestas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_nuevo_trabajador_dashboard.py",
+        "backend/tests/test_responder_evaluacion.py",
+        "backend/tests/test_cierre_onboarding.py"
+      ]
+    },
+    {
+      "id": "RF-12",
+      "modulo": "Onboarding",
+      "requisito": "Al completar correctamente la evaluación inicial, el sistema debe cambiar el rol de Nuevo Trabajador a Trabajador.",
+      "origen": "InstrumentTestController.php; InstrumentService.php",
+      "destino": "nuevo_trabajador, responder_evaluacion, cerrar_onboarding",
+      "reglas": [
+        "RN-USR-03"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar onboarding y transición transaccional, nunca permitir tamizaje desde registro administrativo",
+      "dependencias": "Políticas, instrumento inicial, respuestas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_nuevo_trabajador_dashboard.py",
+        "backend/tests/test_responder_evaluacion.py",
+        "backend/tests/test_cierre_onboarding.py"
+      ]
+    },
+    {
+      "id": "RF-13",
+      "modulo": "Asignación profesional",
+      "requisito": "El sistema debe asignar automáticamente al nuevo Trabajador a un Psicólogo habilitado con la menor carga activa.",
+      "origen": "InstrumentService.php",
+      "destino": "assignments, cerrar_onboarding",
+      "reglas": [
+        "RN-ASG-01",
+        "RN-ASG-02",
+        "RN-ASG-03",
+        "RN-ASG-05"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Menor carga y más tiempo sin asignación, máximo una activa; reasignación preserva origen",
+      "dependencias": "Roles activos, asignaciones profesionales",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_assignments_api.py",
+        "backend/tests/test_assignments_concurrency.py",
+        "backend/tests/test_cierre_onboarding.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-14",
+      "modulo": "Asignación profesional",
+      "requisito": "Cuando exista empate de carga, el sistema debe priorizar al Psicólogo que lleve más tiempo sin recibir una nueva asignación.",
+      "origen": "InstrumentService.php",
+      "destino": "assignments, cerrar_onboarding",
+      "reglas": [
+        "RN-ASG-04"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Menor carga y más tiempo sin asignación, máximo una activa; reasignación preserva origen",
+      "dependencias": "Roles activos, asignaciones profesionales",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_assignments_api.py",
+        "backend/tests/test_assignments_concurrency.py",
+        "backend/tests/test_cierre_onboarding.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-15",
+      "modulo": "Asignación profesional",
+      "requisito": "Si no existen Psicólogos disponibles, el sistema debe dejar la asignación pendiente y notificar al área administrativa.",
+      "origen": "InstrumentService.php",
+      "destino": "assignments, cerrar_onboarding",
+      "reglas": [
+        "RN-ASG-06"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Menor carga y más tiempo sin asignación, máximo una activa; reasignación preserva origen",
+      "dependencias": "Roles activos, asignaciones profesionales",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_assignments_api.py",
+        "backend/tests/test_assignments_concurrency.py",
+        "backend/tests/test_cierre_onboarding.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-16",
+      "modulo": "Asignación profesional",
+      "requisito": "El sistema debe permitir reasignar un Trabajador conservando el historial de asignaciones anteriores.",
+      "origen": "InstrumentService.php",
+      "destino": "assignments, cerrar_onboarding",
+      "reglas": [
+        "RN-ASG-07"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Menor carga y más tiempo sin asignación, máximo una activa; reasignación preserva origen",
+      "dependencias": "Roles activos, asignaciones profesionales",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_assignments_api.py",
+        "backend/tests/test_assignments_concurrency.py",
+        "backend/tests/test_cierre_onboarding.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-17",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El sistema debe permitir administrar instrumentos psicológicos y su estado activo/inactivo.",
+      "origen": "InstrumentService.php; InstrumentTestController.php",
+      "destino": "instruments, instrument_content, version_instrumento",
+      "reglas": [
+        "RN-INS-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Catálogo genérico; versiones utilizadas protegidas; acceso Admin institucional",
+      "dependencias": "Instrumentos, preguntas, escalas, opciones, rangos",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_instruments_api.py",
+        "backend/tests/test_instrument_content_api.py",
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-18",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El sistema debe permitir administrar preguntas, opciones de respuesta, orden y rangos de interpretación por instrumento.",
+      "origen": "InstrumentService.php; InstrumentTestController.php",
+      "destino": "instruments, instrument_content, version_instrumento",
+      "reglas": [
+        "RN-INS-02",
+        "RN-INS-03"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Catálogo genérico; versiones utilizadas protegidas; acceso Admin institucional",
+      "dependencias": "Instrumentos, preguntas, escalas, opciones, rangos",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_instruments_api.py",
+        "backend/tests/test_instrument_content_api.py",
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_institutional_admin.py"
+      ]
+    },
+    {
+      "id": "RF-19",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El sistema debe permitir asignar instrumentos a Trabajadores para su resolución.",
+      "origen": "Psychology/AssignTestController.php; Tools/AssignedTestsController.php; InstrumentService.php",
+      "destino": "instrument_assignments, responder_evaluacion",
+      "reglas": [
+        "RN-INS-05"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Asignación explícita y respuesta posterior al onboarding; puntaje Decimal; finalizadas inmutables",
+      "dependencias": "Asignación profesional, catálogo configurado, aplicación",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_cierre_concurrency.py",
+        "backend/tests/test_responder_evaluacion.py"
+      ]
+    },
+    {
+      "id": "RF-20",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El Trabajador debe poder consultar los instrumentos que tiene asignados y su estado.",
+      "origen": "Psychology/AssignTestController.php; Tools/AssignedTestsController.php; InstrumentService.php",
+      "destino": "instrument_assignments, responder_evaluacion",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Asignación explícita y respuesta posterior al onboarding; puntaje Decimal; finalizadas inmutables",
+      "dependencias": "Asignación profesional, catálogo configurado, aplicación",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_cierre_concurrency.py",
+        "backend/tests/test_responder_evaluacion.py"
+      ]
+    },
+    {
+      "id": "RF-21",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El Trabajador debe poder responder y finalizar un instrumento asignado.",
+      "origen": "Psychology/AssignTestController.php; Tools/AssignedTestsController.php; InstrumentService.php",
+      "destino": "instrument_assignments, responder_evaluacion",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Asignación explícita y respuesta posterior al onboarding; puntaje Decimal; finalizadas inmutables",
+      "dependencias": "Asignación profesional, catálogo configurado, aplicación",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_cierre_concurrency.py",
+        "backend/tests/test_responder_evaluacion.py"
+      ]
+    },
+    {
+      "id": "RF-22",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "Una aplicación finalizada no debe permitir modificar sus respuestas.",
+      "origen": "Psychology/AssignTestController.php; Tools/AssignedTestsController.php; InstrumentService.php",
+      "destino": "instrument_assignments, responder_evaluacion",
+      "reglas": [
+        "RN-INS-06"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Asignación explícita y respuesta posterior al onboarding; puntaje Decimal; finalizadas inmutables",
+      "dependencias": "Asignación profesional, catálogo configurado, aplicación",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_cierre_concurrency.py",
+        "backend/tests/test_responder_evaluacion.py"
+      ]
+    },
+    {
+      "id": "RF-23",
+      "modulo": "Instrumentos psicológicos",
+      "requisito": "El sistema debe calcular el puntaje y determinar el rango de interpretación configurado para el instrumento.",
+      "origen": "Psychology/AssignTestController.php; Tools/AssignedTestsController.php; InstrumentService.php",
+      "destino": "instrument_assignments, responder_evaluacion",
+      "reglas": [
+        "RN-INS-07",
+        "RN-INS-08"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Asignación explícita y respuesta posterior al onboarding; puntaje Decimal; finalizadas inmutables",
+      "dependencias": "Asignación profesional, catálogo configurado, aplicación",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py",
+        "backend/tests/test_cierre_concurrency.py",
+        "backend/tests/test_responder_evaluacion.py"
+      ]
+    },
+    {
+      "id": "RF-24",
+      "modulo": "Resultados",
+      "requisito": "El Trabajador debe poder consultar sus resultados e historial de instrumentos resueltos.",
+      "origen": "TestResultController.php; TestHistoryController.php; Psychology/StudentResultController.php",
+      "destino": "resultados",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar filtros por propietario y profesional vigente, sin exposición administrativa",
+      "dependencias": "Aplicación finalizada, propietario/asignación activa",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_resultados_historial.py"
+      ]
+    },
+    {
+      "id": "RF-25",
+      "modulo": "Resultados",
+      "requisito": "El Psicólogo debe poder consultar los resultados e historial de los Trabajadores que tenga asignados.",
+      "origen": "TestResultController.php; TestHistoryController.php; Psychology/StudentResultController.php",
+      "destino": "resultados",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar filtros por propietario y profesional vigente, sin exposición administrativa",
+      "dependencias": "Aplicación finalizada, propietario/asignación activa",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_resultados_historial.py"
+      ]
+    },
+    {
+      "id": "RF-26",
+      "modulo": "Citas",
+      "requisito": "El Trabajador debe poder solicitar una cita con el Psicólogo que tenga asignado.",
+      "origen": "Psychology/AppointmentController.php; Psychology/StudentAppointmentsController.php",
+      "destino": "citas",
+      "reglas": [
+        "RN-CIT-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reprogramación crea sucesora; original conserva horario; confirmadas no se solapan",
+      "dependencias": "Asignación activa, disponibilidad, agenda",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_citas_api.py",
+        "backend/tests/test_reprogramacion.py",
+        "backend/tests/test_cierre_concurrency.py"
+      ]
+    },
+    {
+      "id": "RF-27",
+      "modulo": "Citas",
+      "requisito": "El Psicólogo debe poder aprobar, rechazar, reprogramar o cancelar solicitudes de cita de sus Trabajadores asignados.",
+      "origen": "Psychology/AppointmentController.php; Psychology/StudentAppointmentsController.php",
+      "destino": "citas",
+      "reglas": [
+        "RN-CIT-02"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reprogramación crea sucesora; original conserva horario; confirmadas no se solapan",
+      "dependencias": "Asignación activa, disponibilidad, agenda",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_citas_api.py",
+        "backend/tests/test_reprogramacion.py",
+        "backend/tests/test_cierre_concurrency.py"
+      ]
+    },
+    {
+      "id": "RF-28",
+      "modulo": "Citas",
+      "requisito": "El sistema debe impedir solapamientos de horarios para un mismo Psicólogo.",
+      "origen": "Psychology/AppointmentController.php; Psychology/StudentAppointmentsController.php",
+      "destino": "citas",
+      "reglas": [
+        "RN-CIT-03"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reprogramación crea sucesora; original conserva horario; confirmadas no se solapan",
+      "dependencias": "Asignación activa, disponibilidad, agenda",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_citas_api.py",
+        "backend/tests/test_reprogramacion.py",
+        "backend/tests/test_cierre_concurrency.py"
+      ]
+    },
+    {
+      "id": "RF-29",
+      "modulo": "Citas",
+      "requisito": "Trabajador y Psicólogo deben poder consultar sus citas y el estado de cada una.",
+      "origen": "Psychology/AppointmentController.php; Psychology/StudentAppointmentsController.php",
+      "destino": "citas",
+      "reglas": [
+        "RN-CIT-05"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reprogramación crea sucesora; original conserva horario; confirmadas no se solapan",
+      "dependencias": "Asignación activa, disponibilidad, agenda",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_citas_api.py",
+        "backend/tests/test_reprogramacion.py",
+        "backend/tests/test_cierre_concurrency.py"
+      ]
+    },
+    {
+      "id": "RF-30",
+      "modulo": "Citas",
+      "requisito": "El Psicólogo debe poder registrar una nota asociada a una cita realizada.",
+      "origen": "Psychology/AppointmentController.php; app/Models/CitaNota.php",
+      "destino": "notas_cita",
+      "reglas": [
+        "RN-CIT-04"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Nota privada solo profesional; administración no lee contenido",
+      "dependencias": "Cita completada, profesional autorizado",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_notas_cita.py"
+      ]
+    },
+    {
+      "id": "RF-31",
+      "modulo": "Monitoreo emocional",
+      "requisito": "El Trabajador debe poder registrar su estado de ánimo para construir un historial temporal.",
+      "origen": "MoodRecordController.php",
+      "destino": "estado_animo",
+      "reglas": [
+        "RN-SEG-04"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Conservar reglas laborales; excluir DDL y cooldown académico no aprobado",
+      "dependencias": "Trabajador, fechas válidas",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_estado_animo.py"
+      ]
+    },
+    {
+      "id": "RF-32",
+      "modulo": "Factores psicosociales",
+      "requisito": "El Trabajador debe poder registrar factores psicosociales relevantes de su entorno laboral.",
+      "origen": "TestProfesionalController.php; StoreFactoresRequest.php",
+      "destino": "factores",
+      "reglas": [
+        "RN-SEG-04"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Historial laboral propio y lectura profesional autorizada",
+      "dependencias": "Catálogo factores, trabajador/asignación",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_factores.py"
+      ]
+    },
+    {
+      "id": "RF-33",
+      "modulo": "Factores psicosociales",
+      "requisito": "El Psicólogo debe poder consultar el historial de factores psicosociales de sus Trabajadores asignados.",
+      "origen": "TestProfesionalController.php; StoreFactoresRequest.php",
+      "destino": "factores",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Historial laboral propio y lectura profesional autorizada",
+      "dependencias": "Catálogo factores, trabajador/asignación",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_factores.py"
+      ]
+    },
+    {
+      "id": "RF-34",
+      "modulo": "Seguimiento profesional",
+      "requisito": "El Psicólogo debe poder registrar observaciones, motivo, categoría, plan de acción y próxima revisión de un seguimiento.",
+      "origen": "TestProfesionalController.php; app/Models/TestProfesionalSesion.php",
+      "destino": "seguimiento, recomendaciones",
+      "reglas": [
+        "RN-SEG-01",
+        "RN-SEG-02"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Recomendación manual ligada al seguimiento y estados; no diagnóstico automático",
+      "dependencias": "Asignación activa, seguimiento con autor",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_seguimiento.py",
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-35",
+      "modulo": "Seguimiento profesional",
+      "requisito": "El sistema debe mantener el historial cronológico de seguimientos de cada Trabajador.",
+      "origen": "TestProfesionalController.php; app/Models/TestProfesionalSesion.php",
+      "destino": "seguimiento, recomendaciones",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Recomendación manual ligada al seguimiento y estados; no diagnóstico automático",
+      "dependencias": "Asignación activa, seguimiento con autor",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_seguimiento.py",
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-36",
+      "modulo": "Recomendaciones",
+      "requisito": "El Psicólogo debe poder registrar recomendaciones profesionales asociadas a un seguimiento.",
+      "origen": "TestProfesionalController.php; app/Models/TestProfesionalSesion.php",
+      "destino": "seguimiento, recomendaciones",
+      "reglas": [
+        "RN-SEG-03"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Recomendación manual ligada al seguimiento y estados; no diagnóstico automático",
+      "dependencias": "Asignación activa, seguimiento con autor",
+      "prioridad": "Media",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_seguimiento.py",
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-37",
+      "modulo": "Alertas",
+      "requisito": "El sistema debe poder generar alertas de riesgo mediante reglas explícitas de negocio configuradas para el alcance actual.",
+      "origen": "InstrumentService.php (rangos; sin equivalencia completa)",
+      "destino": "alertas",
+      "reglas": [
+        "RN-ALT-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reglas explícitas configuradas, acciones trazadas; no IA ni Markov",
+      "dependencias": "Resultado, ReglaAlerta, asignación vigente",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_alertas.py"
+      ]
+    },
+    {
+      "id": "RF-38",
+      "modulo": "Alertas",
+      "requisito": "El Psicólogo debe poder revisar, atender y cerrar alertas de sus Trabajadores asignados.",
+      "origen": "InstrumentService.php (rangos; sin equivalencia completa)",
+      "destino": "alertas",
+      "reglas": [
+        "RN-ALT-02",
+        "RN-ALT-03"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reglas explícitas configuradas, acciones trazadas; no IA ni Markov",
+      "dependencias": "Resultado, ReglaAlerta, asignación vigente",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_alertas.py"
+      ]
+    },
+    {
+      "id": "RF-39",
+      "modulo": "Alertas",
+      "requisito": "Cada acción realizada sobre una alerta debe quedar registrada como seguimiento de la alerta.",
+      "origen": "InstrumentService.php (rangos; sin equivalencia completa)",
+      "destino": "alertas",
+      "reglas": [
+        "RN-ALT-02"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Reglas explícitas configuradas, acciones trazadas; no IA ni Markov",
+      "dependencias": "Resultado, ReglaAlerta, asignación vigente",
+      "prioridad": "Alta",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_alertas.py"
+      ]
+    },
+    {
+      "id": "RF-40",
+      "modulo": "Notificaciones",
+      "requisito": "El sistema debe generar notificaciones relacionadas con asignaciones, instrumentos, citas, alertas y otros eventos funcionales.",
+      "origen": "app/Models/Notificacion.php; UserNotificationController.php",
+      "destino": "notificaciones, notificacion_events",
+      "reglas": [
+        "RN-NOT-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Mensajes dirigidos; sin difusión de contenido clínico a todos los administradores",
+      "dependencias": "Eventos de negocio, destinatario, estado lectura",
+      "prioridad": "Media",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_notificaciones.py",
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-41",
+      "modulo": "Notificaciones",
+      "requisito": "Los usuarios deben poder consultar y marcar sus notificaciones como leídas.",
+      "origen": "app/Models/Notificacion.php; UserNotificationController.php",
+      "destino": "notificaciones, notificacion_events",
+      "reglas": [
+        "RN-NOT-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Mensajes dirigidos; sin difusión de contenido clínico a todos los administradores",
+      "dependencias": "Eventos de negocio, destinatario, estado lectura",
+      "prioridad": "Media",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_notificaciones.py",
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-42",
+      "modulo": "Administración",
+      "requisito": "El Administrador debe poder gestionar áreas y cargos institucionales utilizados por los perfiles.",
+      "origen": "AdminStudentRegistrationController.php; AdminPsychologistRegistrationController.php; Superadmin/GestionAdminController.php",
+      "destino": "superadmin, institutional_administration; frontend/features/admin",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Institución única confirmada; Admin limitado a personal; áreas/cargos vinculables sin perder historial",
+      "dependencias": "Catálogos, roles, perfiles",
+      "prioridad": "Media",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_institutional_admin.py",
+        "backend/tests/test_area_cargo_api.py"
+      ]
+    },
+    {
+      "id": "RF-43",
+      "modulo": "Administración",
+      "requisito": "El Administrador debe poder consultar información operativa y estadísticas institucionales sin acceder por defecto a notas psicológicas privadas.",
+      "origen": "DashboardController.php; PsychologistDashboardController.php; TestResultController.php",
+      "destino": "dashboard, reportes",
+      "reglas": [
+        "RN-USR-06"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Operativo administrativo sin notas privadas; CSV seguro y permisos por reporte",
+      "dependencias": "Roles, periodo, catálogos y agregados",
+      "prioridad": "Media",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_dashboard.py",
+        "backend/tests/test_reportes.py"
+      ]
+    },
+    {
+      "id": "RF-44",
+      "modulo": "Reportes",
+      "requisito": "El sistema debe permitir generar reportes operativos de usuarios, instrumentos, citas y seguimiento según permisos.",
+      "origen": "DashboardController.php; PsychologistDashboardController.php; TestResultController.php",
+      "destino": "dashboard, reportes",
+      "reglas": [
+        "RN-PRI-01"
+      ],
+      "inicial": "IMPLEMENTADO",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Operativo administrativo sin notas privadas; CSV seguro y permisos por reporte",
+      "dependencias": "Roles, periodo, catálogos y agregados",
+      "prioridad": "Media",
+      "accion": "Conservado y regresión verificada",
+      "evidencia": [
+        "backend/tests/test_dashboard.py",
+        "backend/tests/test_reportes.py"
+      ]
+    },
+    {
+      "id": "RF-45",
+      "modulo": "Auditoría",
+      "requisito": "El sistema debe registrar acciones administrativas y sensibles para permitir trazabilidad.",
+      "origen": "Sin equivalencia segura completa; Superadmin/GestionAdminController.php",
+      "destino": "gobierno, auditoria_events, superadmin",
+      "reglas": [
+        "RN-AUD-01"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Auditoría consultable sin cuerpos; políticas por versión; configuración mediante catálogos/reglas existentes",
+      "dependencias": "Actor JWT, eventos, políticas, configuración vigente",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_gobierno.py",
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_primer_acceso.py"
+      ]
+    },
+    {
+      "id": "RF-46",
+      "modulo": "Políticas y privacidad",
+      "requisito": "El sistema debe conservar las versiones de políticas y el registro de aceptación de cada usuario.",
+      "origen": "Sin equivalencia segura completa; Superadmin/GestionAdminController.php",
+      "destino": "gobierno, auditoria_events, superadmin",
+      "reglas": [
+        "RN-PRI-02",
+        "RN-PRI-03"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Auditoría consultable sin cuerpos; políticas por versión; configuración mediante catálogos/reglas existentes",
+      "dependencias": "Actor JWT, eventos, políticas, configuración vigente",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_gobierno.py",
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_primer_acceso.py"
+      ]
+    },
+    {
+      "id": "RF-47",
+      "modulo": "Evolución",
+      "requisito": "El sistema debe permitir al Trabajador consultar la evolución histórica de sus niveles de estrés a partir de evaluaciones registradas.",
+      "origen": "TestHistoryController.php; resources/views (evolución)",
+      "destino": "evolucion",
+      "reglas": [
+        "RN-EVO-01"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Series separadas, tendencia descriptiva y periodo; no predicción ni modificación histórica",
+      "dependencias": "Resultados finalizados, instrumento/versión, permiso",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-48",
+      "modulo": "Evolución",
+      "requisito": "El sistema debe permitir al Psicólogo consultar la evolución histórica y tendencia de los trabajadores que tenga asignados, respetando los permisos de acceso.",
+      "origen": "TestHistoryController.php; resources/views (evolución)",
+      "destino": "evolucion",
+      "reglas": [
+        "RN-EVO-01"
+      ],
+      "inicial": "PENDIENTE",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Series separadas, tendencia descriptiva y periodo; no predicción ni modificación histórica",
+      "dependencias": "Resultados finalizados, instrumento/versión, permiso",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_cierre_funcional.py"
+      ]
+    },
+    {
+      "id": "RF-49",
+      "modulo": "Superadministración",
+      "requisito": "El Superadministrador debe poder gestionar configuración global, usuarios, instrumentos y auditoría del sistema.",
+      "origen": "Sin equivalencia segura completa; Superadmin/GestionAdminController.php",
+      "destino": "gobierno, auditoria_events, superadmin",
+      "reglas": [
+        "RN-USR-05"
+      ],
+      "inicial": "PARCIAL",
+      "final": "IMPLEMENTADO",
+      "diferencia": "Auditoría consultable sin cuerpos; políticas por versión; configuración mediante catálogos/reglas existentes",
+      "dependencias": "Actor JWT, eventos, políticas, configuración vigente",
+      "prioridad": "Alta",
+      "accion": "Implementado y verificado",
+      "evidencia": [
+        "backend/tests/test_gobierno.py",
+        "backend/tests/test_superadmin_api.py",
+        "backend/tests/test_primer_acceso.py"
+      ]
+    }
+  ],
+  "no_funcionales": [
+    {
+      "id": "RNF-01",
+      "categoria": "Seguridad",
+      "requisito": "El sistema debe utilizar autenticación segura para controlar el acceso a la plataforma.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "auth_api, login_attempts, sesion_perfil"
+    },
+    {
+      "id": "RNF-02",
+      "categoria": "Control de acceso",
+      "requisito": "El sistema debe aplicar permisos según los roles Nuevo Trabajador, Trabajador, Psicólogo, Admin y Superadmin.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "superadmin_api, institutional_admin, resultados_historial"
+    },
+    {
+      "id": "RNF-03",
+      "categoria": "Privacidad",
+      "requisito": "La información personal, emocional y de seguimiento debe ser accesible únicamente por usuarios autorizados.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "resultados_historial, notas_cita, seguimiento, cierre_funcional"
+    },
+    {
+      "id": "RNF-04",
+      "categoria": "Privacidad",
+      "requisito": "El acceso administrativo no debe implicar por defecto acceso irrestricto a notas psicológicas o información sensible.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "reportes, notas_cita, institutional_admin"
+    },
+    {
+      "id": "RNF-05",
+      "categoria": "Legal",
+      "requisito": "El sistema debe registrar conocimiento y aceptación de las políticas de privacidad y tratamiento de información vigentes.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "primer_acceso"
+    },
+    {
+      "id": "RNF-06",
+      "categoria": "Legal",
+      "requisito": "El sistema debe permitir mantener versiones de políticas y trazabilidad de su aceptación.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "gobierno, primer_acceso"
+    },
+    {
+      "id": "RNF-07",
+      "categoria": "Salud y bienestar",
+      "requisito": "El sistema debe mantener un enfoque de monitoreo, prevención y apoyo, sin sustituir diagnóstico o tratamiento clínico profesional.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "cierre_funcional; revisión textos sin diagnóstico"
+    },
+    {
+      "id": "RNF-08",
+      "categoria": "Seguridad",
+      "requisito": "Las contraseñas no deben almacenarse en texto plano y deben gestionarse mediante los mecanismos de seguridad de Django.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "auth_api, superadmin_api"
+    },
+    {
+      "id": "RNF-09",
+      "categoria": "Seguridad",
+      "requisito": "El sistema debe ser una plataforma institucional cerrada y evitar acceso público no autorizado.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "auth_api, superadmin_api"
+    },
+    {
+      "id": "RNF-10",
+      "categoria": "Calidad de datos",
+      "requisito": "Los formularios y servicios deben validar datos obligatorios, formatos y reglas antes de persistir información.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "validaciones_pre_h4, cierre_funcional"
+    },
+    {
+      "id": "RNF-11",
+      "categoria": "Base de datos",
+      "requisito": "El modelo relacional propio de SASPEL debe diseñarse y mantenerse normalizado hasta Tercera Forma Normal (3FN).",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "initial_data_model, instrument_data_model; revisión de relaciones y excepciones en IMPLEMENTACION"
+    },
+    {
+      "id": "RNF-12",
+      "categoria": "Base de datos",
+      "requisito": "Las relaciones deben mantener integridad referencial mediante claves primarias, claves foráneas, restricciones únicas y controles necesarios.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "uuid_audit, instrument_data_model, appointment_data_model"
+    },
+    {
+      "id": "RNF-13",
+      "categoria": "Base de datos",
+      "requisito": "El sistema debe utilizar PostgreSQL como gestor de base de datos relacional.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "run_isolated sobre PostgreSQL 18"
+    },
+    {
+      "id": "RNF-14",
+      "categoria": "Arquitectura backend",
+      "requisito": "El backend debe mantener separación Hexagonal entre Domain, Application e Infrastructure.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "architecture"
+    },
+    {
+      "id": "RNF-15",
+      "categoria": "Arquitectura backend",
+      "requisito": "Domain y Application no deben depender directamente de Django ni Django REST Framework.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "architecture"
+    },
+    {
+      "id": "RNF-16",
+      "categoria": "Arquitectura frontend",
+      "requisito": "El frontend debe organizarse mediante MVVM y por funcionalidades, separando View, ViewModel, Model y Data Access.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "inspección de features/VM/servicios + suite Angular"
+    },
+    {
+      "id": "RNF-17",
+      "categoria": "Integración",
+      "requisito": "La comunicación entre frontend y backend debe realizarse mediante una API REST.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "cierre_browser, superadmin_browser"
+    },
+    {
+      "id": "RNF-18",
+      "categoria": "Usabilidad",
+      "requisito": "La interfaz debe ser clara, consistente y permitir identificar acciones, errores, estados vacíos y confirmaciones.",
+      "estado": "PARCIAL",
+      "evidencia": "suite Angular y muestra E2E; falta evaluación completa con usuarios"
+    },
+    {
+      "id": "RNF-19",
+      "categoria": "Usabilidad",
+      "requisito": "La interfaz debe ser responsive para computadoras, tablets y dispositivos móviles compatibles.",
+      "estado": "PARCIAL",
+      "evidencia": "E2E Edge 1440 y 390 px; falta matriz de tablets/motores"
+    },
+    {
+      "id": "RNF-20",
+      "categoria": "Rendimiento",
+      "requisito": "Las operaciones habituales de consulta, registro y navegación deben mantener tiempos de respuesta aceptables para uso institucional.",
+      "estado": "NO VERIFICADO",
+      "evidencia": "sin carga representativa ni umbral de aceptación acordado"
+    },
+    {
+      "id": "RNF-21",
+      "categoria": "Auditoría",
+      "requisito": "Las acciones administrativas y operaciones sensibles definidas por negocio deben quedar trazables.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "gobierno, institutional_admin"
+    },
+    {
+      "id": "RNF-22",
+      "categoria": "Mantenibilidad",
+      "requisito": "El código debe estar organizado por responsabilidades y módulos para facilitar mantenimiento y pruebas.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "architecture, inventario y revisión por módulos"
+    },
+    {
+      "id": "RNF-23",
+      "categoria": "Pruebas",
+      "requisito": "Las reglas de negocio críticas, casos de uso y endpoints principales deben contar con pruebas automatizadas o evidencia funcional.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "suite backend/frontend, concurrencia y E2E"
+    },
+    {
+      "id": "RNF-24",
+      "categoria": "Escalabilidad",
+      "requisito": "La estructura del sistema debe permitir incorporar posteriormente lógica difusa, motor de inferencia y otros módulos sin reestructurar el núcleo funcional.",
+      "estado": "PARCIAL",
+      "evidencia": "puertos y reglas aisladas; no hay prototipo de extensión futura verificado"
+    },
+    {
+      "id": "RNF-25",
+      "categoria": "Respaldo",
+      "requisito": "La información relevante debe poder respaldarse y recuperarse de forma ordenada durante las pruebas y demostraciones del proyecto.",
+      "estado": "IMPLEMENTADO",
+      "evidencia": "run_isolated --schema: pg_dump/pg_restore; respaldo local previo"
+    }
+  ],
+  "excluidos": [
+    "RF-50: sistema experto futuro",
+    "Chat",
+    "Diario",
+    "Markov/IA",
+    "Migración de datos clínicos reales"
+  ],
+  "cobertura": {
+    "denominador": 74,
+    "verificados": 70,
+    "parciales": 3,
+    "no_verificados": 1,
+    "porcentaje": 94.59
+  }
+}

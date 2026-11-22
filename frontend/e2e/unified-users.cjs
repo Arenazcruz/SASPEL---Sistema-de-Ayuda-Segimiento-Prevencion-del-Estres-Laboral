@@ -31,7 +31,9 @@ const assert = require('node:assert/strict');
     await page.waitForURL(base + target);
   }
   async function logout() {
+    const revocation = page.waitForResponse(r=>r.url().endsWith('/auth/logout/') && r.request().method()==='POST');
     await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+    assert.equal((await revocation).status(), 204);
     await page.waitForURL(base + '/login');
   }
   try {
@@ -105,7 +107,11 @@ const assert = require('node:assert/strict');
     await row().getByRole('button', { name: 'Reactivar', exact: true }).click();
     await row().getByRole('button', { name: 'Desactivar', exact: true }).waitFor();
     await logout();
-    await login(created.email, '/dashboard/nuevo-trabajador');
+    await login(created.email, '/primer-acceso/password');
+    await page.locator('[formcontrolname="password"]').fill(password+'N7!');
+    await page.locator('[formcontrolname="password_confirmation"]').fill(password+'N7!');
+    await page.getByRole('button', {name:'Guardar y continuar'}).click();
+    await page.waitForURL(base+'/dashboard/nuevo-trabajador');
     await logout();
     await login(process.env.SASPEL_TEST_EMAIL, '/dashboard/superadmin');
     await page.goto(base + '/dashboard/superadmin/personas/psicologos?search=Ana');
@@ -123,6 +129,10 @@ const assert = require('node:assert/strict');
     console.log(
       'OK: filtros, modal crear/editar/ver, correo, estado, login, rutas anteriores y móvil.',
     );
+  } catch (error) {
+    console.error('Pantalla sintética', page.url(), await page.locator('body').innerText());
+    if(await page.locator('#email').count()) console.error('Correo sintético en formulario:',await page.locator('#email').inputValue());
+    throw error;
   } finally {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
     await browser.close();

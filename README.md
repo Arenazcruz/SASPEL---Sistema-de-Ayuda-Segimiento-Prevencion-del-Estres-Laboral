@@ -75,7 +75,17 @@ Si una comprobación falla, no integrar ni publicar el cambio como estable.
 
 ## Estado e historial de implementación
 
-**Estado actual de esta rama:** T23 incorpora asignaciones profesionales manuales
+**Estado actual de esta rama:** se integraron reprogramación con historial,
+instrumentos de seguimiento, recomendaciones, evolución, auditoría, políticas,
+perfil propio, revocación de sesiones y administración de la institución única.
+Consulta el [informe de cierre y límites](docs/completar/INFORME.md), la
+[matriz de requisitos](docs/completar/MATRIZ.md), las
+[pruebas ejecutadas](docs/completar/PRUEBAS.md) y la
+[guía de ejecución/demostración](docs/completar/GUIA.md).
+La cobertura verificada es 70/74 requisitos (94,59 %); quedan validaciones
+no funcionales y aceptación formal pendientes. El cronograma no fue modificado.
+
+**Historial:** T23 incorporó asignaciones profesionales manuales
 en Superadmin, con carga de psicólogos, trabajadores sin asignación, finalización,
 reasignación e historial. Consulta [implementación y pruebas de T23](docs/T23_IMPLEMENTACION.md).
 Se conserva SA-01: panel Superadmin, Personas, Áreas y Cargos. Consulta también
@@ -577,3 +587,9 @@ interactiva. Actualiza después `POSTGRES_PASSWORD` en `.env` con exactamente
 esa contraseña y reinicia Django. Actualiza también cualquier otra aplicación
 local que use ese mismo usuario. Documentación:
 [psql: comando de contraseña](https://www.postgresql.org/docs/current/app-psql.html).
+
+## Versión del Hito 4
+
+[Instalación, reglas y uso por rol](docs/h4/MANUAL.md) · [Diccionario físico y relaciones](docs/h4/DICCIONARIO.md) · [Evidencias en navegador](docs/h4/E2E.md).
+
+[Paquete documental y guion H4](docs/h4/INDICE.md).

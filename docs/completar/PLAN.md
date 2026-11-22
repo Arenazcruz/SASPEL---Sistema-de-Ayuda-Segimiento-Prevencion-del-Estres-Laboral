@@ -32,8 +32,11 @@ SASPE-UF se consulta estáticamente, sin ejecutar Artisan ni acceder a sus datos
 
 No se cambian el Excel ni el informe académico. No se publica ni integra a
 main/develop. No se inventan parámetros clínicos ni textos legales aprobados.
-El alcance institucional delegado de ADMIN no está definido en el modelo actual;
-se documentará el requisito parcial sin conceder acceso global por inferencia.
+El usuario confirmó el 26/10/2026 que SASPEL representa una sola institución.
+ADMIN gestiona sus trabajadores, psicólogos, catálogos, instrumentos y
+reasignaciones mediante una superficie acotada; los roles y cuentas
+administrativas globales permanecen reservados a SUPERADMIN. No se añade una
+entidad multiinstitución. También se completa la vinculación área–cargo.
 Chat, diario, IA y recomendaciones automáticas no se incorporan.
 Cada resultado de pruebas se registra con sus omisiones. Los cambios de esquema
 se verifican en PostgreSQL aislado antes de considerar su aplicación real.

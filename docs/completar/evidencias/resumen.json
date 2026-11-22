@@ -1,0 +1,55 @@
+{
+  "fecha": "2026-10-26",
+  "commit_codigo": "74b8900b7b791ddc2f3b9c8e7f85b1de3f5cda85",
+  "backend_workspace": {
+    "descubiertas": 464,
+    "aprobadas": 462,
+    "omitidas": 2,
+    "fallos": 0,
+    "incluye_sql_local_no_versionado": 24
+  },
+  "backend_versionado": {
+    "descubiertas": 440,
+    "aprobadas": 438,
+    "omitidas": 2,
+    "fallos": 0
+  },
+  "navegador": {
+    "aprobadas": 2,
+    "fallos": 0
+  },
+  "frontend": {
+    "aprobadas": 222,
+    "archivos": 23,
+    "fallos": 0
+  },
+  "logs": {
+    "backend.txt": {
+      "sha256": "41ddbcdcb7f5adeaf5c90a7d27717b05786488db50a9dcf9a526ddecd4ba37f7"
+    },
+    "backend-versionado.txt": {
+      "sha256": "8bd67078f3382b5b39623130248875d0189b32ff6b371cd703534e97baa661f6"
+    },
+    "frontend.txt": {
+      "sha256": "2fc411a34fe130617b53c0bd2f3f1f063649f166bec56f44b54db113076e494a"
+    },
+    "navegador.txt": {
+      "sha256": "a343a2f8f22d3ff44166f087639e3bf6b88d13bf7009d9608510f10390f2aa11"
+    },
+    "migraciones-respaldo.txt": {
+      "sha256": "050b6f0849df343b7674736f9090bbf596fb164e832d4cb93057d75cc363fbef"
+    },
+    "build.txt": {
+      "sha256": "2d38ea739092441598b49620f77e739fc9b9b54727396fea52e158ff982450fa"
+    },
+    "admin-auditoria.txt": {
+      "sha256": "c03f34c4f4f2a76fc2c3ca56e99772f091626e906231a9a2ee80434f84e364f3"
+    },
+    "migracion-local.txt": {
+      "sha256": "3af6a63285d92a2362bb2d5149e54dc026d9067a9e36860221d834fe26b01b65"
+    }
+  },
+  "cronograma_sha256_al_cierre": "6a1ab6b57f11a46afa48aa47b2644343d6ed764c1028bf7adc32d8b44abfb5ee",
+  "respaldo_local": "Privado e ignorado por Git: .cache/completar/respaldo-local/antes-0013-0015.dump",
+  "normalizacion_logs": "UTF-8/LF; sin ANSI, espacios finales ni líneas vacías finales; redacta Bearer. Hash del texto normalizado."
+}
