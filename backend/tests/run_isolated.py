@@ -20,7 +20,10 @@ def main():
     parser.add_argument('--browser', action='store_true')
     parser.add_argument('--schema', action='store_true', help='Verificar migración, reversión y respaldo/restauración sintéticos.')
     parser.add_argument('labels', nargs='*', default=['tests'])
+    parser.add_argument('--demo-dump', type=Path, help='Guardar el dump sintético verificado en una ruta nueva.')
     args = parser.parse_args()
+    if args.demo_dump and (not args.schema or args.demo_dump.exists()):
+        parser.error('--demo-dump requiere --schema y una ruta nueva.')
     backend = Path(__file__).resolve().parents[1]
     binaries = Path(os.getenv('SASPEL_TEST_PG_BIN', r'C:\Program Files\PostgreSQL\18\bin'))
     suffix = '.exe' if os.name == 'nt' else ''
@@ -77,30 +80,37 @@ def main():
                 # Reversión solo en el clúster recién creado, nunca en desarrollo.
                 manage('migrate', 'api', '0012', '--noinput')
                 manage('migrate', '--noinput')
-                manage('shell', '--command',
-                       "from src.infrastructure.persistence.django.models import AreaInstitucional,CargoInstitucional,AreaCargo; "
-                       "a=AreaInstitucional.objects.create(nombre='Respaldo sintético'); "
-                       "c=CargoInstitucional.objects.create(nombre='Cargo sintético de respaldo'); "
-                       "AreaCargo.objects.create(area=a,cargo=c)")
+                manage('migrate', '--check')
+                env['SASPEL_DEMO_PASSWORD'] = secrets.token_urlsafe(28) + 'A9!'
+                manage('seed_demo')
+                manage('seed_demo')
                 env['PGPASSWORD'] = password
                 connection = ['-h', '127.0.0.1', '-p', str(port), '-U', 'verificador']
                 pg('pg_dump', *connection, '-Fc', '-f', root / 'synthetic.dump', 'saspel_verificacion')
                 pg('pg_restore', *connection, '--exit-on-error', '-d', 'saspel_restauracion', root / 'synthetic.dump')
                 with psycopg.connect(host='127.0.0.1', port=port, user='verificador', password=password,
                                      dbname='saspel_restauracion') as restored:
-                    count = restored.execute('SELECT COUNT(*) FROM django_migrations').fetchone()[0]
-                    if count < 15:
-                        raise RuntimeError('Restauración sin historial de migraciones completo.')
-                    restored_link = restored.execute(
-                        "SELECT COUNT(*) FROM saspel_area_cargo ac "
-                        "JOIN saspel_area_institucional a ON ac.area_id=a.id "
-                        "JOIN saspel_cargo_institucional c ON ac.cargo_id=c.id "
-                        "WHERE a.nombre=%s AND c.nombre=%s",
-                        ('Respaldo sintético', 'Cargo sintético de respaldo'),
+                    with psycopg.connect(host='127.0.0.1', port=port, user='verificador', password=password,
+                                         dbname='saspel_verificacion') as original:
+                        tables = [r[0] for r in original.execute(
+                            "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")]
+                        from psycopg import sql
+                        for table in tables:
+                            query = sql.SQL("SELECT count(*) FROM {}").format(sql.Identifier(table))
+                            if original.execute(query).fetchone() != restored.execute(query).fetchone():
+                                raise RuntimeError(f'Recuento diferente al restaurar {table}.')
+                    if restored.execute("SELECT COUNT(*) FROM saspel_usuario").fetchone()[0] != 5:
+                        raise RuntimeError('Faltan usuarios del dataset.')
+                    verified = restored.execute(
+                        "SELECT COUNT(*) FROM saspel_resultado_instrumento r JOIN saspel_alerta a ON a.resultado_id=r.id"
                     ).fetchone()[0]
-                    if restored_link != 1:
-                        raise RuntimeError('No se recuperó el vínculo sintético del respaldo.')
-                print('Migración, reversión 0015→0012→0015 y pg_dump/pg_restore comprobados.', flush=True)
+                    if verified != 2:
+                        raise RuntimeError('Faltan resultados con alerta en el respaldo.')
+                if args.demo_dump:
+                    args.demo_dump.parent.mkdir(parents=True, exist_ok=True)
+                    with args.demo_dump.open('xb') as target, (root/'synthetic.dump').open('rb') as source:
+                        shutil.copyfileobj(source, target)
+                print(f'Restauración íntegra: {len(tables)} tablas, cinco cuentas y dos resultados con alerta.', flush=True)
             else:
                 from contextlib import nullcontext
                 from frontend_temporal import frontend_temporal
