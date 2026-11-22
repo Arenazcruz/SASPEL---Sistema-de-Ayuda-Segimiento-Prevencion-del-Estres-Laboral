@@ -6,11 +6,19 @@ from src.infrastructure.persistence.django.repositories.recomendaciones import D
 
 
 class TextoRecomendacion(EstrictoSerializer):
+    compartida = serializers.BooleanField(default=False)
     texto = serializers.CharField(max_length=5000)
 
 
 class EstadoRecomendacion(EstrictoSerializer):
     estado = serializers.ChoiceField(choices=['EN_PROGRESO', 'COMPLETADA', 'CANCELADA'])
+
+
+class RecomendacionesPropiasView(CitasBaseView):
+    http_method_names = ["get", "head", "options"]
+
+    def get(self, request):
+        return Response(GestionarRecomendaciones(DjangoRecomendacionesRepository()).propias(request.user.pk))
 
 
 class RecomendacionesView(CitasBaseView):

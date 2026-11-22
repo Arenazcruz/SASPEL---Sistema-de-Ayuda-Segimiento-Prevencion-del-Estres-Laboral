@@ -14,11 +14,14 @@ class DjangoRecomendacionesRepository(DjangoResultadosRepository):
     def listar(self, seguimiento):
         return [self.dto(r) for r in Recomendacion.objects.filter(seguimiento_id=seguimiento, deleted=False)]
 
-    def crear(self, actor, seguimiento, texto):
-        return self.dto(Recomendacion.objects.create(seguimiento_id=seguimiento, profesional_id=actor, texto=texto, creado_por=str(actor), actualizado_por=str(actor)))
+    def compartidas(self, actor):
+        return list(Recomendacion.objects.filter(compartida=True, deleted=False, seguimiento__deleted=False, seguimiento__trabajador_id=actor).values("id", "texto", "estado", "creado_en"))
+
+    def crear(self, actor, seguimiento, texto, compartida):
+        return self.dto(Recomendacion.objects.create(seguimiento_id=seguimiento, profesional_id=actor, texto=texto, compartida=compartida, creado_por=str(actor), actualizado_por=str(actor)))
 
     def obtener(self, seguimiento, recomendacion):
-        row = Recomendacion.objects.filter(pk=recomendacion, seguimiento_id=seguimiento, deleted=False).first()
+        row = Recomendacion.objects.select_for_update().filter(pk=recomendacion, seguimiento_id=seguimiento, deleted=False).first()
         return self.dto(row) if row else None
 
     def cambiar(self, actor, recomendacion, estado):

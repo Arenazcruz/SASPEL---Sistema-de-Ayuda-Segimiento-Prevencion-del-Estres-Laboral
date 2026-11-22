@@ -7,6 +7,11 @@ class GestionarRecomendaciones:
     def __init__(self, repository: RecomendacionesRepository):
         self.repository = repository
 
+    def propias(self, actor):
+        if self.repository.rol_activo(actor) != "TRABAJADOR":
+            raise AccesoResultadosDenegado("Solo para el trabajador.")
+        return self.repository.compartidas(actor)
+
     def ejecutar(self, actor, seguimiento, datos=None, recomendacion=None):
         with self.repository.atomic():
             if self.repository.rol_activo(actor) != 'PSICOLOGO':
@@ -27,5 +32,5 @@ class GestionarRecomendaciones:
                 texto = datos['texto'].strip()
                 if not texto or len(texto) > 5000:
                     raise AdministrationError('Escribe una recomendación de hasta 5000 caracteres.')
-                return self.repository.crear(actor, seguimiento, texto)
+                return self.repository.crear(actor, seguimiento, texto, datos.get("compartida", False))
             return self.repository.listar(seguimiento)

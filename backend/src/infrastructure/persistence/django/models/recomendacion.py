@@ -5,6 +5,7 @@ from .seguimiento import Seguimiento
 
 
 class Recomendacion(AuditableModel):
+    compartida = models.BooleanField(default=False)
     seguimiento = models.ForeignKey(Seguimiento, on_delete=models.PROTECT, related_name='recomendaciones')
     profesional = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='recomendaciones_registradas')
     texto = models.TextField(max_length=5000)
