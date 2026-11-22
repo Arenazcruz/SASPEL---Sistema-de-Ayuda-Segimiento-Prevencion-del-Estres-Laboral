@@ -587,3 +587,7 @@ interactiva. Actualiza después `POSTGRES_PASSWORD` en `.env` con exactamente
 esa contraseña y reinicia Django. Actualiza también cualquier otra aplicación
 local que use ese mismo usuario. Documentación:
 [psql: comando de contraseña](https://www.postgresql.org/docs/current/app-psql.html).
+
+## Versión del Hito 4
+
+[Instalación, reglas y uso por rol](docs/h4/MANUAL.md) · [Diccionario físico y relaciones](docs/h4/DICCIONARIO.md) · [Evidencias en navegador](docs/h4/E2E.md).
