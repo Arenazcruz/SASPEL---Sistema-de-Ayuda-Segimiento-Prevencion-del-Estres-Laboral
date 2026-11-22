@@ -26,6 +26,14 @@ class CierreBrowserTests(LiveServerTestCase):
         root = Path(__file__).resolve().parents[2]
         data = dict(worker=str(self.w.pk), worker_email=self.w.email, psy_email=self.p.email,
                     instrument=str(self.instrument.pk), seguimiento=str(self.seg.pk), admin_email=admin.email)
+        from datetime import time, timedelta
+        from django.utils import timezone
+        from zoneinfo import ZoneInfo
+        from src.infrastructure.persistence.django.models import DisponibilidadPsicologo, ReglaAlerta
+        start = (timezone.now().astimezone(ZoneInfo('America/La_Paz')) + timedelta(days=2)).replace(hour=10, minute=0)
+        data.update(inicio=start.strftime('%Y-%m-%dT%H:%M'), fin=(start + timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'))
+        DisponibilidadPsicologo.objects.create(psicologo=self.p, dia_semana=start.weekday(), hora_inicio=time(8), hora_fin=time(18))
+        ReglaAlerta.objects.create(nombre='Regla de ensayo', rango=self.instrument.rangos.get(), nivel='MEDIA')
         run = subprocess.run(['node', str(root/'frontend/e2e/cierre-funcional.cjs')],
             env=dict(os.environ, SASPEL_TEST_API=self.live_server_url, SASPEL_TEST_PASSWORD=password,
                      SASPEL_TEST_FIXTURE=json.dumps(data)), capture_output=True, text=True,
