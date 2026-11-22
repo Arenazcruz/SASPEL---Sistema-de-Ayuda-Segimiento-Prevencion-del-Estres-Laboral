@@ -36,7 +36,7 @@ from src.infrastructure.api.rest.views.reportes import ReportesView
 from src.infrastructure.api.rest.views.perfil import PerfilPropioView
 from src.infrastructure.api.rest.views.gobierno import PoliticasAdministracionView, AuditoriaView
 from src.infrastructure.api.rest.views.evolucion import EvolucionView
-from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesView, EstadoRecomendacionView
+from src.infrastructure.api.rest.views.recomendaciones import RecomendacionesPropiasView, RecomendacionesView, EstadoRecomendacionView
 from src.infrastructure.api.rest.views.instrument_assignments import AsignacionesInstrumentoView, InstrumentosPropiosView, ResolverInstrumentoView, AccionInstrumentoView
 
 urlpatterns = [
@@ -46,6 +46,7 @@ urlpatterns = [
     path('administracion/auditoria/', AuditoriaView.as_view()),
     path('trabajador/evolucion/', EvolucionView.as_view()),
     path('psicologo/trabajadores/<uuid:trabajador_id>/evolucion/', EvolucionView.as_view()),
+    path('trabajador/recomendaciones/', RecomendacionesPropiasView.as_view()),
     path('seguimientos/<uuid:seguimiento_id>/recomendaciones/', RecomendacionesView.as_view()),
     path('seguimientos/<uuid:seguimiento_id>/recomendaciones/<uuid:recomendacion_id>/estado/', EstadoRecomendacionView.as_view()),
     path('trabajador/instrumentos/', InstrumentosPropiosView.as_view()),
